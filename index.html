@@ -1,256 +1,198 @@
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Join the Red Deer Reavers for a Christmas armored combat event! Participate in a medieval tournament and more.">
-    <title>Red Deer Reavers - Christmas Armored Combat Event</title>
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Custom CSS -->
+    <title>Red Deer Reavers Non-Profit Plan</title>
     <style>
         body {
-            background-color: #f8f9fa;
-            font-family: 'Arial', sans-serif;
-            margin: 0;
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 20px;
             padding: 0;
+            background-color: #f9f9f9;
         }
-        .navbar {
-            background-color: #343a40;
+        h1, h2 {
+            color: #333;
         }
-        .navbar-brand {
-            color: #ffffff !important;
-        }
-        .hero {
-            background-image: url('https://i.postimg.cc/Z5bhqYL9/file-Ct-BL4q-Te-Qp-HFo-W3m-DVwbvvd-G-ezgif-com-webp-to-jpg-converter.jpg');
-            background-size: cover;
-            background-position: center;
-            height: 500px;
-            position: relative;
-            color: white;
+        h1 {
             text-align: center;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-            padding: 0 15px;
         }
-        .hero h1 {
-            font-size: 3rem;
-            text-shadow: 2px 2px 5px rgba(0,0,0,0.7);
+        ul {
+            list-style: disc;
+            margin-left: 20px;
         }
-        .hero p {
-            font-size: 1.2rem;
-            text-shadow: 1px 1px 3px rgba(0,0,0,0.7);
-        }
-        .section-title {
-            font-size: 2rem;
-            margin-bottom: 1.5rem;
-            text-align: center;
+        section {
+            margin-bottom: 20px;
         }
         .container {
+            max-width: 800px;
+            margin: auto;
+            background: white;
             padding: 20px;
-        }
-        .sponsor-level {
-            text-align: center;
-            padding: 15px 0;
-        }
-        .sponsor-level h3 {
-            font-size: 1.5rem;
-            margin-bottom: 10px;
-        }
-        .sponsor-logo {
-            width: 130px;
-            height: auto;
-            margin: 5px;
-        }
-        .sponsor-level.silver h3 {
-            color: #C0C0C0;
-        }
-        .sponsor-level.bronze h3 {
-            color: #CD7F32;
-        }
-        .footer {
-            background-color: #343a40;
-            color: white;
-            padding: 20px 0;
-            text-align: center;
-        }
-        /* Responsive adjustments */
-        @media (max-width: 768px) {
-            .hero {
-                height: 350px;
-            }
-            .hero h1 {
-                font-size: 2.5rem;
-            }
-            .hero p {
-                font-size: 1rem;
-            }
-            .section-title {
-                font-size: 1.8rem;
-            }
-            .sponsor-logo {
-                width: 100px;
-            }
-        }
-        @media (max-width: 480px) {
-            .hero {
-                height: 300px;
-            }
-            .hero h1 {
-                font-size: 2rem;
-            }
-            .hero p {
-                font-size: 0.9rem;
-            }
-            .section-title {
-                font-size: 1.5rem;
-            }
-            .sponsor-logo {
-                width: 90px;
-            }
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
     </style>
 </head>
 <body>
-
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark">
-        <div class="container">
-            <a class="navbar-brand" href="#">Red Deer Reavers</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="#about">About</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#event">Event</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#family-fun">Family Fun</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#sponsors">Sponsors</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#contact">Contact</a>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
-
-    <!-- Hero Section -->
-    <section class="hero">
-        <h1>Join the Battle!</h1>
-        <p>Christmas Armored Combat Tournament</p>
-        <a href="#event" class="btn btn-primary btn-lg">Learn More</a>
-    </section>
-
-    <!-- About Section -->
-    <section id="about" class="container py-5">
-        <h2 class="section-title">About Us</h2>
-        <p>The Red Deer Reavers are Alberta's newest Historical Armored Combat Sports team. As part of HACSA, we compete in full-contact medieval combat, donning historically accurate armor and wielding blunt steel weapons in battles that test both strength and strategy. Our team is growing and welcomes newcomers to join in the fun, whether for casual participation or competitive fighting.</p>
-        <img src="https://i.postimg.cc/ncQX128K/file-j-RSm-Etik9-QKJYJJs-Ix-HEDqiq.webp" class="img-fluid my-4" alt="Christmas themed knight">
-    </section>
-
-    <!-- Event Section -->
-    <section id="event" class="bg-light py-5">
-        <div class="container">
-            <h2 class="section-title">Christmas Armored Combat Tournament</h2>
-            <p>Join us this Christmas for an epic armored combat tournament featuring teams from Alberta and Western Canada. The winner will receive a custom prize crafted by local blacksmith, <strong>MOUNT CROM Armouries Inc.</strong></p>
-
-            <div class="row">
-                <div class="col-lg-6">
-                    <img src="https://static.wixstatic.com/media/6f1a25_3bc65ce9059d40fbbea78eb23908ab98~mv2.jpg/v1/fill/w_640,h_500,al_c,q_80,usm_0.66_1.00_0.01,enc_auto/6f1a25_3bc65ce9059d40fbbea78eb23908ab98~mv2.jpg" class="img-fluid" alt="Tournament image">
-                </div>
-                <div class="col-lg-6">
-                    <h3>Event Highlights</h3>
+    <div class="container">
+        <h1>Red Deer Reavers Non-Profit Plan</h1>
+        <section>
+            <h2>Step 1: Define the Mission and Vision</h2>
+            <ul>
+                <li>Draft the mission statement: "To support the Red Deer Reavers and promote Buhurt through training resources, competitions, and youth engagement."</li>
+                <li>Set initial goals:
                     <ul>
-                        <li>Indoor tournament with full armor combat</li>
-                        <li>Prize from MOUNT CROM Armouries</li>
-                        <li>Soft kit practice for newcomers</li>
-                        <li>Try on real armor</li>
-                        <li>BBQ with hot dogs and hamburgers</li>
+                        <li>Raise funds for practice space, gear, and travel.</li>
+                        <li>Establish a sustainable structure for the team.</li>
+                        <li>Prepare for the World Tournament in Houston, Texas.</li>
                     </ul>
-                    <a href="#contact" class="btn btn-primary btn-lg">Register Now</a>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Family Fun Section -->
-    <section id="family-fun" class="container py-5">
-        <h2 class="section-title">Fun for the Whole Family</h2>
-        <p>This event isn't just for armored combat enthusiasts—it's fun for the whole family! Children of all ages can enjoy face painting, soft kit practice sessions, and the opportunity to take photos with "Sir Santa" — a medieval Santa knight! Schools are encouraged to attend as part of their field trips for a chance to experience medieval history firsthand.</p>
-        <img src="https://i.postimg.cc/4dhD0YX0/Messenger-creation-57-B1-DD71-C8-DA-4-FF2-9-FD1-379-C665-EBF10-3.jpg" class="img-fluid my-4" alt="Family Friendly Event">
-    </section>
-
-    <!-- Sponsors Section -->
-    <section id="sponsors" class="container py-5">
-        <h2 class="section-title">Our Sponsors</h2>
-
-        <!-- Gold Sponsors -->
-        <div class="sponsor-level">
-            <h3>Gold Sponsors</h3>
-            <a href="https://www.tuffsteam.com/">
-                <img src="https://i.postimg.cc/26VWNftM/Copy-of-Tuff-Steaming-and-Vac-Service-Logo.png" alt="Tuff Steaming & Vac" class="sponsor-logo">
-            </a>
-        </div>
-
-        <!-- Silver Sponsors -->
-        <div class="sponsor-level silver">
-            <h3>Silver Sponsors</h3>
-            <a href="https://www.progressiveauctions.ca">
-                <img src="https://i.postimg.cc/Qx5pMhMr/img.jpg" alt="Progressive Auctions" class="sponsor-logo">
-            </a>
-        </div>
-
-        <!-- Bronze Sponsors -->
-        <div class="sponsor-level bronze">
-            <h3>Bronze Sponsors</h3>
-            <a href="https://www.orielwindows.ca">
-                <img src="https://orielwindows.ca/wp-content/uploads/2021/02/Oriel-Logo.png" alt="Oriel Windows & Doors" class="sponsor-logo">
-            </a>
-            <a href="https://www.mrrooter.ca/red-deer/">
-                <img src="https://i.imgur.com/4zQlyWw.png" alt="Mr. Rooter Plumbing" class="sponsor-logo">
-            </a>
-            <a href="https://www.wrecklessbikes.ca/">
-                <img src="https://i.imgur.com/8QlSKVr.png" alt="Wreckless Bikes" class="sponsor-logo">
-            </a>
-        </div>
-    </section>
-
-    <!-- Contact Section -->
-    <section id="contact" class="container py-5">
-        <h2 class="section-title">Contact Us</h2>
-        <p>If you are interested in joining the event or want to learn more, feel free to reach out!</p>
-        <form class="contact-form">
-            <div class="row">
-                <div class="col-lg-6">
-                    <input type="text" class="form-control" placeholder="Your Name" required>
-                </div>
-                <div class="col-lg-6">
-                    <input type="email" class="form-control" placeholder="Your Email" required>
-                </div>
-            </div>
-            <textarea class="form-control" rows="5" placeholder="Your Message" required></textarea>
-            <button type="submit" class="btn btn-primary btn-lg">Send Message</button>
-        </form>
-    </section>
-
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="container">
-            <p>&copy; 2024 Red Deer Reavers | Historical Armored Combat Sports Association</p>
-        </div>
-    </footer>
-
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+                </li>
+            </ul>
+        </section>
+        <section>
+            <h2>Step 2: Governance Setup</h2>
+            <ul>
+                <li>Board of Directors:
+                    <ul>
+                        <li>Minimum 3 roles required:
+                            <ul>
+                                <li>President: Oversees the organization and ensures goals are met.</li>
+                                <li>Treasurer: Manages finances, including donations and expenses.</li>
+                                <li>Secretary: Handles documentation, meeting minutes, and correspondence.</li>
+                            </ul>
+                        </li>
+                        <li>Optional roles:
+                            <ul>
+                                <li>Fundraising Coordinator: Develops and oversees fundraising efforts.</li>
+                                <li>Youth Program Coordinator: Manages future youth involvement plans.</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </li>
+                <li>Recruit members for the board:
+                    <ul>
+                        <li>Discuss with teammates and trusted individuals who are interested in leadership roles.</li>
+                    </ul>
+                </li>
+            </ul>
+        </section>
+        <section>
+            <h2>Step 3: Legal and Administrative</h2>
+            <ul>
+                <li>Register the Non-Profit:
+                    <ul>
+                        <li>File incorporation documents for a non-profit organization in Alberta.</li>
+                        <li>Choose the name: Red Deer Reavers.</li>
+                        <li>Draft and submit bylaws outlining how the organization operates (e.g., elections, decision-making, meetings).</li>
+                    </ul>
+                </li>
+                <li>Get a Business Number:
+                    <ul>
+                        <li>Apply for a business number with the Canada Revenue Agency (CRA).</li>
+                    </ul>
+                </li>
+                <li>Charitable Status (Optional):
+                    <ul>
+                        <li>Register with CRA to issue tax-deductible receipts for donations (can be done later).</li>
+                    </ul>
+                </li>
+            </ul>
+        </section>
+        <section>
+            <h2>Step 4: Fundraising and Revenue</h2>
+            <ul>
+                <li>Develop funding strategies:
+                    <ul>
+                        <li>Approach companies where team members are employed for donations or sponsorships.</li>
+                        <li>Organize fundraising events (e.g., Buhurt demonstrations or tournaments).</li>
+                        <li>Launch crowdfunding campaigns on platforms like GoFundMe.</li>
+                    </ul>
+                </li>
+                <li>Build a donor-friendly structure:
+                    <ul>
+                        <li>Offer sponsorship packages (e.g., logo placement, event mentions).</li>
+                        <li>Recognize supporters on social media and team materials.</li>
+                    </ul>
+                </li>
+            </ul>
+        </section>
+        <section>
+            <h2>Step 5: Operational Planning</h2>
+            <ul>
+                <li>Gear and Space:
+                    <ul>
+                        <li>Prioritize purchasing training and competition gear.</li>
+                        <li>Secure a rental practice space after initial funding.</li>
+                    </ul>
+                </li>
+                <li>Youth Program Development:
+                    <ul>
+                        <li>Plan outreach efforts to schools and youth organizations.</li>
+                        <li>Develop a beginner-friendly program using soft kit training gear.</li>
+                    </ul>
+                </li>
+                <li>Travel Planning:
+                    <ul>
+                        <li>Estimate costs for attending the World Tournament in Houston, Texas (flights, accommodation, gear transport).</li>
+                        <li>Start a specific fundraiser for this goal.</li>
+                    </ul>
+                </li>
+            </ul>
+        </section>
+        <section>
+            <h2>Step 6: Community Engagement</h2>
+            <ul>
+                <li>Social Media Presence:
+                    <ul>
+                        <li>Use platforms like Facebook, Instagram, and YouTube to share updates, events, and achievements.</li>
+                        <li>Create a website with donation links and team information.</li>
+                    </ul>
+                </li>
+                <li>Local Events:
+                    <ul>
+                        <li>Host exhibitions or open houses to raise awareness about Buhurt.</li>
+                        <li>Partner with local community centers or sports clubs to attract interest.</li>
+                    </ul>
+                </li>
+            </ul>
+        </section>
+        <section>
+            <h2>Step 7: Timeline</h2>
+            <ul>
+                <li>First 3 Months:
+                    <ul>
+                        <li>Finalize incorporation and board setup.</li>
+                        <li>Begin initial fundraising and secure the business number.</li>
+                        <li>Build a social media presence.</li>
+                    </ul>
+                </li>
+                <li>Next 3 Months:
+                    <ul>
+                        <li>Launch fundraising events and campaigns.</li>
+                        <li>Secure practice space and gear.</li>
+                        <li>Begin travel preparations for Houston.</li>
+                    </ul>
+                </li>
+                <li>6 Months to 1 Year:
+                    <ul>
+                        <li>Attend the World Tournament.</li>
+                        <li>Initiate the youth program pilot.</li>
+                    </ul>
+                </li>
+            </ul>
+        </section>
+        <section>
+            <h2>Step 8: Sustainability</h2>
+            <ul>
+                <li>Regularly evaluate goals and finances.</li>
+                <li>Explore additional funding sources, including grants.</li>
+                <li>Build partnerships with local businesses and organizations.</li>
+            </ul>
+        </section>
+    </div>
 </body>
 </html>
