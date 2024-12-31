@@ -101,12 +101,13 @@
             z-index: 10;
         }
 
-        /* Responsive Navbar */
+        /* Adjust the logo size */
         .nav-wrapper img {
-            max-width: 100px;
+            max-width: 80px;
             height: auto;
         }
 
+        /* Responsive adjustments */
         @media (max-width: 600px) {
             .hero h1 {
                 font-size: 2rem; /* Resize h1 for mobile */
@@ -122,9 +123,11 @@
     <!-- Navbar -->
     <nav style="background: linear-gradient(to right, #FFA500, #800080);">
         <div class="nav-wrapper container">
+            <!-- Logo and Hamburger Menu -->
             <a href="index.html" class="brand-logo">
                 <img src="assets/logo.jpg" alt="Team Logo">
             </a>
+            <a href="#" data-target="mobile-nav" class="sidenav-trigger"><i class="material-icons">menu</i></a>
             <ul id="nav-mobile" class="right hide-on-med-and-down">
                 <li><a href="about.html">About Us</a></li>
                 <li><a href="steps.html">Steps to Success</a></li>
@@ -134,6 +137,15 @@
             </ul>
         </div>
     </nav>
+
+    <!-- Mobile Sidebar (Collapsible Navbar) -->
+    <ul class="sidenav" id="mobile-nav">
+        <li><a href="about.html">About Us</a></li>
+        <li><a href="steps.html">Steps to Success</a></li>
+        <li><a href="programs.html">Programs & Events</a></li>
+        <li><a href="involved.html">Get Involved</a></li>
+        <li><a href="contact.html">Contact Us</a></li>
+    </ul>
 
     <!-- Hero Section -->
     <div class="hero">
@@ -232,5 +244,12 @@
 
     <!-- Materialize JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <script>
+        // Initialize the mobile nav (collapsible navbar)
+        document.addEventListener('DOMContentLoaded', function() {
+            const elems = document.querySelectorAll('.sidenav');
+            M.Sidenav.init(elems);
+        });
+    </script>
 </body>
 </html>
