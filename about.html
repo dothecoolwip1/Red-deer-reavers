@@ -20,7 +20,7 @@
         .header {
             background: url('assets/about3.jpg') center/cover no-repeat;
             height: 40vh;
-            width: 100%; /* Ensure full width */
+            width: 100%;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -186,7 +186,7 @@
                         <div class="member-card-content">
                             <h5>${member.name}</h5>
                             <p><strong>${member.position}</strong></p>
-                            <a href="#modal-${member.id}" class="details-button modal-trigger" data-id="${member.id}">View Details</a>
+                            <a href="#modal-${member.id}" class="details-button modal-trigger" data-id="${member.id}">View Stats</a>
                         </div>
                     </div>
                 `;
@@ -198,6 +198,26 @@
                 } else {
                     teamMembers.innerHTML += memberCard;
                 }
+            });
+
+            members.forEach(member => {
+                const modalHtml = `
+                    <div id="modal-${member.id}" class="modal">
+                        <div class="modal-content">
+                            <h4>${member.name}</h4>
+                            <p><strong>Height:</strong> ${member.height}</p>
+                            <p><strong>Weight:</strong> ${member.weight}</p>
+                            <p><strong>Fighting Style:</strong> ${member.fighting_style}</p>
+                            <p><strong>Wins:</strong> ${member.wins}</p>
+                            <p><strong>Losses:</strong> ${member.losses}</p>
+                            <p>${member.description}</p>
+                        </div>
+                        <div class="modal-footer">
+                            <a href="#!" class="modal-close waves-effect waves-green btn-flat">Close</a>
+                        </div>
+                    </div>
+                `;
+                document.body.insertAdjacentHTML('beforeend', modalHtml);
             });
 
             M.Modal.init(document.querySelectorAll('.modal'));
