@@ -83,16 +83,6 @@
             background-color: #6F006F;
         }
 
-        hr {
-            border: 0;
-            height: 1px;
-            background: linear-gradient(to right, #FFA500, #800080);
-        }
-
-        .accordion-item {
-            margin-bottom: 20px;
-        }
-
         .accordion-title {
             cursor: pointer;
             font-size: 1.25rem;
@@ -106,11 +96,6 @@
             display: none;
         }
 
-        .modal-content {
-            font-size: 1.2rem;
-        }
-
-        /* Navbar Logo */
         .nav-wrapper img {
             max-width: 50px;
             height: auto;
@@ -137,7 +122,7 @@
         </div>
     </nav>
 
-    <!-- Mobile Sidebar (Collapsible Navbar) -->
+    <!-- Mobile Sidebar -->
     <ul class="sidenav" id="mobile-nav">
         <li><a href="index.html">Home</a></li>
         <li><a href="about.html">About Us</a></li>
@@ -166,13 +151,13 @@
         </div>
     </div>
 
-    <!-- Accordion for Volunteer Opportunities -->
+    <!-- Volunteer Opportunities Section -->
     <div class="container section">
         <h2>Volunteer Opportunities</h2>
         <div class="accordion-item">
             <div class="accordion-title">Help at Events</div>
             <div class="accordion-content">
-                <p>Help us organize and manage events, ensuring everything runs smoothly. Your support will be key to the success of our tournaments and activities!</p>
+                <p>Help us organize and manage events. Your support ensures our tournaments and activities run smoothly!</p>
                 <a href="#" class="btn btn-secondary">Sign Up</a>
             </div>
         </div>
@@ -180,15 +165,7 @@
         <div class="accordion-item">
             <div class="accordion-title">Youth Program Assistance</div>
             <div class="accordion-content">
-                <p>Volunteer in our youth programs to help teach and mentor young fighters in a safe and educational environment.</p>
-                <a href="#" class="btn btn-secondary">Sign Up</a>
-            </div>
-        </div>
-
-        <div class="accordion-item">
-            <div class="accordion-title">Administrative Support</div>
-            <div class="accordion-content">
-                <p>Assist with day-to-day administrative tasks, such as scheduling, social media management, and communications.</p>
+                <p>Volunteer in our youth programs to teach and mentor young fighters in a safe environment.</p>
                 <a href="#" class="btn btn-secondary">Sign Up</a>
             </div>
         </div>
@@ -229,17 +206,6 @@
         </div>
     </div>
 
-    <!-- Modal Structure -->
-    <div id="sponsor-modal" class="modal">
-        <div class="modal-content">
-            <h4>How to Become a Sponsor</h4>
-            <p>To become a sponsor, select your tier from the table above and follow the sign-up instructions on the respective link provided.</p>
-        </div>
-        <div class="modal-footer">
-            <a href="#!" class="modal-close waves-effect waves-green btn-flat">Close</a>
-        </div>
-    </div>
-
     <!-- Footer -->
     <footer class="page-footer" style="background: linear-gradient(to right, #FFA500, #800080);">
         <div class="container">
@@ -249,7 +215,7 @@
                     <h5 class="white-text" style="font-family: 'Cinzel', serif;">Red Deer Reavers</h5>
                     <ul style="font-family: 'Roboto', sans-serif; font-size: 16px;">
                         <li><a href="index.html" class="white-text">Home</a></li>
-                        <li><a href="about.html">About Us</a></li>
+                        <li><a href="about.html" class="white-text">About Us</a></li>
                         <li><a href="steps.html">Steps to Success</a></li>
                         <li><a href="programs.html">Programs & Events</a></li>
                         <li><a href="involved.html">Get Involved</a></li>
@@ -269,16 +235,20 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            // Initialize Modals
-            var elems = document.querySelectorAll('.modal');
-            M.Modal.init(elems);
+            // Initialize Sidenav for mobile navigation
+            const sidenavElems = document.querySelectorAll('.sidenav');
+            M.Sidenav.init(sidenavElems);
 
-            // Accordion functionality
+            // Accordion functionality for Volunteer Opportunities
             const accordions = document.querySelectorAll('.accordion-title');
-            accordions.forEach((accordion) => {
-                accordion.addEventListener('click', function () {
-                    const content = this.nextElementSibling;
-                    content.style.display = content.style.display === 'block' ? 'none' : 'block';
+            accordions.forEach(accordion => {
+                accordion.addEventListener('click', () => {
+                    const content = accordion.nextElementSibling;
+                    if (content.style.display === "block") {
+                        content.style.display = "none";
+                    } else {
+                        content.style.display = "block";
+                    }
                 });
             });
         });

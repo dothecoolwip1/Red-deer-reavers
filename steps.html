@@ -22,34 +22,36 @@
         .header {
             background: url('assets/steps.jpg') center/cover no-repeat;
             height: 40vh;
+            width: 100%;
             display: flex;
-            width: 100%; /* Ensure full width */
             align-items: center;
             justify-content: center;
-            color: white;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+            position: relative;
+        }
+
+        .header-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: 1;
         }
 
         .header h1 {
             font-size: 2.5rem;
             font-family: 'Cinzel', serif;
+            position: relative;
+            z-index: 2;
+            color: white;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
         }
 
         h1,
-        h2,
-        h3 {
+        h2 {
             font-family: 'Cinzel', serif;
             color: #800080;
-        }
-
-        a {
-            color: #800080;
-            text-decoration: none;
-        }
-
-        a:hover {
-            color: #FFA500;
-            text-decoration: underline;
         }
 
         .btn-primary {
@@ -70,70 +72,43 @@
             background-color: #6F006F;
         }
 
-        hr {
-            border: 0;
-            height: 1px;
-            background: linear-gradient(to right, #FFA500, #800080);
-        }
-
-        /* Timeline Section */
         .timeline {
             padding: 20px;
             border-left: 3px solid #800080;
-            position: relative;
         }
 
         .timeline-item {
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             cursor: pointer;
-            transition: transform 0.3s ease;
+            padding: 15px;
+            border: 1px solid #ddd;
+            background-color: #fff;
+            border-radius: 5px;
+            transition: background-color 0.3s ease, transform 0.3s ease;
         }
 
         .timeline-item:hover {
-            transform: scale(1.05);
-            background-color: #f7f7f7;
+            background-color: #f0f0f0;
+            transform: translateY(-5px);
         }
 
         .timeline-item h5 {
-            margin: 0 0 5px;
+            margin: 0;
             color: #FFA500;
-            font-size: 1.2rem;
-        }
-
-        .timeline-item p {
-            margin: 5px 0;
-            color: #333;
         }
 
         .timeline-item .details {
             display: none;
-            margin-top: 15px;
-            padding: 10px;
-            background-color: #fafafa;
-            border-left: 3px solid #800080;
+            margin-top: 10px;
         }
 
         .timeline-item.active .details {
             display: block;
         }
 
-        /* Icons for each phase */
-        .timeline-item i {
-            font-size: 40px;
-            color: #800080;
-            margin-right: 10px;
-        }
-
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .timeline {
-                padding: 10px;
-                border-left: 2px solid #800080;
-            }
-
-            .timeline-item {
-                padding-left: 40px;
-            }
+        .nav-wrapper img {
+            max-width: 50px;
+            height: auto;
         }
     </style>
 </head>
@@ -144,11 +119,12 @@
     <nav style="background: linear-gradient(to right, #FFA500, #800080);">
         <div class="nav-wrapper container">
             <a href="index.html" class="brand-logo">
-                <img src="assets/logo.jpg" alt="Team Logo" style="height: 62px;">
+                <img src="assets/logo.jpg" alt="Team Logo">
             </a>
+            <a href="#" data-target="mobile-nav" class="sidenav-trigger"><i class="material-icons">menu</i></a>
             <ul id="nav-mobile" class="right hide-on-med-and-down">
-                <li><a href="index.html">Home</a></li>
                 <li><a href="about.html">About Us</a></li>
+                <li><a href="steps.html">Steps to Success</a></li>
                 <li><a href="programs.html">Programs & Events</a></li>
                 <li><a href="involved.html">Get Involved</a></li>
                 <li><a href="contact.html">Contact Us</a></li>
@@ -156,8 +132,18 @@
         </div>
     </nav>
 
+    <!-- Mobile Sidebar -->
+    <ul class="sidenav" id="mobile-nav">
+        <li><a href="about.html">About Us</a></li>
+        <li><a href="steps.html">Steps to Success</a></li>
+        <li><a href="programs.html">Programs & Events</a></li>
+        <li><a href="involved.html">Get Involved</a></li>
+        <li><a href="contact.html">Contact Us</a></li>
+    </ul>
+
     <!-- Header Section -->
     <div class="header">
+        <div class="header-overlay"></div>
         <h1>Steps to Success</h1>
     </div>
 
@@ -171,67 +157,44 @@
     <div class="container section">
         <h3 class="center-align">Phase Timeline</h3>
         <div class="timeline">
-            <!-- Phase 1 -->
             <div class="timeline-item" onclick="toggleDetails(this)">
-                <i class="material-icons">home</i>
-                <div class="timeline-content">
-                    <h5><strong>Jan 2023 - Dec 2023:</strong> Foundation</h5>
-                    <p>Incorporation, initial fundraising, and participation in the World Tournament.</p>
-                    <div class="details">
-                        <p>In the first year, we focus on establishing the foundation of Red Deer Reavers. This includes legal incorporation, securing our first major sponsors, and ensuring our team is ready for the World Tournament.</p>
-                    </div>
+                <h5>Jan 2023 - Dec 2023: Foundation</h5>
+                <p>Incorporation, initial fundraising, and participation in the World Tournament.</p>
+                <div class="details">
+                    <p>Establishing the legal foundation for the Red Deer Reavers, creating partnerships, and ensuring readiness for major events.</p>
                 </div>
             </div>
-
-            <!-- Phase 2 -->
             <div class="timeline-item" onclick="toggleDetails(this)">
-                <i class="material-icons">expand</i>
-                <div class="timeline-content">
-                    <h5><strong>Jan 2024 - Dec 2024:</strong> Growth</h5>
-                    <p>Hosting regional tournaments and expanding youth programs.</p>
-                    <div class="details">
-                        <p>In Year 2, we look to expand regionally with tournaments and further grow our youth programs. We aim to get more individuals involved in the sport while ensuring sustainability for future growth.</p>
-                    </div>
+                <h5>Jan 2024 - Dec 2024: Growth</h5>
+                <p>Hosting regional tournaments and expanding youth programs.</p>
+                <div class="details">
+                    <p>Focus on engaging the community through events, fostering youth development, and strengthening regional involvement in Buhurt.</p>
                 </div>
             </div>
-
-            <!-- Phase 3 -->
             <div class="timeline-item" onclick="toggleDetails(this)">
-                <i class="material-icons">group</i>
-                <div class="timeline-content">
-                    <h5><strong>Jan 2025 - Dec 2027:</strong> Leadership</h5>
-                    <p>Building a training facility and establishing provincial leadership.</p>
-                    <div class="details">
-                        <p>Building a permanent facility dedicated to training and developing new talent. Establishing leadership across Alberta for greater organizational strength.</p>
-                    </div>
+                <h5>Jan 2025 - Dec 2025: Leadership</h5>
+                <p>Building a training facility and establishing provincial leadership.</p>
+                <div class="details">
+                    <p>Creating a centralized training hub and mentoring new leaders to solidify the organization's impact in Alberta.</p>
                 </div>
             </div>
-
-            <!-- Phase 4 -->
             <div class="timeline-item" onclick="toggleDetails(this)">
-                <i class="material-icons">location_city</i>
-                <div class="timeline-content">
-                    <h5><strong>Jan 2028 - Dec 2029:</strong> National Impact</h5>
-                    <p>Gaining national recognition and hosting Canadian championships.</p>
-                    <div class="details">
-                        <p>By this time, the Red Deer Reavers will be a national force in the Buhurt community, and we'll be hosting the Canadian championships.</p>
-                    </div>
+                <h5>Jan 2026 - Dec 2027: National Recognition</h5>
+                <p>Gaining national recognition and hosting Canadian championships.</p>
+                <div class="details">
+                    <p>Promoting Buhurt at a national level by hosting premier events and establishing a strong competitive presence in Canada.</p>
                 </div>
             </div>
-
-            <!-- Phase 5 -->
             <div class="timeline-item" onclick="toggleDetails(this)">
-                <i class="material-icons">star</i>
-                <div class="timeline-content">
-                    <h5><strong>Jan 2030 - Dec 2032:</strong> Legacy</h5>
-                    <p>Creating a permanent Buhurt arena and hosting international tournaments.</p>
-                    <div class="details">
-                        <p>Our final goal is to build a state-of-the-art Buhurt arena, ensuring the legacy of the Red Deer Reavers is felt for generations to come.</p>
-                    </div>
+                <h5>Jan 2028 - Dec 2030: Legacy</h5>
+                <p>Creating a permanent Buhurt arena and hosting international tournaments.</p>
+                <div class="details">
+                    <p>Leaving a lasting legacy with a dedicated arena, positioning Alberta as a global hub for Historical Armored Combat.</p>
                 </div>
             </div>
         </div>
     </div>
+    
 
     <!-- Call to Action Section -->
     <div class="section">
@@ -240,40 +203,43 @@
             <a href="contact.html" class="btn-large btn-secondary">Contact Us</a>
         </div>
     </div>
-<!-- Footer -->
-<footer class="page-footer" style="background: linear-gradient(to right, #FFA500, #800080);">
-    <div class="container">
-        <div class="row" style="display: flex; justify-content: space-between; align-items: center;">
-            <!-- Existing Footer Content -->
-            <div class="col s12 m8 center-align" style="text-align: center;">
-                <img src="assets/logo.jpg" alt="Team Logo" style="width: 100px; margin-bottom: 20px;">
-                <h5 class="white-text" style="font-family: 'Cinzel', serif;">Red Deer Reavers</h5>
-                <ul style="font-family: 'Roboto', sans-serif; font-size: 16px;">
-                    <li><a href="index.html" class="white-text">Home</a></li>
-                    <li><a href="about.html" class="white-text">About Us</a></li>
-                    <li><a href="steps.html" class="white-text">Steps to Success</a></li>
-                    <li><a href="programs.html" class="white-text">Programs & Events</a></li>
-                    <li><a href="involved.html" class="white-text">Get Involved</a></li>
-                </ul>
-            </div>
 
-            <!-- HCSA Logo and Text Section on the left -->
-            <div class="col s12 m4" style="display: flex; justify-content: flex-start; align-items: center;">
-                <span class="white-text" style="font-family: 'Roboto', sans-serif; font-size: 16px; margin-right: 10px;">Proudly a member of</span>
-                <a href="https://www.hacsacanada.com/" target="_blank">
-                    <img src="assets/HACSA.avif" alt="HCSA Logo" style="width: 100px;">
-                </a>
+    <!-- Footer -->
+    <footer class="page-footer" style="background: linear-gradient(to right, #FFA500, #800080);">
+        <div class="container">
+            <div class="row" style="display: flex; justify-content: space-between; align-items: center;">
+                <div class="col s12 m8 center-align">
+                    <img src="assets/logo.jpg" alt="Team Logo" style="width: 100px; margin-bottom: 20px;">
+                    <h5 class="white-text" style="font-family: 'Cinzel', serif;">Red Deer Reavers</h5>
+                    <ul style="font-family: 'Roboto', sans-serif; font-size: 16px;">
+                        <li><a href="index.html" class="white-text">Home</a></li>
+                        <li><a href="about.html" class="white-text">About Us</a></li>
+                        <li><a href="steps.html" class="white-text">Steps to Success</a></li>
+                        <li><a href="programs.html" class="white-text">Programs & Events</a></li>
+                        <li><a href="involved.html" class="white-text">Get Involved</a></li>
+                    </ul>
+                </div>
+                <div class="col s12 m4" style="display: flex; justify-content: flex-start; align-items: center;">
+                    <span class="white-text" style="font-family: 'Roboto', sans-serif; font-size: 16px; margin-right: 10px;">Proudly a member of</span>
+                    <a href="https://www.hacsacanada.com/" target="_blank">
+                        <img src="assets/HACSA.avif" alt="HCSA Logo" style="width: 100px;">
+                    </a>
+                </div>
             </div>
         </div>
-    </div>
-</footer>
+    </footer>
 
     <!-- Materialize JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
     <script>
-        // Function to toggle visibility of timeline item details
+        document.addEventListener('DOMContentLoaded', function () {
+            const sidenavElems = document.querySelectorAll('.sidenav');
+            M.Sidenav.init(sidenavElems);
+        });
+
         function toggleDetails(item) {
-            item.classList.toggle('active');
+            const details = item.querySelector('.details');
+            details.classList.toggle('active');
         }
     </script>
 </body>
