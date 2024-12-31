@@ -126,6 +126,7 @@
             <a href="index.html" class="brand-logo">
                 <img src="assets/logo.jpg" alt="Team Logo" style="height: 62px;">
             </a>
+            <a href="#" data-target="mobile-nav" class="sidenav-trigger"><i class="material-icons">menu</i></a>
             <ul id="nav-mobile" class="right hide-on-med-and-down">
                 <li><a href="index.html">Home</a></li>
                 <li><a href="steps.html">Steps to Success</a></li>
@@ -166,27 +167,22 @@
     <!-- Materialize JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
     <script>
-        // Function to load data from JSON and display it dynamically
-        function loadJSONData() {
-            fetch('members.json')
-                .then(response => response.json())
-                .then(members => {
-                    console.log("JSON Data Loaded: ", members);  // Debugging: Check if JSON data is fetched properly
-                    displayMembers(members);
-                })
-                .catch(error => console.error('Error loading JSON:', error));
+        async function loadMembers() {
+            const response = await fetch('members.json');
+            const members = await response.json();
+            displayMembers(members);
         }
 
-        // Function to display members based on position
         function displayMembers(members) {
             const hacsaLeadership = document.getElementById('hacsa-leadership');
             const teamLeadership = document.getElementById('team-leadership');
             const teamMembers = document.getElementById('team-members');
 
             members.forEach(member => {
+                const headshotSrc = member.headshot || 'assets/placeholder-headshot.jpg';
                 const memberCard = `
                     <div class="member-card">
-                        <img src="assets/placeholder-headshot.jpg" alt="${member.name}">
+                        <img src="${headshotSrc}" alt="${member.name}" onerror="this.src='assets/placeholder-headshot.jpg'">
                         <div class="member-card-content">
                             <h5>${member.name}</h5>
                             <p><strong>${member.position}</strong></p>
@@ -199,86 +195,41 @@
                     hacsaLeadership.innerHTML += memberCard;
                 } else if (member.category === 'Leads') {
                     teamLeadership.innerHTML += memberCard;
-                } else if (member.category === 'Member') {
+                } else {
                     teamMembers.innerHTML += memberCard;
                 }
             });
 
-            // Add event listeners to the buttons to open modals
-            document.querySelectorAll('.modal-trigger').forEach(button => {
-                button.addEventListener('click', function (e) {
-                    const memberId = e.target.getAttribute('data-id');
-                    const member = members.find(m => m.id == memberId);
-                    console.log(`Opening modal for ${member.name}`);  // Debugging: Check which modal is being opened
-                    showModal(member);
-                });
-            });
-
-            // Initialize the modal components after the DOM is fully loaded
-            document.addEventListener('DOMContentLoaded', function () {
-                console.log("Initializing Modals");  // Debugging: Check when modal is initialized
-                M.Modal.init(document.querySelectorAll('.modal'));
-            });
+            M.Modal.init(document.querySelectorAll('.modal'));
         }
 
-        // Function to display modal with member details
-        function showModal(member) {
-            console.log(`Displaying modal for ${member.name}`);  // Debugging: Check when showModal is called
-            // Create unique modal for each member
-            const modalHtml = `
-                <div id="modal-${member.id}" class="modal">
-                    <div class="modal-content">
-                        <h4>${member.name}</h4>
-                        <p><strong>Height:</strong> ${member.height}</p>
-                        <p><strong>Weight:</strong> ${member.weight}</p>
-                        <p><strong>Fighting Style:</strong> ${member.fighting_style}</p>
-                        <p><strong>Wins:</strong> ${member.wins}</p>
-                        <p><strong>Losses:</strong> ${member.losses}</p>
-                        <p>${member.description}</p>
-                    </div>
-                    <div class="modal-footer">
-                        <a href="#!" class="modal-close waves-effect waves-green btn-flat">Close</a>
-                    </div>
-                </div>
-            `;
-            document.body.insertAdjacentHTML('beforeend', modalHtml); // Append the modal to the body
-            M.Modal.init(document.querySelectorAll('.modal'));  // Initialize the modal
-            const modalInstance = M.Modal.getInstance(document.querySelector(`#modal-${member.id}`));
-            modalInstance.open();  // Open the modal dynamically
-        }
-
-        // Load data when the page loads
-        window.onload = loadJSONData;
+        window.onload = loadMembers;
     </script>
-    
-       <!-- Footer -->
-<footer class="page-footer" style="background: linear-gradient(to right, #FFA500, #800080);">
-    <div class="container">
-        <div class="row" style="display: flex; justify-content: space-between; align-items: center;">
-            <!-- Existing Footer Content -->
-            <div class="col s12 m8 center-align" style="text-align: center;">
-                <img src="assets/logo.jpg" alt="Team Logo" style="width: 100px; margin-bottom: 20px;">
-                <h5 class="white-text" style="font-family: 'Cinzel', serif;">Red Deer Reavers</h5>
-                <ul style="font-family: 'Roboto', sans-serif; font-size: 16px;">
-                    <li><a href="index.html" class="white-text">Home</a></li>
-                    <li><a href="about.html" class="white-text">About Us</a></li>
-                    <li><a href="steps.html" class="white-text">Steps to Success</a></li>
-                    <li><a href="programs.html" class="white-text">Programs & Events</a></li>
-                    <li><a href="involved.html" class="white-text">Get Involved</a></li>
-                </ul>
-            </div>
 
-            <!-- HCSA Logo and Text Section on the left -->
-            <div class="col s12 m4" style="display: flex; justify-content: flex-start; align-items: center;">
-                <span class="white-text" style="font-family: 'Roboto', sans-serif; font-size: 16px; margin-right: 10px;">Proudly a member of</span>
-                <a href="https://www.hacsacanada.com/" target="_blank">
-                    <img src="assets/HACSA.avif" alt="HCSA Logo" style="width: 100px;">
-                </a>
+    <!-- Footer -->
+    <footer class="page-footer" style="background: linear-gradient(to right, #FFA500, #800080);">
+        <div class="container">
+            <div class="row" style="display: flex; justify-content: space-between; align-items: center;">
+                <div class="col s12 m8 center-align">
+                    <img src="assets/logo.jpg" alt="Team Logo" style="width: 100px; margin-bottom: 20px;">
+                    <h5 class="white-text" style="font-family: 'Cinzel', serif;">Red Deer Reavers</h5>
+                    <ul style="font-family: 'Roboto', sans-serif; font-size: 16px;">
+                        <li><a href="index.html" class="white-text">Home</a></li>
+                        <li><a href="about.html">About Us</a></li>
+                        <li><a href="steps.html">Steps to Success</a></li>
+                        <li><a href="programs.html">Programs & Events</a></li>
+                        <li><a href="involved.html">Get Involved</a></li>
+                    </ul>
+                </div>
+                <div class="col s12 m4" style="display: flex; justify-content: flex-start; align-items: center;">
+                    <span class="white-text" style="font-family: 'Roboto', sans-serif; font-size: 16px; margin-right: 10px;">Proudly a member of</span>
+                    <a href="https://www.hacsacanada.com/" target="_blank">
+                        <img src="assets/HACSA.avif" alt="HCSA Logo" style="width: 100px;">
+                    </a>
+                </div>
             </div>
         </div>
-    </div>
-</footer>
-
+    </footer>
 </body>
 
 </html>
