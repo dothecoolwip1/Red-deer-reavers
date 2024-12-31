@@ -1,0 +1,52 @@
+[
+    {
+        "id": 1,
+        "name": "Weekly Practice",
+        "schedule": "Every Tuesday, April to October",
+        "time": "5:00 PM",
+        "location": "Red Deer Sports Arena",
+        "description": "Weekly training sessions for all skill levels. Focus on conditioning, combat drills, and strategy.",
+        "category": "Training",
+        "link": "https://www.google.com/calendar/render?action=TEMPLATE&text=Weekly+Practice&dates=20230404T170000Z/20230404T190000Z&details=Weekly+training+sessions+for+all+skill+levels.+Focus+on+conditioning,+combat+drills,+and+strategy.&location=Red+Deer+Sports+Arena"
+    },
+    {
+        "id": 2,
+        "name": "Youth Group Training",
+        "schedule": "Every Thursday, March to September",
+        "time": "4:00 PM",
+        "location": "Red Deer High School Gym",
+        "description": "Youth training program focusing on safety, teamwork, and introduction to Buhurt combat.",
+        "category": "Youth Training",
+        "link": "https://www.google.com/calendar/render?action=TEMPLATE&text=Youth+Group+Training&dates=20230302T160000Z/20230302T180000Z&details=Youth+training+program+focusing+on+safety,+teamwork,+and+introduction+to+Buhurt+combat.&location=Red+Deer+High+School+Gym"
+    },
+    {
+        "id": 3,
+        "name": "Soft Kit Day",
+        "schedule": "First Saturday of each month, April to October",
+        "time": "12:00 PM",
+        "location": "Red Deer Community Center",
+        "description": "A day for younger participants to practice with soft kits in a safe, controlled environment. Great for new members!",
+        "category": "Youth Program",
+        "link": "https://www.google.com/calendar/render?action=TEMPLATE&text=Soft+Kit+Day&dates=20230401T120000Z/20230401T140000Z&details=A+day+for+younger+participants+to+practice+with+soft+kits+in+a+safe,+controlled+environment.&location=Red+Deer+Community+Center"
+    },
+    {
+        "id": 4,
+        "name": "Open Practice",
+        "schedule": "Every Friday, year-round",
+        "time": "6:00 PM",
+        "location": "Red Deer Training Facility",
+        "description": "Open practice session for advanced members. Focus on full combat scenarios and advanced techniques.",
+        "category": "Advanced Training",
+        "link": "https://www.google.com/calendar/render?action=TEMPLATE&text=Open+Practice&dates=20230407T180000Z/20230407T200000Z&details=Open+practice+session+for+advanced+members.+Focus+on+full+combat+scenarios+and+advanced+techniques.&location=Red+Deer+Training+Facility"
+    },
+    {
+        "id": 5,
+        "name": "Community Demo Day",
+        "schedule": "Last Sunday of every month",
+        "time": "2:00 PM",
+        "location": "Red Deer Park",
+        "description": "Community demonstration to showcase Buhurt combat and get locals involved in the sport.",
+        "category": "Community Engagement",
+        "link": "https://www.google.com/calendar/render?action=TEMPLATE&text=Community+Demo+Day&dates=20230430T140000Z/20230430T160000Z&details=Community+demonstration+to+showcase+Buhurt+combat+and+get+locals+involved+in+the+sport.&location=Red+Deer+Park"
+    }
+]

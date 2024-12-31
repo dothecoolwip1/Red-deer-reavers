@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Red Deer Reavers - Steps to Success</title>
+    <!-- Materialize CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            font-size: 16px;
+            background-color: #F5F5F5;
+            color: #333;
+        }
+
+        .header {
+            background: url('assets/steps.jpg') center/cover no-repeat;
+            height: 40vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-family: 'Cinzel', serif;
+        }
+
+        h1,
+        h2,
+        h3 {
+            font-family: 'Cinzel', serif;
+            color: #800080;
+        }
+
+        a {
+            color: #800080;
+            text-decoration: none;
+        }
+
+        a:hover {
+            color: #FFA500;
+            text-decoration: underline;
+        }
+
+        .btn-primary {
+            background-color: #FFA500;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #E59400;
+        }
+
+        .btn-secondary {
+            background-color: #800080;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #6F006F;
+        }
+
+        hr {
+            border: 0;
+            height: 1px;
+            background: linear-gradient(to right, #FFA500, #800080);
+        }
+
+        /* Timeline Section */
+        .timeline {
+            padding: 20px;
+            border-left: 3px solid #800080;
+            position: relative;
+        }
+
+        .timeline-item {
+            margin-bottom: 30px;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .timeline-item:hover {
+            transform: scale(1.05);
+            background-color: #f7f7f7;
+        }
+
+        .timeline-item h5 {
+            margin: 0 0 5px;
+            color: #FFA500;
+            font-size: 1.2rem;
+        }
+
+        .timeline-item p {
+            margin: 5px 0;
+            color: #333;
+        }
+
+        .timeline-item .details {
+            display: none;
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #fafafa;
+            border-left: 3px solid #800080;
+        }
+
+        .timeline-item.active .details {
+            display: block;
+        }
+
+        /* Icons for each phase */
+        .timeline-item i {
+            font-size: 40px;
+            color: #800080;
+            margin-right: 10px;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .timeline {
+                padding: 10px;
+                border-left: 2px solid #800080;
+            }
+
+            .timeline-item {
+                padding-left: 40px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Navbar -->
+    <nav style="background: linear-gradient(to right, #FFA500, #800080);">
+        <div class="nav-wrapper container">
+            <a href="index.html" class="brand-logo">
+                <img src="assets/logo.jpg" alt="Team Logo" style="height: 62px;">
+            </a>
+            <ul id="nav-mobile" class="right hide-on-med-and-down">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="about.html">About Us</a></li>
+                <li><a href="programs.html">Programs & Events</a></li>
+                <li><a href="involved.html">Get Involved</a></li>
+                <li><a href="contact.html">Contact Us</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Header Section -->
+    <div class="header">
+        <h1>Steps to Success</h1>
+    </div>
+
+    <!-- Overview Section -->
+    <div class="container section">
+        <h2>Our Roadmap</h2>
+        <p class="flow-text">Our roadmap ensures sustainable growth and development for the Buhurt community in Alberta. Each phase is designed to achieve key milestones that bring us closer to our vision.</p>
+    </div>
+
+    <!-- Timeline Section -->
+    <div class="container section">
+        <h3 class="center-align">Phase Timeline</h3>
+        <div class="timeline">
+            <!-- Phase 1 -->
+            <div class="timeline-item" onclick="toggleDetails(this)">
+                <i class="material-icons">home</i>
+                <div class="timeline-content">
+                    <h5><strong>Jan 2023 - Dec 2023:</strong> Foundation</h5>
+                    <p>Incorporation, initial fundraising, and participation in the World Tournament.</p>
+                    <div class="details">
+                        <p>In the first year, we focus on establishing the foundation of Red Deer Reavers. This includes legal incorporation, securing our first major sponsors, and ensuring our team is ready for the World Tournament.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Phase 2 -->
+            <div class="timeline-item" onclick="toggleDetails(this)">
+                <i class="material-icons">expand</i>
+                <div class="timeline-content">
+                    <h5><strong>Jan 2024 - Dec 2024:</strong> Growth</h5>
+                    <p>Hosting regional tournaments and expanding youth programs.</p>
+                    <div class="details">
+                        <p>In Year 2, we look to expand regionally with tournaments and further grow our youth programs. We aim to get more individuals involved in the sport while ensuring sustainability for future growth.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Phase 3 -->
+            <div class="timeline-item" onclick="toggleDetails(this)">
+                <i class="material-icons">group</i>
+                <div class="timeline-content">
+                    <h5><strong>Jan 2025 - Dec 2027:</strong> Leadership</h5>
+                    <p>Building a training facility and establishing provincial leadership.</p>
+                    <div class="details">
+                        <p>Building a permanent facility dedicated to training and developing new talent. Establishing leadership across Alberta for greater organizational strength.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Phase 4 -->
+            <div class="timeline-item" onclick="toggleDetails(this)">
+                <i class="material-icons">location_city</i>
+                <div class="timeline-content">
+                    <h5><strong>Jan 2028 - Dec 2029:</strong> National Impact</h5>
+                    <p>Gaining national recognition and hosting Canadian championships.</p>
+                    <div class="details">
+                        <p>By this time, the Red Deer Reavers will be a national force in the Buhurt community, and we'll be hosting the Canadian championships.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Phase 5 -->
+            <div class="timeline-item" onclick="toggleDetails(this)">
+                <i class="material-icons">star</i>
+                <div class="timeline-content">
+                    <h5><strong>Jan 2030 - Dec 2032:</strong> Legacy</h5>
+                    <p>Creating a permanent Buhurt arena and hosting international tournaments.</p>
+                    <div class="details">
+                        <p>Our final goal is to build a state-of-the-art Buhurt arena, ensuring the legacy of the Red Deer Reavers is felt for generations to come.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Call to Action Section -->
+    <div class="section">
+        <div class="container center-align">
+            <a href="involved.html" class="btn-large btn-primary">Join the Mission</a>
+            <a href="contact.html" class="btn-large btn-secondary">Contact Us</a>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="page-footer" style="background: linear-gradient(to right, #FFA500, #800080);">
+        <div class="container">
+            <div class="row">
+                <div class="col s12 center-align">
+                    <img src="assets/logo.jpg" alt="Team Logo" style="width: 100px; margin-bottom: 20px;">
+                    <h5 class="white-text" style="font-family: 'Cinzel', serif;">Red Deer Reavers</h5>
+                    <ul style="font-family: 'Roboto', sans-serif; font-size: 16px;">
+                        <li><a href="index.html" class="white-text">Home</a></li>
+                        <li><a href="about.html" class="white-text">About Us</a></li>
+                        <li><a href="steps.html" class="white-text">Steps to Success</a></li>
+                        <li><a href="programs.html" class="white-text">Programs & Events</a></li>
+                        <li><a href="involved.html" class="white-text">Get Involved</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Materialize JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <script>
+        // Function to toggle visibility of timeline item details
+        function toggleDetails(item) {
+            item.classList.toggle('active');
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,29 @@
+[
+    {
+        "id": 1,
+        "name": "Regional Demonstration",
+        "date": "2025-01-15",
+        "location": "Red Deer Community Center",
+        "description": "Experience the thrill of Buhurt with live demonstrations and interactive activities.",
+        "category": "Upcoming",
+        "link": "https://www.google.com/calendar/render?action=TEMPLATE&text=Regional+Demonstration&dates=20250115T090000Z/20250115T110000Z&details=Experience+the+thrill+of+Buhurt+with+live+demonstrations+and+interactive+activities.&location=Red+Deer+Community+Center"
+    },
+    {
+        "id": 2,
+        "name": "Youth Workshop",
+        "date": "2025-02-10",
+        "location": "Red Deer High School Gym",
+        "description": "Introduce your kids to the world of Historical Armored Combat in a safe and supportive environment.",
+        "category": "Upcoming",
+        "link": "https://www.google.com/calendar/render?action=TEMPLATE&text=Youth+Workshop&dates=20250210T090000Z/20250210T110000Z&details=Introduce+your+kids+to+the+world+of+Historical+Armored+Combat+in+a+safe+and+supportive+environment.&location=Red+Deer+High+School+Gym"
+    },
+    {
+        "id": 3,
+        "name": "Annual Tournament",
+        "date": "2024-11-10",
+        "location": "Red Deer Sports Arena",
+        "description": "A competitive tournament showcasing the top Buhurt fighters from across Alberta.",
+        "category": "Upcoming",
+        "link": "https://www.google.com/calendar/render?action=TEMPLATE&text=Annual+Tournament&dates=20241110T090000Z/20241110T110000Z&details=A+competitive+tournament+showcasing+the+top+Buhurt+fighters+from+across+Alberta.&location=Red+Deer+Sports+Arena"
+    }
+]
