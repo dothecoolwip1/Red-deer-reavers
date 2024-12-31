@@ -53,6 +53,19 @@
     },
     {
         "id": "5",
+        "name": "Gonzo Franco",
+        "position": "Member",
+        "height": "5'8\"",
+        "weight": "195 lbs",
+        "fighting_style": "Blacksmith",
+        "wins": "8",
+        "losses": "5",
+        "description": "Gonzo Franco is Berny’s inseparable brother, equally mighty and skilled. Together, they form the backbone of the Reavers' forging legacy. Gonzo wields a finely balanced blacksmith's hammer named 'Echo,' used both for crafting and in battle. His armor is a masterwork of joint effort with Berny, blending durability with finesse. Known for his quiet strength and focus, Gonzo has earned the nickname 'The Silent Forge.'",
+        "category": "Member",
+        "headshot": "assets/headshots/gonzo.webp"
+    },
+    {
+        "id": "6",
         "name": "Garrett Robson",
         "position": "Member",
         "height": "6'1\"",
@@ -65,7 +78,7 @@
         "headshot": "assets/headshots/garrett.webp"
     },
     {
-        "id": "6",
+        "id": "7",
         "name": "Keston Piche",
         "position": "Member",
         "height": "5'11\"",
@@ -78,7 +91,7 @@
         "headshot": "assets/headshots/keston.webp"
     },
     {
-        "id": "7",
+        "id": "8",
         "name": "Monty Jones",
         "position": "Member",
         "height": "6'0\"",
@@ -91,7 +104,7 @@
         "headshot": "assets/headshots/monty.webp"
     },
     {
-        "id": "8",
+        "id": "9",
         "name": "Nate Randall",
         "position": "Member",
         "height": "5'9\"",

@@ -49,28 +49,18 @@
         }
 
         h1,
-        h2,
-        h3 {
+        h2 {
             font-family: 'Cinzel', serif;
             color: #800080;
-        }
-
-        .btn-primary {
-            background-color: #FFA500;
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background-color: #E59400;
         }
 
         .program-item,
         .event-item {
             cursor: pointer;
-            padding: 10px;
             margin-bottom: 10px;
             border: 1px solid #ddd;
             border-radius: 5px;
+            padding: 15px;
             background: #f8f8f8;
             transition: background 0.3s ease;
         }
@@ -83,14 +73,21 @@
         .details {
             display: none;
             padding: 10px;
-            margin-top: 5px;
-            background: #fff;
-            border-radius: 5px;
-            border: 1px solid #ddd;
+            margin-top: 10px;
+            border-top: 1px solid #ddd;
         }
 
         .details.visible {
             display: block;
+        }
+
+        .btn-primary {
+            background-color: #FFA500;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #E59400;
         }
     </style>
 </head>
@@ -132,16 +129,16 @@
     <!-- Programs Section -->
     <div class="container section">
         <h2>Programs</h2>
-        <div id="programs-container" class="programs">
-            <p class="no-programs">No programs available at the moment. Check back later!</p>
+        <div id="programs-container">
+            <p>No programs available at the moment. Check back later!</p>
         </div>
     </div>
 
     <!-- Events Section -->
     <div class="container section">
         <h2>Events</h2>
-        <div id="events-container" class="events">
-            <p class="no-events">No events available at the moment. Check back later!</p>
+        <div id="events-container">
+            <p>No events available at the moment. Check back later!</p>
         </div>
     </div>
 
@@ -149,7 +146,7 @@
     <footer class="page-footer" style="background: linear-gradient(to right, #FFA500, #800080);">
         <div class="container">
             <div class="row">
-                <div class="col s12 m8 center-align">
+                <div class="col s12 center-align">
                     <h5 class="white-text">Red Deer Reavers</h5>
                 </div>
             </div>
@@ -165,12 +162,10 @@
             M.Sidenav.init(sidenavElems);
         });
 
-        // Toggle visibility of details
-        function toggleDetails(event) {
-            const details = event.target.querySelector('.details');
-            if (details) {
-                details.classList.toggle('visible');
-            }
+        // Toggle details
+        function toggleDetails(item) {
+            const details = item.querySelector('.details');
+            details.classList.toggle('visible');
         }
 
         // Fetch and display programs
@@ -180,18 +175,19 @@
                 const container = document.getElementById('programs-container');
                 container.innerHTML = ""; // Clear placeholder
                 programs.forEach(program => {
-                    const item = `
-                        <div class="program-item" onclick="toggleDetails(event)">
-                            <div>${program.name}</div>
-                            <div class="details">
-                                <p><strong>Schedule:</strong> ${program.schedule}</p>
-                                <p><strong>Time:</strong> ${program.time}</p>
-                                <p><strong>Location:</strong> ${program.location}</p>
-                                <p>${program.description}</p>
-                            </div>
+                    const item = document.createElement('div');
+                    item.className = "program-item";
+                    item.innerHTML = `
+                        <div><strong>${program.name}</strong></div>
+                        <div class="details">
+                            <p><strong>Schedule:</strong> ${program.schedule}</p>
+                            <p><strong>Time:</strong> ${program.time}</p>
+                            <p><strong>Location:</strong> ${program.location}</p>
+                            <p>${program.description}</p>
                         </div>
                     `;
-                    container.insertAdjacentHTML("beforeend", item);
+                    item.addEventListener('click', () => toggleDetails(item));
+                    container.appendChild(item);
                 });
             });
 
@@ -202,17 +198,18 @@
                 const container = document.getElementById('events-container');
                 container.innerHTML = ""; // Clear placeholder
                 events.forEach(event => {
-                    const item = `
-                        <div class="event-item" onclick="toggleDetails(event)">
-                            <div>${event.name}</div>
-                            <div class="details">
-                                <p><strong>Date:</strong> ${event.date}</p>
-                                <p><strong>Location:</strong> ${event.location}</p>
-                                <p>${event.description}</p>
-                            </div>
+                    const item = document.createElement('div');
+                    item.className = "event-item";
+                    item.innerHTML = `
+                        <div><strong>${event.name}</strong></div>
+                        <div class="details">
+                            <p><strong>Date:</strong> ${event.date}</p>
+                            <p><strong>Location:</strong> ${event.location}</p>
+                            <p>${event.description}</p>
                         </div>
                     `;
-                    container.insertAdjacentHTML("beforeend", item);
+                    item.addEventListener('click', () => toggleDetails(item));
+                    container.appendChild(item);
                 });
             });
     </script>
