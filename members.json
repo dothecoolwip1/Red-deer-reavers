@@ -115,5 +115,18 @@
         "description": "Born to fight, Nate Randall embodies the raw essence of combat. His armor is simple yet robust, a testament to his focus on skill over ornamentation. Nate wields a greatsword named 'Truth,' forged to cut through deception and weakness alike. His intense gaze and relentless pursuit of victory have earned him the title 'The Blade of Resolve.'",
         "category": "Member",
         "headshot": "assets/headshots/nate.webp"
+    },
+    {
+        "id": "10",
+        "name": "Aiden Centimo",
+        "position": "Member",
+        "height": "6'3\"",
+        "weight": "215 lbs",
+        "fighting_style": "Swift Striker",
+        "wins": "19",
+        "losses": "4",
+        "description": "Aiden Centimo, the fleet-footed warrior of the Reavers, is known for his agility and precision. His lightweight armor, adorned with silver and blue motifs, allows him to move with unmatched speed. Aiden wields dual rapiers, 'Frost' and 'Fang,' each enchanted to strike true and fast. His tactical acumen and elegant combat style have earned him the title 'The Silver Gale.'",
+        "category": "Member",
+        "headshot": "assets/headshots/aiden.webp"
     }
 ]
