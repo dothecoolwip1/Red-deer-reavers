@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Red Deer Reavers 2026 AGM information and member question, concern, and topic submission form.">
+    <title>Red Deer Reavers AGM 2026</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Roboto', sans-serif;
+            background: #f5f5f5;
+            color: #2f2f2f;
+        }
+
+        nav, .page-footer {
+            background: linear-gradient(to right, #FFA500, #800080);
+        }
+
+        nav a {
+            color: white;
+        }
+
+        .nav-wrapper img {
+            max-width: 50px;
+            height: auto;
+        }
+
+        .header {
+            min-height: 46vh;
+            background: url('assets/involved.jpg') center 38%/cover no-repeat;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            position: relative;
+            padding: 40px 20px;
+        }
+
+        .header-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.58);
+        }
+
+        .header-content {
+            position: relative;
+            z-index: 2;
+            max-width: 850px;
+        }
+
+        .header h1 {
+            margin: 0 0 10px;
+            color: white;
+            font-family: 'Cinzel', serif;
+            font-size: 3rem;
+            font-weight: 700;
+            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.75);
+        }
+
+        .header p {
+            color: white;
+            font-size: 1.25rem;
+            margin: 6px 0;
+        }
+
+        h2, h3, h4 {
+            font-family: 'Cinzel', serif;
+            color: #800080;
+        }
+
+        .section-title {
+            margin-bottom: 10px;
+        }
+
+        .event-card {
+            margin-top: -48px;
+            position: relative;
+            z-index: 3;
+            border-radius: 14px;
+            overflow: hidden;
+        }
+
+        .event-card .card-content {
+            padding: 28px;
+        }
+
+        .event-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 18px;
+            margin-top: 18px;
+        }
+
+        .event-detail {
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+        }
+
+        .event-detail i {
+            color: #FFA500;
+        }
+
+        .info-card {
+            height: 100%;
+            border-radius: 12px;
+        }
+
+        .info-card .card-content {
+            padding: 22px;
+        }
+
+        .info-icon {
+            color: #FFA500;
+            font-size: 2.4rem;
+        }
+
+        .notice {
+            border-left: 5px solid #800080;
+            background: #fff;
+            padding: 16px 18px;
+            border-radius: 8px;
+            margin: 20px 0 30px;
+        }
+
+        .form-shell {
+            background: white;
+            border-radius: 14px;
+            padding: 28px;
+            box-shadow: 0 3px 16px rgba(0, 0, 0, 0.1);
+            margin-bottom: 40px;
+        }
+
+        .anonymous-row {
+            margin: 8px 0 18px;
+        }
+
+        .btn-primary {
+            background-color: #FFA500;
+            color: white;
+            font-weight: 700;
+        }
+
+        .btn-primary:hover,
+        .btn-primary:focus {
+            background-color: #e59400;
+        }
+
+        .btn-secondary {
+            background-color: #800080;
+            color: white;
+        }
+
+        .btn-secondary:hover,
+        .btn-secondary:focus {
+            background-color: #650065;
+        }
+
+        .privacy-note {
+            font-size: 0.95rem;
+            color: #666;
+            margin-top: 12px;
+        }
+
+        .success-box {
+            display: none;
+            background: #e8f5e9;
+            border-left: 5px solid #2e7d32;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+        }
+
+        .required-note {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .sidenav a {
+            color: #333;
+        }
+
+        .page-footer a {
+            color: white;
+        }
+
+        @media (max-width: 800px) {
+            .header h1 {
+                font-size: 2.2rem;
+            }
+
+            .event-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .event-card {
+                margin-top: -28px;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .header {
+                min-height: 40vh;
+            }
+
+            .header h1 {
+                font-size: 1.9rem;
+            }
+
+            .header p {
+                font-size: 1.05rem;
+            }
+
+            .form-shell {
+                padding: 20px 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-wrapper container">
+            <a href="index.html" class="brand-logo">
+                <img src="assets/logo.jpg" alt="Red Deer Reavers logo">
+            </a>
+            <a href="#" data-target="mobile-nav" class="sidenav-trigger"><i class="material-icons">menu</i></a>
+            <ul class="right hide-on-med-and-down">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="about.html">About Us</a></li>
+                <li><a href="programs.html">Programs & Events</a></li>
+                <li><a href="involved.html">Get Involved</a></li>
+                <li><a href="contact.html">Contact Us</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <ul class="sidenav" id="mobile-nav">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="about.html">About Us</a></li>
+        <li><a href="programs.html">Programs & Events</a></li>
+        <li><a href="involved.html">Get Involved</a></li>
+        <li><a href="contact.html">Contact Us</a></li>
+    </ul>
+
+    <section class="header">
+        <div class="header-overlay"></div>
+        <div class="header-content">
+            <h1>2026 Annual General Meeting</h1>
+            <p>Red Deer Reavers Guild</p>
+            <p>Questions, concerns, ideas and agenda topics are welcome before the meeting.</p>
+        </div>
+    </section>
+
+    <main>
+        <div class="container">
+            <div class="card event-card">
+                <div class="card-content">
+                    <h3 style="margin-top: 0;">AGM Details</h3>
+                    <div class="event-grid">
+                        <div class="event-detail">
+                            <i class="material-icons">event</i>
+                            <div>
+                                <strong>Date</strong><br>
+                                Sunday, October 18, 2026
+                            </div>
+                        </div>
+                        <div class="event-detail">
+                            <i class="material-icons">schedule</i>
+                            <div>
+                                <strong>Time</strong><br>
+                                5:30 PM, following practice from 2:00 to 5:00 PM
+                            </div>
+                        </div>
+                        <div class="event-detail">
+                            <i class="material-icons">place</i>
+                            <div>
+                                <strong>Location</strong><br>
+                                Alister's home
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <section class="section">
+                <h2 class="section-title center-align">What is an AGM?</h2>
+                <p class="flow-text center-align">
+                    The Annual General Meeting is the main yearly business meeting for the Red Deer Reavers Guild.
+                    It gives members a chance to review how the society is doing, elect leadership, review finances,
+                    raise issues and help decide where the team goes next.
+                </p>
+
+                <div class="row">
+                    <div class="col s12 m6 l3">
+                        <div class="card info-card">
+                            <div class="card-content center-align">
+                                <i class="material-icons info-icon">account_balance</i>
+                                <h5>Finances</h5>
+                                <p>Review the annual financial audit, income, expenses and current balance.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col s12 m6 l3">
+                        <div class="card info-card">
+                            <div class="card-content center-align">
+                                <i class="material-icons info-icon">how_to_vote</i>
+                                <h5>Elections & Voting</h5>
+                                <p>Elect executive officers and hold any properly scheduled member votes.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col s12 m6 l3">
+                        <div class="card info-card">
+                            <div class="card-content center-align">
+                                <i class="material-icons info-icon">groups</i>
+                                <h5>Team Business</h5>
+                                <p>Discuss membership, operations, events, gear, fundraising and team priorities.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col s12 m6 l3">
+                        <div class="card info-card">
+                            <div class="card-content center-align">
+                                <i class="material-icons info-icon">flag</i>
+                                <h5>Future Direction</h5>
+                                <p>Bring forward ideas, concerns and goals for the next year and beyond.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="notice">
+                    <strong>What to expect:</strong> The meeting will follow an agenda, attendance and minutes will be recorded,
+                    members will be able to discuss agenda items, and formal votes will be documented. The current bylaws give
+                    each member one vote and allow proxy voting with prior written notice. Members who cannot attend in person
+                    may also participate through an approved documented voting method.
+                </div>
+            </section>
+
+            <section class="section" id="submit">
+                <h2 class="section-title">Submit a Question, Concern or Topic</h2>
+                <p class="flow-text">
+                    If there is something you want discussed at the AGM, send it here ahead of time. You can include your name
+                    or submit it anonymously. The goal is to help build the agenda and make sure important topics are not missed.
+                </p>
+
+                <div id="success-box" class="success-box">
+                    <strong>Thanks. Your AGM submission was sent.</strong><br>
+                    It will be reviewed while the meeting agenda is being prepared.
+                </div>
+
+                <div class="form-shell">
+                    <form id="agm-form" method="POST">
+                        <input type="hidden" name="_subject" value="Red Deer Reavers AGM Submission">
+                        <input type="hidden" name="_template" value="table">
+                        <input type="hidden" name="_url" value="https://dothecoolwip1.github.io/Red-deer-reavers/agm.html">
+                        <input type="hidden" name="_next" value="https://dothecoolwip1.github.io/Red-deer-reavers/agm.html?submitted=1">
+                        <input type="text" name="_honey" style="display:none">
+                        <input type="hidden" id="submitted-as" name="Submitted As" value="Named or name left blank">
+
+                        <div class="row">
+                            <div class="input-field col s12 m6">
+                                <input id="member-name" name="Name" type="text" maxlength="100">
+                                <label for="member-name">Your name, optional</label>
+                            </div>
+                            <div class="input-field col s12 m6">
+                                <select id="category" name="Category" required>
+                                    <option value="" disabled selected>Choose one</option>
+                                    <option value="Question">Question</option>
+                                    <option value="Concern">Concern</option>
+                                    <option value="Topic for discussion">Topic for discussion</option>
+                                    <option value="Proposal or idea">Proposal or idea</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                                <label for="category">Type of submission</label>
+                            </div>
+                        </div>
+
+                        <div class="anonymous-row">
+                            <label>
+                                <input id="anonymous" type="checkbox">
+                                <span>Submit anonymously</span>
+                            </label>
+                        </div>
+
+                        <div class="row">
+                            <div class="input-field col s12">
+                                <input id="topic" name="Topic" type="text" maxlength="160" required>
+                                <label for="topic">Short topic or title</label>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="input-field col s12">
+                                <textarea id="details" name="Details" class="materialize-textarea" maxlength="4000" required></textarea>
+                                <label for="details">What would you like brought up at the AGM?</label>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="input-field col s12">
+                                <select id="share" name="Meeting Sharing Preference" required>
+                                    <option value="" disabled selected>Choose one</option>
+                                    <option value="Okay to read or discuss as submitted">Okay to read or discuss as submitted</option>
+                                    <option value="Please summarize without identifying me">Please summarize without identifying me</option>
+                                </select>
+                                <label for="share">How should this be brought up?</label>
+                            </div>
+                        </div>
+
+                        <p class="required-note">Fields marked by the form as required must be completed. Your name is not required.</p>
+
+                        <button class="btn-large btn-primary waves-effect waves-light" type="submit">
+                            Submit for AGM
+                            <i class="material-icons right">send</i>
+                        </button>
+
+                        <p class="privacy-note">
+                            Leaving your name blank, or selecting anonymous, means the submission will be reviewed without a member name attached.
+                            This form is for agenda planning and does not itself create a formal vote, nomination or bylaw amendment.
+                        </p>
+                    </form>
+                </div>
+            </section>
+
+            <section class="section center-align" style="padding-bottom: 50px;">
+                <h3>Want to review the society documents?</h3>
+                <p>The team bylaws, minutes and other society records are stored in the Reavers Google Drive.</p>
+                <a class="btn btn-secondary waves-effect waves-light" href="https://drive.google.com/drive/folders/1dD5-X08qAoyu-bSonBDvOOA4lqDIHA7L" target="_blank" rel="noopener">
+                    Open Reavers Drive
+                </a>
+            </section>
+        </div>
+    </main>
+
+    <footer class="page-footer">
+        <div class="container">
+            <div class="row" style="display:flex; align-items:center; flex-wrap:wrap;">
+                <div class="col s12 m8 center-align">
+                    <img src="assets/logo.jpg" alt="Red Deer Reavers logo" style="width:90px; margin-bottom:12px;">
+                    <h5 class="white-text" style="font-family:'Cinzel', serif;">Red Deer Reavers</h5>
+                    <p class="white-text">Historical Armored Combat in Central Alberta</p>
+                </div>
+                <div class="col s12 m4 center-align">
+                    <a href="index.html" class="white-text">Home</a><br>
+                    <a href="contact.html" class="white-text">Contact Us</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            M.Sidenav.init(document.querySelectorAll('.sidenav'));
+            M.FormSelect.init(document.querySelectorAll('select'));
+
+            const form = document.getElementById('agm-form');
+            const email = atob('Z2FycmV0dHJvYnNvbjk1QGdtYWlsLmNvbQ==');
+            form.action = 'https://formsubmit.co/' + email;
+
+            const anonymous = document.getElementById('anonymous');
+            const nameInput = document.getElementById('member-name');
+            const submittedAs = document.getElementById('submitted-as');
+
+            anonymous.addEventListener('change', function () {
+                if (anonymous.checked) {
+                    nameInput.value = '';
+                    nameInput.disabled = true;
+                    submittedAs.value = 'Anonymous';
+                    const label = document.querySelector('label[for="member-name"]');
+                    if (label) {
+                        label.classList.remove('active');
+                    }
+                } else {
+                    nameInput.disabled = false;
+                    submittedAs.value = 'Named or name left blank';
+                }
+            });
+
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('submitted') === '1') {
+                const successBox = document.getElementById('success-box');
+                successBox.style.display = 'block';
+                successBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        });
+    </script>
+</body>
+</html>
