@@ -1,5 +1,10 @@
 // Shared page chrome for the Reavers site. `npm run pages` writes the root HTML files from scripts/pages/*.page.mjs.
-export const V = "20";
+export const V = "21";
+
+export const SOCIAL = {
+  instagram: "https://www.instagram.com/red_deer_reavers/",
+  facebook: "https://www.facebook.com/share/1BZE4wGtyz/"
+};
 
 export const icon = (id, cls = "icon") => `<svg class="${cls}" aria-hidden="true"><use href="assets/icons.svg#${id}"></use></svg>`;
 
@@ -11,10 +16,10 @@ export const photo = (n, alt, { sizes = "100vw", eager = false, cls = "", pos = 
   return `<img${cls ? ` class="${cls}"` : ""} src="assets/generated/gallery/image-${id}-1200.webp" srcset="${srcset}" sizes="${sizes}" alt="${alt}"${eager ? ` fetchpriority="high"` : ` loading="lazy"`} decoding="async"${pos ? ` style="object-position:${pos}"` : ""}>`;
 };
 
-/** Art-directed hero: a portrait photo on phones, a landscape photo from tablet up. */
+/** Art-directed hero: a portrait photo on upright screens, a landscape photo on wide ones. */
 export const heroPicture = (portrait, landscape, { posPortrait = "50% 30%", posLandscape = "50% 35%" } = {}) => {
   const set = n => widths.map(w => `assets/generated/gallery/image-${String(n).padStart(2, "0")}-${w}.webp ${w}w`).join(", ");
-  return `<picture><source media="(max-width: 759px)" srcset="${set(portrait)}" sizes="100vw"><img src="assets/generated/gallery/image-${String(landscape).padStart(2, "0")}-1600.webp" srcset="${set(landscape)}" sizes="100vw" alt="" fetchpriority="high" decoding="async" style="--pos-portrait:${posPortrait};--pos-landscape:${posLandscape}"></picture>`;
+  return `<picture><source media="(orientation: portrait)" srcset="${set(portrait)}" sizes="100vw"><img src="assets/generated/gallery/image-${String(landscape).padStart(2, "0")}-1600.webp" srcset="${set(landscape)}" sizes="100vw" alt="" fetchpriority="high" decoding="async" style="--pos-portrait:${posPortrait};--pos-landscape:${posLandscape}"></picture>`;
 };
 
 export const head = ({ title, description, page, ogImage = 14, extra = "" }) => `<!doctype html>
@@ -47,7 +52,8 @@ const NAV = [
   ["training", "training.html", "Training"],
   ["events", "events.html", "Events"],
   ["community", "community.html", "Community"],
-  ["media", "media.html", "Media"]
+  ["media", "media.html", "Media", "nav-wide"],
+  ["social", "social.html", "Social"]
 ];
 
 export const header = (active, { solid = false, cta = ["training.html#start", "Join"] } = {}) => `
@@ -57,7 +63,7 @@ export const header = (active, { solid = false, cta = ["training.html#start", "J
       <img src="assets/crest-96.webp" alt="" width="52" height="52">
       <span class="brand-word"><strong>Reavers</strong><small>Red Deer · Alberta</small></span>
     </a>
-    <nav class="main-nav" aria-label="Primary">${NAV.map(([key, href, label]) => `<a href="${href}"${key === active ? ` aria-current="page"` : ""}>${label}</a>`).join("")}</nav>
+    <nav class="main-nav" aria-label="Primary">${NAV.map(([key, href, label, cls]) => `<a href="${href}"${cls ? ` class="${cls}"` : ""}${key === active ? ` aria-current="page"` : ""}>${label}</a>`).join("")}</nav>
     <a class="btn btn-ember btn-sm header-cta" href="${cta[0]}">${cta[1]}</a>
   </div>
 </header>
@@ -108,8 +114,9 @@ export const footer = () => `
         </div>
         <div>
           <h2 class="footer-h">Follow</h2>
-          <a href="https://www.instagram.com/red_deer_reavers/" target="_blank" rel="noopener">${icon("instagram")}Instagram</a>
-          <a href="https://www.facebook.com/profile.php?id=61566406838469" target="_blank" rel="noopener">${icon("facebook")}Facebook</a>
+          <a href="social.html">${icon("horn")}All our channels</a>
+          <a href="${SOCIAL.instagram}" target="_blank" rel="noopener">${icon("instagram")}Instagram</a>
+          <a href="${SOCIAL.facebook}" target="_blank" rel="noopener">${icon("facebook")}Facebook</a>
           <a href="mailto:reddeerreavers@gmail.com">${icon("quill")}Email</a>
         </div>
       </div>

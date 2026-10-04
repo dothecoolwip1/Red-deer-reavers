@@ -1,4 +1,4 @@
-const CACHE="reavers-forged-v20";
+const CACHE="reavers-forged-v21";
 const STATIC=[
   "./",
   "./index.html",
@@ -8,12 +8,13 @@ const STATIC=[
   "./events.html",
   "./community.html",
   "./media.html",
-  "./styles.css?v=20",
-  "./app.js?v=20",
-  "./team-data.js?v=20",
-  "./buhurtos.js?v=20",
-  "./fighter.js?v=20",
-  "./gallery.js?v=20",
+  "./social.html",
+  "./styles.css?v=21",
+  "./app.js?v=21",
+  "./team-data.js?v=21",
+  "./buhurtos.js?v=21",
+  "./fighter.js?v=21",
+  "./gallery.js?v=21",
   "./assets/icons.svg",
   "./assets/crest-96.webp",
   "./assets/crest-256.webp",
@@ -22,7 +23,7 @@ const STATIC=[
   "./vendor/fonts/cinzel-latin-wght-normal.woff2",
   "./vendor/fonts/alegreya-sans-latin-400-normal.woff2",
   "./vendor/fonts/alegreya-sans-latin-700-normal.woff2",
-  "./vendor/photoswipe/photoswipe.css?v=20",
+  "./vendor/photoswipe/photoswipe.css?v=21",
   "./vendor/photoswipe/photoswipe-lightbox.esm.js",
   "./vendor/photoswipe/photoswipe.esm.js"
 ];
@@ -46,7 +47,7 @@ self.addEventListener("fetch",event=>{
   const sameOrigin=req.url.startsWith(self.location.origin);
   // Live data (team API, BuhurtOS) is never cached by the worker; the pages show their own fallbacks.
   if(!sameOrigin)return;
-  const alwaysFresh=req.mode==="navigate"||req.destination==="style"||req.destination==="script";
+  const alwaysFresh=req.mode==="navigate"||req.destination==="style"||req.destination==="script"||req.url.includes("/assets/social/feed.json");
 
   if(alwaysFresh){
     event.respondWith(

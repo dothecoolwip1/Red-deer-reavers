@@ -1,0 +1,58 @@
+name: Sync Social Photos
+
+# Pulls photos from the Reavers' Instagram and Facebook posts into assets/social and commits them,
+# so they appear on the Social, Media and Home pages. Setup: docs/SOCIAL_SYNC.md.
+on:
+  schedule:
+    - cron: "23 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: social-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: main
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: Install image tools
+        run: npm install --no-audit --no-fund --omit=dev
+
+      - name: Pull latest posts
+        run: node scripts/sync-social.mjs
+        env:
+          INSTAGRAM_ACCESS_TOKEN: ${{ secrets.INSTAGRAM_ACCESS_TOKEN }}
+          FACEBOOK_PAGE_ID: ${{ secrets.FACEBOOK_PAGE_ID }}
+          FACEBOOK_PAGE_TOKEN: ${{ secrets.FACEBOOK_PAGE_TOKEN }}
+          META_GRAPH_VERSION: ${{ vars.META_GRAPH_VERSION }}
+
+      - name: Publish new photos
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/social
+          if git diff --cached --quiet; then
+            echo "No new social photos."
+            exit 0
+          fi
+          git commit -m "Sync social media photos"
+          git checkout -- .
+          for attempt in 1 2 3; do
+            git pull --rebase origin main && git push origin HEAD:main && exit 0
+            sleep $((attempt * 5))
+          done
+          exit 1

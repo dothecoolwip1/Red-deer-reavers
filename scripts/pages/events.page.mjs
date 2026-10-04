@@ -1,4 +1,4 @@
-import { head, header, footer, dock, scripts, photo, icon } from "./partials.mjs";
+import { head, header, footer, dock, scripts, photo, icon, SOCIAL } from "./partials.mjs";
 
 export const file = "events.html";
 export default () => `${head({
@@ -26,8 +26,8 @@ export default () => `${head({
         <div data-upcoming-event><div class="hub-empty"><strong>Checking the calendar…</strong></div></div>
         <p class="muted" style="margin:0">Confirmed dates only. When a public Reavers date is locked in, it belongs here.</p>
         <div class="btn-row">
-          <a class="btn btn-ember" href="https://www.facebook.com/profile.php?id=61566406838469" target="_blank" rel="noopener">${icon("facebook")} Facebook</a>
-          <a class="btn" href="https://www.instagram.com/red_deer_reavers/" target="_blank" rel="noopener">${icon("instagram")} Instagram</a>
+          <a class="btn btn-ember" href="${SOCIAL.facebook}" target="_blank" rel="noopener">${icon("facebook")} Facebook</a>
+          <a class="btn" href="${SOCIAL.instagram}" target="_blank" rel="noopener">${icon("instagram")} Instagram</a>
         </div>
       </article>
     </div>

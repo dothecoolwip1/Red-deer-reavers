@@ -153,6 +153,16 @@ export default () => `${head({
     </div>
   </section>
 
+  <section class="section" style="padding-top:0" data-social-strip-section hidden aria-labelledby="fresh-title">
+    <div class="shell">
+      <div class="section-head split">
+        <div><p class="eyebrow">Fresh from our socials</p><h2 id="fresh-title">Latest posts</h2></div>
+        <a class="text-link head-link" href="social.html">All our channels ${icon("arrow")}</a>
+      </div>
+      <div class="feed-strip" data-social-strip></div>
+    </div>
+  </section>
+
   <section class="section parchment" aria-labelledby="news-title">
     <div class="shell">
       <div class="section-head center">

@@ -18,7 +18,7 @@
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
   <link rel="preload" href="vendor/fonts/grenze-gotisch-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="vendor/fonts/cinzel-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="styles.css?v=20">
+  <link rel="stylesheet" href="styles.css?v=21">
 </head>
 <body data-page="home">
 <a class="skip-link" href="#content">Skip to content</a>
@@ -29,14 +29,14 @@
       <img src="assets/crest-96.webp" alt="" width="52" height="52">
       <span class="brand-word"><strong>Reavers</strong><small>Red Deer · Alberta</small></span>
     </a>
-    <nav class="main-nav" aria-label="Primary"><a href="team.html">Team</a><a href="training.html">Training</a><a href="events.html">Events</a><a href="community.html">Community</a><a href="media.html">Media</a></nav>
+    <nav class="main-nav" aria-label="Primary"><a href="team.html">Team</a><a href="training.html">Training</a><a href="events.html">Events</a><a href="community.html">Community</a><a href="media.html" class="nav-wide">Media</a><a href="social.html">Social</a></nav>
     <a class="btn btn-ember btn-sm header-cta" href="training.html#start">Join</a>
   </div>
 </header>
 
 <main id="content">
   <section class="hero" aria-labelledby="hero-title">
-    <div class="hero-media" aria-hidden="true"><picture><source media="(max-width: 759px)" srcset="assets/generated/gallery/image-06-360.webp 360w, assets/generated/gallery/image-06-720.webp 720w, assets/generated/gallery/image-06-1200.webp 1200w, assets/generated/gallery/image-06-1600.webp 1600w" sizes="100vw"><img src="assets/generated/gallery/image-14-1600.webp" srcset="assets/generated/gallery/image-14-360.webp 360w, assets/generated/gallery/image-14-720.webp 720w, assets/generated/gallery/image-14-1200.webp 1200w, assets/generated/gallery/image-14-1600.webp 1600w" sizes="100vw" alt="" fetchpriority="high" decoding="async" style="--pos-portrait:50% 20%;--pos-landscape:42% 30%"></picture></div>
+    <div class="hero-media" aria-hidden="true"><picture><source media="(orientation: portrait)" srcset="assets/generated/gallery/image-06-360.webp 360w, assets/generated/gallery/image-06-720.webp 720w, assets/generated/gallery/image-06-1200.webp 1200w, assets/generated/gallery/image-06-1600.webp 1600w" sizes="100vw"><img src="assets/generated/gallery/image-14-1600.webp" srcset="assets/generated/gallery/image-14-360.webp 360w, assets/generated/gallery/image-14-720.webp 720w, assets/generated/gallery/image-14-1200.webp 1200w, assets/generated/gallery/image-14-1600.webp 1600w" sizes="100vw" alt="" fetchpriority="high" decoding="async" style="--pos-portrait:50% 20%;--pos-landscape:42% 30%"></picture></div>
     <canvas class="embers" data-embers aria-hidden="true"></canvas>
     <div class="shell hero-content">
       <div>
@@ -187,6 +187,16 @@
     </div>
   </section>
 
+  <section class="section" style="padding-top:0" data-social-strip-section hidden aria-labelledby="fresh-title">
+    <div class="shell">
+      <div class="section-head split">
+        <div><p class="eyebrow">Fresh from our socials</p><h2 id="fresh-title">Latest posts</h2></div>
+        <a class="text-link head-link" href="social.html">All our channels <svg class="icon" aria-hidden="true"><use href="assets/icons.svg#arrow"></use></svg></a>
+      </div>
+      <div class="feed-strip" data-social-strip></div>
+    </div>
+  </section>
+
   <section class="section parchment" aria-labelledby="news-title">
     <div class="shell">
       <div class="section-head center">
@@ -239,8 +249,9 @@
         </div>
         <div>
           <h2 class="footer-h">Follow</h2>
+          <a href="social.html"><svg class="icon" aria-hidden="true"><use href="assets/icons.svg#horn"></use></svg>All our channels</a>
           <a href="https://www.instagram.com/red_deer_reavers/" target="_blank" rel="noopener"><svg class="icon" aria-hidden="true"><use href="assets/icons.svg#instagram"></use></svg>Instagram</a>
-          <a href="https://www.facebook.com/profile.php?id=61566406838469" target="_blank" rel="noopener"><svg class="icon" aria-hidden="true"><use href="assets/icons.svg#facebook"></use></svg>Facebook</a>
+          <a href="https://www.facebook.com/share/1BZE4wGtyz/" target="_blank" rel="noopener"><svg class="icon" aria-hidden="true"><use href="assets/icons.svg#facebook"></use></svg>Facebook</a>
           <a href="mailto:reddeerreavers@gmail.com"><svg class="icon" aria-hidden="true"><use href="assets/icons.svg#quill"></use></svg>Email</a>
         </div>
       </div>
@@ -260,8 +271,8 @@
   <a href="community.html"><svg class="icon" aria-hidden="true"><use href="assets/icons.svg#horn"></use></svg><span>Book</span></a>
 </nav>
 
-<script src="team-data.js?v=20"></script>
-<script src="buhurtos.js?v=20"></script>
-<script src="app.js?v=20" defer></script>
+<script src="team-data.js?v=21"></script>
+<script src="buhurtos.js?v=21"></script>
+<script src="app.js?v=21" defer></script>
 </body>
 </html>

@@ -24,7 +24,7 @@
 
   // ---------- installable app / offline shell ----------
   if ("serviceWorker" in navigator) {
-    const register = () => navigator.serviceWorker.register("sw.js?v=20", { updateViaCache: "none" }).then(registration => registration.update()).catch(() => {});
+    const register = () => navigator.serviceWorker.register("sw.js?v=21", { updateViaCache: "none" }).then(registration => registration.update()).catch(() => {});
     if (document.readyState === "complete") register(); else window.addEventListener("load", register);
   }
 
@@ -429,4 +429,84 @@
     }
   });
 
+})();
+
+// ---------- photos synced from Instagram and Facebook (assets/social/feed.json) ----------
+(async () => {
+  const feedEl = document.querySelector("[data-social-feed]");
+  const stripEl = document.querySelector("[data-social-strip]");
+  if (!feedEl && !stripEl) return;
+  const escapeHtml = value => String(value ?? "").replace(/[&<>'"]/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[char]));
+  const icon = id => `<svg class="icon" aria-hidden="true"><use href="assets/icons.svg#${id}"></use></svg>`;
+  const LABEL = { instagram: "Instagram", facebook: "Facebook" };
+  const safeLink = url => (/^https:\/\/(www\.|m\.)?(instagram\.com|facebook\.com|fb\.watch)\//i.test(String(url || "")) ? String(url) : "");
+  const safeSrc = src => (/^assets\/social\/[\w.-]+\.webp$/.test(String(src || "")) ? src : "");
+  const dateText = raw => { const d = new Date(raw); return Number.isNaN(d.getTime()) ? "" : new Intl.DateTimeFormat("en-CA", { month: "short", day: "numeric", year: "numeric" }).format(d); };
+
+  let posts = [];
+  try {
+    const response = await fetch("assets/social/feed.json", { cache: "no-cache" });
+    if (response.ok) posts = ((await response.json()).posts || []).filter(p => p && LABEL[p.source] && Array.isArray(p.images) && p.images.length);
+  } catch (error) { console.warn("Social feed unavailable.", error); }
+
+  const imageTag = (img, sizes) => {
+    const s = img.sizes || {};
+    const main = s[720] || s[360] || s[1200];
+    if (!main || !safeSrc(main.src)) return "";
+    const srcset = [360, 720, 1200].map(w => s[w] && safeSrc(s[w].src) ? `${s[w].src} ${s[w].width}w` : "").filter(Boolean).join(", ");
+    return `<img src="${escapeHtml(main.src)}" srcset="${escapeHtml(srcset)}" sizes="${sizes}" width="${Number(main.width) || 720}" height="${Number(main.height) || 720}" alt="${escapeHtml(img.alt || "Red Deer Reavers photo")}" loading="lazy" decoding="async">`;
+  };
+  const postCard = (p, i, compact) => {
+    const link = safeLink(p.url);
+    const tag = link ? "a" : "article";
+    const media = imageTag(p.images[0], compact ? "(max-width: 759px) 50vw, 200px" : "(max-width: 599px) 100vw, (max-width: 1023px) 50vw, 380px");
+    if (!media) return "";
+    const caption = String(p.caption || "").replace(/\s+/g, " ").trim();
+    const short = caption.length > 170 ? `${caption.slice(0, 167).trim()}…` : caption;
+    return `<${tag} class="${compact ? "strip-card" : "plate post-card"} is-${p.source}"${link ? ` href="${escapeHtml(link)}" target="_blank" rel="noopener"` : ""} data-source="${p.source}" data-reveal data-delay="${i % 3}">
+      <figure class="post-media">${media}${p.images.length > 1 ? `<span class="post-count">${icon("frame")}${p.images.length}<span class="sr-only"> photos</span></span>` : ""}${p.video ? `<span class="post-play"><span class="sr-only">Video</span></span>` : ""}</figure>
+      ${compact ? `<span class="strip-source">${icon(p.source)}<span class="sr-only">${LABEL[p.source]}</span></span>` : `<div class="post-body"><div class="post-meta"><span class="post-source">${icon(p.source)}${LABEL[p.source]}</span><time datetime="${escapeHtml(p.date)}">${escapeHtml(dateText(p.date))}</time></div>${short ? `<p>${escapeHtml(short)}</p>` : ""}${link ? `<span class="text-link">Open post ${icon("external")}</span>` : ""}</div>`}
+    </${tag}>`;
+  };
+  const reveal = root => window.REAVERS_REVEAL && window.REAVERS_REVEAL(root);
+
+  if (stripEl) {
+    const section = stripEl.closest("[data-social-strip-section]");
+    if (posts.length) {
+      stripEl.innerHTML = posts.slice(0, 6).map((p, i) => postCard(p, i, true)).join("");
+      if (section) section.hidden = false;
+      reveal(stripEl);
+    }
+  }
+
+  if (feedEl) {
+    const filters = document.querySelector("[data-feed-filters]");
+    const moreRow = document.querySelector("[data-feed-more-row]");
+    const more = document.querySelector("[data-feed-more]");
+    let source = "all";
+    let limit = 12;
+    const render = () => {
+      const list = posts.filter(p => source === "all" || p.source === source);
+      feedEl.innerHTML = list.length
+        ? list.slice(0, limit).map((p, i) => postCard(p, i, false)).join("")
+        : `<div class="plate empty"><strong>${posts.length ? `Nothing from ${escapeHtml(LABEL[source] || "there")} yet` : "Fresh posts are on the way"}</strong><p>The newest photos from our Instagram and Facebook appear here automatically. Until then, follow along on <a href="https://www.instagram.com/red_deer_reavers/" target="_blank" rel="noopener">Instagram</a> and <a href="https://www.facebook.com/share/1BZE4wGtyz/" target="_blank" rel="noopener">Facebook</a>.</p></div>`;
+      if (moreRow) moreRow.hidden = list.length <= limit;
+      reveal(feedEl);
+    };
+    if (filters && posts.length) {
+      filters.hidden = false;
+      const present = new Set(posts.map(p => p.source));
+      filters.querySelectorAll("[data-feed-filter]").forEach(btn => {
+        if (btn.dataset.feedFilter !== "all" && !present.has(btn.dataset.feedFilter)) btn.hidden = true;
+        btn.addEventListener("click", () => {
+          source = btn.dataset.feedFilter;
+          limit = 12;
+          filters.querySelectorAll("[data-feed-filter]").forEach(b => b.setAttribute("aria-pressed", String(b === btn)));
+          render();
+        });
+      });
+    }
+    more?.addEventListener("click", () => { limit += 12; render(); });
+    render();
+  }
 })();

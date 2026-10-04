@@ -17,6 +17,10 @@ Fighters do not need to be added on this site. A fighter signs in to BuhurtOS, a
 
 `buhurtos.js` reads only public data with the BuhurtOS publishable (browser-safe) key: the team roster, public fighter profile fields, team and fighter statistics, results, and entries. It never shows birth year, age, gender, account or contact data, and leaves synthetic/test fighters and events out of the roster and records. Anyone on the admin crew roster whose name matches a BuhurtOS fighter is merged into that fighter's card, so crew, coaches and media can still be listed from Admin.
 
+## Social photo sync
+
+`.github/workflows/social-sync.yml` runs `scripts/sync-social.mjs` every six hours. It reads the latest Instagram and Facebook posts through Meta's official APIs, saves WebP copies of the photos in `assets/social/`, writes `assets/social/feed.json`, and commits them so they appear on the Social, Media and Home pages. It does nothing until the `INSTAGRAM_ACCESS_TOKEN` and/or `FACEBOOK_PAGE_ID` + `FACEBOOK_PAGE_TOKEN` repository secrets are added. Step-by-step setup: [docs/SOCIAL_SYNC.md](docs/SOCIAL_SYNC.md).
+
 ## Design
 
 The "Forged" theme lives in `styles.css`: dark iron, gilt corner guards, parchment sections, heraldic shield avatars, and the crest's purple and ember. Fonts (Grenze Gotisch, Cinzel, Alegreya Sans, all OFL) are self-hosted from `vendor/fonts`. Moving decoration (forge embers, the discipline banner) respects reduced-motion settings and has a pause button.
@@ -65,7 +69,8 @@ The production output is written to `_site/`. GitHub Pages deploys only that dir
 - `training.html` practice information and newcomer flow
 - `events.html` tournaments, appearances, schedule, and calendar actions
 - `community.html` schools, demos, events, birthdays, and partnership inquiries
-- `media.html` optimized PhotoSwipe team gallery
+- `media.html` optimized PhotoSwipe team gallery, newest social photos first
+- `social.html` Instagram, Facebook, BuhurtOS and email in one place, with the synced photo feed
 
 ## Admin
 
