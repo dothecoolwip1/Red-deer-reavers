@@ -6,9 +6,9 @@ import QRCode from "qrcode";
 const root = process.cwd();
 const out = path.join(root, "_site");
 const publicFiles = [
-  "404.html","admin.css","admin.html","admin.js","app.js","community.html",
-  "dynamic.css","events.html","gallery.js","index.html","manifest.webmanifest",
-  "media.html","styles.css","sw.js","team-data.js","team.html","training.html"
+  "404.html","admin.css","admin.html","admin.js","app.js","buhurtos.js","community.html",
+  "events.html","fighter.html","fighter.js","gallery.js","index.html","manifest.webmanifest",
+  "media.html","social.html","styles.css","sw.js","team-data.js","team.html","training.html"
 ];
 
 await fs.rm(out, { recursive: true, force: true });
@@ -105,7 +105,16 @@ for (const file of htmlFiles) {
   await fs.writeFile(target, html);
 }
 
+const fontFiles = [
+  ["@fontsource-variable/grenze-gotisch", "grenze-gotisch-latin-wght-normal.woff2"],
+  ["@fontsource-variable/cinzel", "cinzel-latin-wght-normal.woff2"],
+  ...["400-normal", "400-italic", "500-normal", "700-normal", "800-normal"].map(w => ["@fontsource/alegreya-sans", `alegreya-sans-latin-${w}.woff2`])
+];
 const vendorCopies = [
+  ...fontFiles.map(([pkg, file]) => [`node_modules/${pkg}/files/${file}`, `vendor/fonts/${file}`]),
+  ["node_modules/@fontsource-variable/grenze-gotisch/LICENSE", "vendor/fonts/LICENSE-grenze-gotisch.txt"],
+  ["node_modules/@fontsource-variable/cinzel/LICENSE", "vendor/fonts/LICENSE-cinzel.txt"],
+  ["node_modules/@fontsource/alegreya-sans/LICENSE", "vendor/fonts/LICENSE-alegreya-sans.txt"],
   ["node_modules/photoswipe/dist", "vendor/photoswipe"],
   ["node_modules/sortablejs/Sortable.min.js", "vendor/sortable/Sortable.min.js"],
   ["node_modules/add-to-calendar-button/dist", "vendor/add-to-calendar-button/dist"]

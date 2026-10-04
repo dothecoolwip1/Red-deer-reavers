@@ -1,24 +1,46 @@
 import PhotoSwipeLightbox from "./vendor/photoswipe/photoswipe-lightbox.esm.js";
 
 const grid = document.querySelector("[data-gallery-grid]");
+const safeSrc = src => (/^assets\/(generated\/gallery|social)\/[\w.-]+\.webp$/.test(String(src || "")) ? src : "");
+const escapeHtml = value => String(value ?? "").replace(/[&<>'"]/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[char]));
+
+async function loadJson(url, cache) {
+  try {
+    const response = await fetch(url, { cache });
+    return response.ok ? await response.json() : null;
+  } catch {
+    return null;
+  }
+}
 
 if (grid) {
   try {
-    const response = await fetch("assets/generated/gallery/manifest.json", { cache: "force-cache" });
-    if (!response.ok) throw new Error(`Gallery manifest request failed: ${response.status}`);
-    const items = await response.json();
+    const [curated, social] = await Promise.all([
+      loadJson("assets/generated/gallery/manifest.json", "force-cache"),
+      loadJson("assets/social/feed.json", "no-cache")
+    ]);
+    if (!Array.isArray(curated)) throw new Error("Gallery manifest request failed");
 
-    grid.innerHTML = items.map(item => {
-      const d = item.derivatives || {};
-      const thumb = d["720"] || d[720] || d["360"] || d[360];
-      const large = d["1600"] || d[1600] || d["1200"] || d[1200] || thumb;
-      const srcset = [360, 720, 1200, 1600]
-        .map(width => d[String(width)] || d[width])
-        .filter(Boolean)
-        .map(entry => `${entry.src} ${entry.width}w`)
-        .join(", ");
-      return `<a class="gallery-button" href="${large.src}" data-pswp-width="${large.width}" data-pswp-height="${large.height}" data-pswp-srcset="${srcset}" target="_blank" aria-label="Open ${item.alt}">
-        <img src="${thumb.src}" srcset="${srcset}" sizes="(max-width: 759px) 50vw, 25vw" alt="${item.alt}" loading="${item.index <= 2 ? "eager" : "lazy"}" decoding="async">
+    // Newest photos from Instagram and Facebook first, then the curated team gallery.
+    const fromSocial = (social?.posts || []).flatMap(post => (post.images || []).map(img => ({
+      alt: img.alt || "Red Deer Reavers photo from social media",
+      sizes: [360, 720, 1200].map(w => img.sizes?.[w]).filter(Boolean),
+      eager: false
+    }))).slice(0, 48);
+    const fromCurated = curated.map(item => ({
+      alt: item.alt,
+      sizes: [360, 720, 1200, 1600].map(w => item.derivatives?.[String(w)] || item.derivatives?.[w]).filter(Boolean),
+      eager: item.index <= 2
+    }));
+
+    grid.innerHTML = [...fromSocial, ...fromCurated].map((item, i) => {
+      const sizes = item.sizes.filter(s => safeSrc(s.src));
+      if (!sizes.length) return "";
+      const thumb = sizes.find(s => s.width >= 700) || sizes[sizes.length - 1];
+      const large = sizes[sizes.length - 1];
+      const srcset = sizes.map(s => `${s.src} ${s.width}w`).join(", ");
+      return `<a class="gallery-button" href="${large.src}" data-pswp-width="${large.width}" data-pswp-height="${large.height}" data-pswp-srcset="${srcset}" target="_blank" aria-label="Open ${escapeHtml(item.alt)}">
+        <img src="${thumb.src}" srcset="${srcset}" sizes="(max-width: 759px) 50vw, 25vw" width="${thumb.width}" height="${thumb.height}" alt="${escapeHtml(item.alt)}" loading="${item.eager || i < 2 ? "eager" : "lazy"}" decoding="async">
       </a>`;
     }).join("");
 
@@ -33,6 +55,6 @@ if (grid) {
     lightbox.init();
   } catch (error) {
     console.error("Enhanced gallery failed to load.", error);
-    grid.innerHTML = '<div class="roster-empty"><strong>Gallery unavailable.</strong><p>Please refresh the page or try again shortly.</p></div>';
+    grid.innerHTML = '<div class="plate empty"><strong>Gallery unavailable</strong><p>Please refresh the page or try again shortly.</p></div>';
   }
 }
