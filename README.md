@@ -19,7 +19,7 @@ Fighters do not need to be added on this site. A fighter signs in to BuhurtOS, a
 
 ## Social photo sync
 
-`.github/workflows/social-sync.yml` runs `scripts/sync-social.mjs` every six hours. It reads the latest Instagram and Facebook posts through Meta's official APIs, saves WebP copies of the photos in `assets/social/`, writes `assets/social/feed.json`, and commits them so they appear on the Social, Media and Home pages. It does nothing until the `INSTAGRAM_ACCESS_TOKEN` and/or `FACEBOOK_PAGE_ID` + `FACEBOOK_PAGE_TOKEN` repository secrets are added. Step-by-step setup: [docs/SOCIAL_SYNC.md](docs/SOCIAL_SYNC.md).
+`.github/workflows/social-sync.yml` runs `scripts/sync-social.mjs` once a day. It reads the latest Instagram and Facebook posts through Meta's official APIs, saves WebP copies of the photos in `assets/social/`, writes `assets/social/feed.json`, and commits them so they appear on the Social, Media and Home pages. It does nothing until the `INSTAGRAM_ACCESS_TOKEN` and/or `FACEBOOK_PAGE_ID` + `FACEBOOK_PAGE_TOKEN` repository secrets are added. Step-by-step setup: [docs/SOCIAL_SYNC.md](docs/SOCIAL_SYNC.md).
 
 ## Design
 

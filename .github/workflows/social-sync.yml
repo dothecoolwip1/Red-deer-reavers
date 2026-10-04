@@ -4,7 +4,8 @@ name: Sync Social Photos
 # so they appear on the Social, Media and Home pages. Setup: docs/SOCIAL_SYNC.md.
 on:
   schedule:
-    - cron: "23 */6 * * *"
+    # Once a day at 11:23 UTC (5:23 AM in Red Deer during summer time, 4:23 AM in winter).
+    - cron: "23 11 * * *"
   workflow_dispatch:
 
 permissions:

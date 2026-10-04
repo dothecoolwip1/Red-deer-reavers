@@ -1,6 +1,6 @@
 # Social photo sync
 
-Photos the Reavers post on Instagram and Facebook are copied onto the website automatically. Every six hours a GitHub Action
+Photos the Reavers post on Instagram and Facebook are copied onto the website automatically. Once a day a GitHub Action
 (`.github/workflows/social-sync.yml`) reads the latest posts through Meta's official APIs, saves resized copies of the photos in
 `assets/social/`, and publishes them. They show up on:
 
@@ -59,7 +59,7 @@ example `v23.0`) pins the Graph API version. Empty uses the app's default.
 ## 5. Run it
 
 Actions → **Sync Social Photos** → **Run workflow**. New photos are committed to `main` and are live within a minute or
-two. After that it runs on its own every six hours.
+two. After that it runs on its own once a day, early in the morning Red Deer time.
 
 ## When something goes wrong
 
