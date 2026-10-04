@@ -108,3 +108,44 @@ input:focus,select:focus,textarea:focus{border-color:#ff8a2a;box-shadow:0 0 0 3p
   .promo-qr-card span{color:#555}
   .promo-qr-card a{display:none}
 }
+
+/* ==========================================================================
+   Forged theme layer: matches the public site (iron, gilt, ember, royal)
+   ========================================================================== */
+@font-face{font-family:"Grenze Gotisch";src:url("vendor/fonts/grenze-gotisch-latin-wght-normal.woff2") format("woff2");font-weight:100 900;font-display:swap}
+@font-face{font-family:"Cinzel";src:url("vendor/fonts/cinzel-latin-wght-normal.woff2") format("woff2");font-weight:400 900;font-display:swap}
+@font-face{font-family:"Alegreya Sans";src:url("vendor/fonts/alegreya-sans-latin-400-normal.woff2") format("woff2");font-weight:400;font-display:swap}
+@font-face{font-family:"Alegreya Sans";src:url("vendor/fonts/alegreya-sans-latin-700-normal.woff2") format("woff2");font-weight:600 900;font-display:swap}
+html{font-family:"Alegreya Sans","Segoe UI",system-ui,sans-serif;background:#09070a;color:#f2e8d3}
+body{background:radial-gradient(1100px 520px at 90% -10%,rgba(79,35,130,.32),transparent 60%),radial-gradient(800px 400px at -10% 40%,rgba(255,123,28,.07),transparent 60%),#09070a}
+.login-card,.tab-panel,.editor-dialog{border-color:rgba(214,168,76,.24);border-radius:4px;background:linear-gradient(180deg,rgba(52,43,58,.45),rgba(20,16,23,.92)),#141017}
+.login-card h1,.admin-intro h1{font-family:"Grenze Gotisch",Georgia,serif;font-weight:800;letter-spacing:.005em;line-height:.9}
+.panel-heading h2,.dialog-head h2{font-family:"Grenze Gotisch",Georgia,serif;font-weight:800;letter-spacing:.01em}
+.kicker,label,.tab-bar button,.primary-button,.ghost-button,.danger-button,.login-form button,.admin-brand strong{font-family:"Cinzel",Georgia,serif;letter-spacing:.14em}
+.kicker{color:#d6a84c}
+.admin-brand strong{font-family:"Cinzel",Georgia,serif;font-size:.9rem;font-weight:800;letter-spacing:.14em}
+.admin-brand img,.admin-logo{background:transparent}
+.admin-header{background:rgba(12,9,14,.88);border-bottom-color:rgba(214,168,76,.2)}
+input,select,textarea{border-color:rgba(214,168,76,.26);border-radius:2px;background:rgba(9,7,10,.75);font-family:"Alegreya Sans",system-ui,sans-serif}
+input:focus,select:focus,textarea:focus{border-color:#f3cf7a;box-shadow:0 0 0 3px rgba(214,168,76,.2)}
+.primary-button,.login-form button{border-radius:0;background:linear-gradient(180deg,#ffa04d,#ff7b1c 45%,#c9530a);color:#1b0d03;clip-path:polygon(8px 0,calc(100% - 8px) 0,100% 8px,100% calc(100% - 8px),calc(100% - 8px) 100%,8px 100%,0 calc(100% - 8px),0 8px)}
+.ghost-button{border-radius:2px;border-color:rgba(214,168,76,.32)}
+.tab-bar{border-radius:4px;border-color:rgba(214,168,76,.2);background:rgba(15,12,17,.92)}
+.tab-bar button{border-radius:2px;font-size:.62rem}
+.tab-bar button.active{background:linear-gradient(180deg,#7442b4,#4f2382);color:#f2e8d3}
+.manage-row,.inquiry-row,.promo-qr-card{border-radius:3px;border-color:rgba(214,168,76,.16);background:rgba(20,16,23,.85)}
+.calendar-day{border-radius:3px}
+.toast{border-radius:2px;background:#ebdfc4;color:#21180f}
+
+/* BuhurtOS fighters panel */
+.bos-panel{margin:0 0 18px;padding:16px;border:1px solid rgba(214,168,76,.28);border-radius:3px;background:linear-gradient(160deg,rgba(116,66,180,.22),transparent 60%),rgba(15,12,17,.9)}
+.bos-panel h3{margin:0 0 6px;font-family:"Grenze Gotisch",Georgia,serif;font-size:1.6rem;font-weight:800}
+.bos-panel p{margin:0 0 12px;color:#c9bda6;font-size:.86rem;line-height:1.5}
+.bos-list{display:grid;gap:6px;margin:0 0 12px;padding:0;list-style:none}
+.bos-list li{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 11px;border:1px solid rgba(214,168,76,.14);background:rgba(9,7,10,.6);font-size:.86rem}
+.bos-list li b{font-weight:700}
+.bos-list li span{color:#9d9282;font-size:.74rem}
+.bos-list li a{color:#f3cf7a;font-size:.74rem;font-weight:800;text-decoration:none;white-space:nowrap}
+.bos-actions{display:flex;flex-wrap:wrap;gap:8px}
+.bos-actions a{display:inline-flex;align-items:center;min-height:40px;padding:8px 12px;border:1px solid rgba(214,168,76,.32);color:#f2e8d3;font-family:"Cinzel",Georgia,serif;font-size:.64rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;text-decoration:none}
+.bos-actions a.primary{border:0;background:linear-gradient(180deg,#ffa04d,#ff7b1c 45%,#c9530a);color:#1b0d03}

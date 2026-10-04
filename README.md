@@ -5,10 +5,31 @@ Public team website and lightweight team administration for the Red Deer Reavers
 ## Architecture
 
 - Static HTML, CSS, and JavaScript hosted on GitHub Pages
-- Supabase PostgreSQL for practices, events, roster, site settings, and community inquiries
+- Supabase PostgreSQL for practices, events, crew roster, site settings, and community inquiries
 - Supabase Edge Function `reavers-site-api` for public data and the password protected admin workflow
+- **BuhurtOS** (`buhurtos.js`) for fighter profiles: the Team page, home page fighter cards, `fighter.html` profiles, the company record, tournament results and tournament entries are read live from BuhurtOS's public API
 - Progressive Web App manifest and service worker for installable mobile use
 - GitHub Actions production build and quality checks
+
+## Fighter profiles from BuhurtOS
+
+Fighters do not need to be added on this site. A fighter signs in to BuhurtOS, asks to join the Red Deer Reavers, and builds their profile there (photo, disciplines, bio, socials). Once the team captain approves them on BuhurtOS, they appear on the Team page automatically, and their record and placings fill in as they compete at BuhurtOS events. The Team page has an "Add your fighter profile" section that links straight into that flow.
+
+`buhurtos.js` reads only public data with the BuhurtOS publishable (browser-safe) key: the team roster, public fighter profile fields, team and fighter statistics, results, and entries. It never shows birth year, age, gender, account or contact data, and leaves synthetic/test fighters and events out of the roster and records. Anyone on the admin crew roster whose name matches a BuhurtOS fighter is merged into that fighter's card, so crew, coaches and media can still be listed from Admin.
+
+## Design
+
+The "Forged" theme lives in `styles.css`: dark iron, gilt corner guards, parchment sections, heraldic shield avatars, and the crest's purple and ember. Fonts (Grenze Gotisch, Cinzel, Alegreya Sans, all OFL) are self-hosted from `vendor/fonts`. Moving decoration (forge embers, the discipline banner) respects reduced-motion settings and has a pause button.
+
+## Editing pages
+
+The public HTML pages are generated so the header, footer and mobile dock stay identical. Edit `scripts/pages/*.page.mjs` (or the shared `scripts/pages/partials.mjs`) and run:
+
+```
+npm run pages
+```
+
+Commit the regenerated HTML: GitHub Pages serves the repository root.
 
 ## Open source tooling
 
@@ -29,6 +50,7 @@ Dependencies are pinned in `package.json`. Browser libraries are copied into the
 
 ```
 npm install
+npm run pages   # only after editing scripts/pages
 npm run build
 npm run check
 ```
@@ -38,7 +60,8 @@ The production output is written to `_site/`. GitHub Pages deploys only that dir
 ## Public pages
 
 - `index.html` team hub
-- `team.html` opt in public team profiles
+- `team.html` fighters (live from BuhurtOS), company record, add-your-profile steps, crew and leadership
+- `fighter.html?id=…` a fighter's profile, record and placings from BuhurtOS
 - `training.html` practice information and newcomer flow
 - `events.html` tournaments, appearances, schedule, and calendar actions
 - `community.html` schools, demos, events, birthdays, and partnership inquiries

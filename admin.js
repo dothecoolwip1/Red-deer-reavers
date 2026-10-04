@@ -294,3 +294,18 @@
     try{showDashboard();await loadData()}catch{showLogin("Enter the team password to continue.")}
   })();
 })();
+
+// BuhurtOS fighters panel (read only): who is on the Reavers roster there, and where to manage them.
+(async()=>{
+  const list=document.querySelector("[data-bos-roster]");
+  if(!list||!window.BUHURTOS)return;
+  const esc=value=>String(value??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[ch]));
+  try{
+    const {fighters}=await window.BUHURTOS.teamRoster();
+    list.innerHTML=fighters.length
+      ?fighters.map(f=>`<li><div><b>${esc(f.name)}</b> <span>${f.captain?"Captain · ":""}${f.avatar?"has photo":"no photo yet"}${f.disciplines.length?` · ${f.disciplines.length} discipline${f.disciplines.length===1?"":"s"}`:""}</span></div><a href="${esc(f.profileUrl)}" target="_blank" rel="noopener">View card</a></li>`).join("")
+      :'<li><span>No fighters on the BuhurtOS roster yet. Share the sign-up steps with the team.</span></li>';
+  }catch{
+    list.innerHTML='<li><span>BuhurtOS could not be reached just now. The public Team page will retry on its own.</span></li>';
+  }
+})();

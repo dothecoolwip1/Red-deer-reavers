@@ -16,6 +16,7 @@
   "urls": [
     "http://127.0.0.1:4173/index.html",
     "http://127.0.0.1:4173/team.html",
+    "http://127.0.0.1:4173/fighter.html",
     "http://127.0.0.1:4173/training.html",
     "http://127.0.0.1:4173/events.html",
     "http://127.0.0.1:4173/community.html",

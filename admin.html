@@ -6,14 +6,14 @@
   <meta name="theme-color" content="#0b0710">
   <meta name="robots" content="noindex,nofollow">
   <title>Team Admin | Red Deer Reavers</title>
-  <link rel="icon" href="assets/reavers-logo.jpg" type="image/jpeg">
-  <link rel="stylesheet" href="admin.css?v=12">
+  <link rel="icon" href="assets/crest-96.webp" type="image/webp">
+  <link rel="stylesheet" href="admin.css?v=20">
 </head>
 <body>
   <main class="admin-shell">
     <section class="login-panel" data-login-panel>
       <div class="login-card">
-        <img class="admin-logo" src="assets/reavers-logo.jpg" alt="Red Deer Reavers logo">
+        <img class="admin-logo" src="assets/crest-256.webp" alt="Red Deer Reavers logo">
         <p class="kicker">RED DEER REAVERS</p>
         <h1>Team Admin</h1>
         <p class="login-copy">One shared team password. No usernames or account setup.</p>
@@ -31,7 +31,7 @@
     <section class="dashboard" data-dashboard hidden>
       <header class="admin-header">
         <div class="admin-brand">
-          <img src="assets/reavers-logo.jpg" alt="">
+          <img src="assets/crest-96.webp" alt="">
           <div><strong>REAVERS ADMIN</strong><span>Team website controls</span></div>
         </div>
         <div class="header-actions">
@@ -78,7 +78,18 @@
             <div><p class="kicker">TEAM</p><h2>Roster</h2></div>
             <button type="button" class="primary-button" data-add-roster>+ Add person</button>
           </div>
-          <p class="panel-note">Keep everyone here. Use Show on website for each person so the public Team page only includes members who want a profile.</p>
+          <section class="bos-panel" aria-labelledby="bos-title">
+            <p class="kicker">LIVE FROM BUHURTOS</p>
+            <h3 id="bos-title">Fighter profiles</h3>
+            <p>Fighters build their own profile on BuhurtOS and ask to join the Red Deer Reavers. Once the captain approves them there, they appear on the public Team page with their photo, disciplines and record. No need to add fighters here.</p>
+            <ul class="bos-list" data-bos-roster><li><span>Loading fighters from BuhurtOS…</span></li></ul>
+            <div class="bos-actions">
+              <a class="primary" href="https://buhurtos.ca/team-manager" target="_blank" rel="noopener">Approve join requests</a>
+              <a href="https://buhurtos.ca/teams/red-deer-reavers" target="_blank" rel="noopener">Team on BuhurtOS</a>
+              <a href="team.html#add-profile" target="_blank" rel="noopener">Share the sign-up steps</a>
+            </div>
+          </section>
+          <p class="panel-note">Use the list below for crew, leadership, coaches and media. Anyone whose name matches a BuhurtOS fighter is merged into that fighter’s card. Use Show on website so the public Team page only includes people who want a profile.</p>
           <div class="manage-list roster-manage-list" data-roster-manage-list></div>
         </section>
 
@@ -141,8 +152,9 @@
   </dialog>
 
   <div class="toast" data-toast role="status" aria-live="polite"></div>
-  <script src="team-data.js?v=12"></script>
+  <script src="team-data.js?v=20"></script>
+  <script src="buhurtos.js?v=20"></script>
   <script src="vendor/sortable/Sortable.min.js?v=13" defer></script>
-  <script src="admin.js?v=13" defer></script>
+  <script src="admin.js?v=20" defer></script>
 </body>
 </html>
