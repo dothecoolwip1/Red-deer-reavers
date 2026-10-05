@@ -10,6 +10,10 @@
   const dateLabel=value=>{if(!value)return"";const d=new Date(`${value}T12:00:00`);return new Intl.DateTimeFormat("en-CA",{weekday:"short",month:"short",day:"numeric",year:"numeric"}).format(d)};
   const dayNames=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
   let toastTimer=null;
+  // A roster record whose discipline is "hide-buhurtos:<fighter id>" keeps that BuhurtOS fighter off the public pages.
+  const HIDE="hide-buhurtos:";
+  const isHideRecord=m=>String(m.discipline||"").startsWith(HIDE);
+  const hiddenId=m=>String(m.discipline||"").slice(HIDE.length).trim().toLowerCase();
 
   function showToast(message){
     const el=$("[data-toast]");
@@ -47,12 +51,42 @@
   async function loadData(){
     state.data=await api();
     renderAll();
+    if(!state.bosRequested){state.bosRequested=true;loadBos()}
+  }
+
+  async function loadBos(){
+    if(!window.BUHURTOS)return;
+    try{state.bos=(await window.BUHURTOS.teamRoster()).fighters;state.bosError=false}catch{state.bos=null;state.bosError=true}
+    try{state.bosEvents=await window.BUHURTOS.upcomingEvents()}catch{state.bosEvents=null}
+    renderBos();
+  }
+
+  function renderBos(){
+    const list=$("[data-bos-roster]");
+    if(list){
+      const hidden=new Set((state.data?.roster||[]).filter(isHideRecord).map(hiddenId));
+      if(state.bos===undefined)list.innerHTML='<li><span>Loading fighters from BuhurtOS…</span></li>';
+      else if(state.bosError||state.bos===null)list.innerHTML='<li><span>BuhurtOS could not be reached just now. The public Team page will retry on its own.</span></li>';
+      else if(!state.bos.length)list.innerHTML='<li><span>No fighters on the BuhurtOS roster yet. Share the sign-up steps with the team.</span></li>';
+      else list.innerHTML=state.bos.map(f=>{
+        const off=hidden.has(String(f.id).toLowerCase());
+        return `<li class="${off?"is-hidden":""}"><div><b>${esc(f.name)}</b> <span>${f.captain?"Captain · ":""}${off?"Hidden from website":f.avatar?"Shown · has photo":"Shown · no photo yet"}</span></div><div class="bos-row-actions"><a href="${esc(f.profileUrl)}" target="_blank" rel="noopener">View card</a><button type="button" class="visibility-button ${off?"":"is-visible"}" data-bos-toggle="${esc(f.id)}" data-bos-name="${esc(f.name)}" aria-pressed="${off?"false":"true"}" aria-label="${off?"Show":"Hide"} ${esc(f.name)} ${off?"on":"from"} the website">${off?"Show":"Hide"}</button></div></li>`;
+      }).join("");
+    }
+    const events=$("[data-bos-events]");
+    if(events){
+      if(state.bosEvents===undefined)events.innerHTML='<li><span>Loading events from BuhurtOS…</span></li>';
+      else if(state.bosEvents===null)events.innerHTML='<li><span>BuhurtOS could not be reached just now.</span></li>';
+      else if(!state.bosEvents.length)events.innerHTML='<li><span>No upcoming events hosted or entered by the Reavers on BuhurtOS yet. When there are, they appear on the public Events page automatically.</span></li>';
+      else events.innerHTML=state.bosEvents.map(e=>`<li><div><b>${esc(e.name)}</b> <span>${esc(dateLabel(e.startsOn))}${e.endsOn&&e.endsOn!==e.startsOn?` to ${esc(dateLabel(e.endsOn))}`:""}${e.where?` · ${esc(e.where)}`:""}</span></div><div class="bos-row-actions"><a href="${esc(e.url)}" target="_blank" rel="noopener">Open</a></div></li>`).join("");
+    }
   }
 
   function renderAll(){
     renderCalendar();
     renderEventList();
     renderRoster();
+    renderBos();
     renderPractices();
     renderCommunityInquiries();
     renderSettings();
@@ -94,7 +128,7 @@
 
   function renderRoster(){
     const list=$("[data-roster-manage-list]");
-    const roster=[...(state.data?.roster||[])].sort((a,b)=>(Number(a.sort_order)||0)-(Number(b.sort_order)||0)||String(a.name).localeCompare(String(b.name)));
+    const roster=[...(state.data?.roster||[])].filter(m=>!isHideRecord(m)).sort((a,b)=>(Number(a.sort_order)||0)-(Number(b.sort_order)||0)||String(a.name).localeCompare(String(b.name)));
     if(!roster.length){list.innerHTML='<div class="empty-state">No roster members yet.</div>';return}
     list.innerHTML=roster.map(m=>`<article class="manage-row" data-roster-id="${esc(m.id)}">${m.photo_url?`<img class="member-thumb" src="${esc(m.photo_url)}" alt="">`:`<img class="member-thumb placeholder" src="assets/reavers-logo.jpg" alt="">`}<div class="manage-row-main"><strong>${esc(m.name)}</strong><span>${esc(m.role||"Team member")}${m.discipline?` · ${esc(m.discipline)}`:""}${m.experience_years!==null&&m.experience_years!==undefined?` · ${esc(m.experience_years)}+ yrs`:""}</span>${m.affiliations?`<small>${esc(m.affiliations)}</small>`:""}${m.is_example?'<span class="badge">SAMPLE PROFILE</span>':""}${!m.active?'<span class="badge inactive">NOT SHOWN</span>':'<span class="badge visible">SHOWN ON SITE</span>'}</div><div class="manage-row-actions"><button type="button" class="visibility-button ${m.active?"is-visible":""}" data-toggle-roster="${esc(m.id)}" aria-pressed="${m.active?"true":"false"}">${m.active?"Shown":"Not shown"}</button><button type="button" class="small-button drag-handle" aria-label="Drag ${esc(m.name)} to reorder" title="Drag to reorder">↕</button><button type="button" class="small-button" data-edit-roster="${esc(m.id)}">Edit</button><button type="button" class="small-button delete" data-delete-roster="${esc(m.id)}">Delete</button></div></article>`).join("");
     setupRosterSorting(list);
@@ -278,6 +312,17 @@
       .then(()=>showToast("Inquiry updated"))
       .catch(error=>showToast(error.message));
   });
+  document.addEventListener("click",async event=>{
+    const btn=event.target.closest("[data-bos-toggle]");
+    if(!btn)return;
+    const id=String(btn.dataset.bosToggle).toLowerCase(),name=btn.dataset.bosName||"This fighter";
+    const marker=(state.data?.roster||[]).find(m=>isHideRecord(m)&&hiddenId(m)===id);
+    btn.disabled=true;
+    try{
+      if(marker){await api({action:"roster_delete",id:marker.id});await loadData();showToast(`${name} is shown on the website again`)}
+      else{await api({action:"roster_save",item:{name,role:"Hidden from website",discipline:HIDE+id,experience_years:"",affiliations:"",experience_summary:"",bio:"",photo_url:"",active:true,is_example:false,sort_order:9000}});await loadData();showToast(`${name} is hidden from the website`)}
+    }catch(error){showToast(error.message)}finally{btn.disabled=false}
+  });
   $("[data-editor-form]").addEventListener("submit",event=>{event.preventDefault();saveEditor()});
   $("[data-dialog-close]").addEventListener("click",closeEditor);
   $("[data-dialog-cancel]").addEventListener("click",closeEditor);
@@ -293,19 +338,4 @@
     if(!token()){showLogin();return}
     try{showDashboard();await loadData()}catch{showLogin("Enter the team password to continue.")}
   })();
-})();
-
-// BuhurtOS fighters panel (read only): who is on the Reavers roster there, and where to manage them.
-(async()=>{
-  const list=document.querySelector("[data-bos-roster]");
-  if(!list||!window.BUHURTOS)return;
-  const esc=value=>String(value??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[ch]));
-  try{
-    const {fighters}=await window.BUHURTOS.teamRoster();
-    list.innerHTML=fighters.length
-      ?fighters.map(f=>`<li><div><b>${esc(f.name)}</b> <span>${f.captain?"Captain · ":""}${f.avatar?"has photo":"no photo yet"}${f.disciplines.length?` · ${f.disciplines.length} discipline${f.disciplines.length===1?"":"s"}`:""}</span></div><a href="${esc(f.profileUrl)}" target="_blank" rel="noopener">View card</a></li>`).join("")
-      :'<li><span>No fighters on the BuhurtOS roster yet. Share the sign-up steps with the team.</span></li>';
-  }catch{
-    list.innerHTML='<li><span>BuhurtOS could not be reached just now. The public Team page will retry on its own.</span></li>';
-  }
 })();

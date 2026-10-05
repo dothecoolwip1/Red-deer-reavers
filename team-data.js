@@ -17,6 +17,7 @@
     events: [],
     results: [],
     roster: [],
+    hiddenFighters: [],
     updates: [
       { tag: "Recruiting", title: "New fighters are welcome", copy: "No armour or combat experience is required to start. Come meet the team and try the basics first.", href: "training.html#start", cta: "Start here" },
       { tag: "Training", title: "Two team practices every week", copy: "Wednesday evenings and Sunday evenings at Springbrook Archery Centre.", href: "training.html", cta: "Training details" },
@@ -55,7 +56,13 @@
       const settings = data.settings || {};
       const practices = Array.isArray(data.practices) ? data.practices : [];
       const events = Array.isArray(data.events) ? data.events : [];
-      const roster = Array.isArray(data.roster) ? data.roster : [];
+      const allRoster = Array.isArray(data.roster) ? data.roster : [];
+      // A roster record whose discipline is "hide-buhurtos:<fighter id>" is not a person: it tells the site to keep that
+      // BuhurtOS fighter off the public pages (set from Admin → Roster → Fighters on BuhurtOS).
+      const HIDE = "hide-buhurtos:";
+      const isHide = member => String(member.discipline || "").startsWith(HIDE);
+      const hiddenFighters = allRoster.filter(isHide).map(member => String(member.discipline).slice(HIDE.length).trim().toLowerCase()).filter(Boolean);
+      const roster = allRoster.filter(member => !isHide(member));
       const today = todayEdmonton();
       const publicEvents = events
         .filter(item => item.event_date >= today)
@@ -96,6 +103,7 @@
         },
         upcomingEvents: mappedEvents,
         events: mappedEvents,
+        hiddenFighters,
         roster: roster.map(member => ({
           id: member.id,
           name: member.name,

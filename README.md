@@ -7,13 +7,17 @@ Public team website and lightweight team administration for the Red Deer Reavers
 - Static HTML, CSS, and JavaScript hosted on GitHub Pages
 - Supabase PostgreSQL for practices, events, crew roster, site settings, and community inquiries
 - Supabase Edge Function `reavers-site-api` for public data and the password protected admin workflow
-- **BuhurtOS** (`buhurtos.js`) for fighter profiles: the Team page, home page fighter cards, `fighter.html` profiles, the company record, tournament results and tournament entries are read live from BuhurtOS's public API
+- **BuhurtOS** (`buhurtos.js`) for fighter profiles: the Team page, home page fighter cards, `fighter.html` profiles, the company record, tournament results and events are read live from BuhurtOS's public API
 - Progressive Web App manifest and service worker for installable mobile use
 - GitHub Actions production build and quality checks
 
 ## Fighter profiles from BuhurtOS
 
 Fighters do not need to be added on this site. A fighter signs in to BuhurtOS, asks to join the Red Deer Reavers, and builds their profile there (photo, disciplines, bio, socials). Once the team captain approves them on BuhurtOS, they appear on the Team page automatically, and their record and placings fill in as they compete at BuhurtOS events. The Team page has an "Add your fighter profile" section that links straight into that flow.
+
+**Hiding people who come and go.** In Admin → Roster, every BuhurtOS fighter has a **Hide** / **Show** button. Hiding keeps them off the Team page, the home page, the crew count and their profile page, and leaves their BuhurtOS record untouched. The hide list is stored with the team's roster data as a record whose discipline is `hide-buhurtos:<fighter id>`; those records are never shown as people.
+
+**Events from BuhurtOS.** Upcoming published events the Reavers host (`host_team_id`) or are entered in are merged into the Events page, the home page "upcoming" card and the add-to-calendar buttons, with a link to the BuhurtOS page for details and registration. Events the team also entered by hand in Admin are not duplicated, and test events are never shown. Admin → Calendar lists what is being pulled in.
 
 `buhurtos.js` reads only public data with the BuhurtOS publishable (browser-safe) key: the team roster, public fighter profile fields, team and fighter statistics, results, and entries. It never shows birth year, age, gender, account or contact data, and leaves synthetic/test fighters and events out of the roster and records. Anyone on the admin crew roster whose name matches a BuhurtOS fighter is merged into that fighter's card, so crew, coaches and media can still be listed from Admin.
 

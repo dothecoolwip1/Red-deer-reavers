@@ -1,5 +1,5 @@
 // Shared page chrome for the Reavers site. `npm run pages` writes the root HTML files from scripts/pages/*.page.mjs.
-export const V = "21";
+export const V = "22";
 
 export const SOCIAL = {
   instagram: "https://www.instagram.com/red_deer_reavers/",

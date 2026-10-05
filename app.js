@@ -24,7 +24,7 @@
 
   // ---------- installable app / offline shell ----------
   if ("serviceWorker" in navigator) {
-    const register = () => navigator.serviceWorker.register("sw.js?v=21", { updateViaCache: "none" }).then(registration => registration.update()).catch(() => {});
+    const register = () => navigator.serviceWorker.register("sw.js?v=22", { updateViaCache: "none" }).then(registration => registration.update()).catch(() => {});
     if (document.readyState === "complete") register(); else window.addEventListener("load", register);
   }
 
@@ -193,6 +193,23 @@
     return a.getFullYear() === b.getFullYear() ? `${md(a)} – ${md(b)}, ${a.getFullYear()}` : `${md(a)}, ${a.getFullYear()} – ${md(b)}, ${b.getFullYear()}`;
   };
 
+  // Events from BuhurtOS (hosted or entered by the Reavers) join the team's own calendar, so every page shows one list.
+  let bosEvents = [];
+  if (BOS && (document.querySelector("[data-event-list],[data-upcoming-event]"))) {
+    try { bosEvents = await BOS.upcomingEvents(); } catch (error) { console.warn("BuhurtOS events unavailable.", error); }
+  }
+  if (bosEvents.length) {
+    const have = new Set((TEAM.events || []).map(e => `${norm(e.title)}|${e.rawDate}`));
+    const added = bosEvents.filter(e => !have.has(`${norm(e.name)}|${e.startsOn}`)).map(e => ({
+      id: `bos-${e.id}`, title: e.name, type: e.type, rawDate: e.startsOn, rawEndDate: e.endsOn && e.endsOn !== e.startsOn ? e.endsOn : "",
+      rawStartTime: "", rawEndTime: "", date: rangeText(e.startsOn, e.endsOn), startTime: "", endTime: "", location: e.where,
+      details: e.details || (e.competitions.length ? `Reavers entered: ${e.competitions.join(", ")}` : ""), href: e.url, source: "buhurtos", competitions: e.competitions
+    }));
+    const merged = [...(TEAM.events || []), ...added].sort((a, b) => `${a.rawDate} ${a.rawStartTime || ""}`.localeCompare(`${b.rawDate} ${b.rawStartTime || ""}`));
+    TEAM.events = merged;
+    TEAM.upcomingEvents = merged;
+  }
+
   function eventTeaser(event) {
     if (!event) return `<div class="hub-empty"><strong>No public event confirmed</strong><small>The next tournament or demo appears here once it is locked in.</small></div>`;
     return `<a class="hub-live" href="${escapeHtml(safeHref(event.href || "events.html"))}"><span class="hub-kicker">${escapeHtml(event.date || "Date TBA")}</span><strong>${escapeHtml(event.title || "Upcoming event")}</strong><small>${escapeHtml(event.location || "")}</small></a>`;
@@ -212,6 +229,7 @@
         name="${escapeHtml(event.title)}"
         description="${escapeHtml(event.details || "Red Deer Reavers event")}"
         startDate="${escapeHtml(event.rawDate)}"
+        ${event.rawEndDate ? `endDate="${escapeHtml(event.rawEndDate)}"` : ""}
         ${event.rawStartTime ? `startTime="${escapeHtml(event.rawStartTime)}"` : ""}
         ${event.rawEndTime ? `endTime="${escapeHtml(event.rawEndTime)}"` : ""}
         ${event.location ? `location="${escapeHtml(event.location)}"` : ""}
@@ -225,10 +243,11 @@
       return `<article class="plate event-card" data-reveal data-delay="${i % 3}">
         <div class="seal" aria-hidden="true"><div><b>${escapeHtml(sd ? sd.day : "?")}</b><span>${escapeHtml(sd ? sd.month : "TBA")}</span></div></div>
         <div>
-          <span class="label event-type">${escapeHtml(String(event.type || "event").replace(/_/g, " "))}</span>
+          <span class="label event-type">${escapeHtml(String(event.type || "event").replace(/_/g, " "))}</span>${event.source === "buhurtos" ? ` <span class="pennant ember">On BuhurtOS</span>` : ""}
           <h3>${escapeHtml(event.title)}</h3>
           <p class="event-meta"><span>${icon("clock")}${escapeHtml(event.date)}${event.startTime ? ` · ${escapeHtml(event.startTime)}${event.endTime ? ` to ${escapeHtml(event.endTime)}` : ""}` : ""}</span>${event.location ? `<span>${icon("pin")}${escapeHtml(event.location)}</span>` : ""}</p>
           ${event.details ? `<p class="details">${escapeHtml(event.details)}</p>` : ""}
+          ${event.source === "buhurtos" ? `<p class="details"><a class="text-link" href="${escapeHtml(safeHref(event.href))}" target="_blank" rel="noopener">Details on BuhurtOS ${icon("external")}</a></p>` : ""}
           ${calendar}
         </div>
       </article>`;
@@ -246,7 +265,7 @@
   // ---------- roster: BuhurtOS fighters + the team's own crew list ----------
   const siteRoster = (TEAM.roster || []).filter(m => m && m.name);
   const fighterTargets = document.querySelectorAll("[data-fighter-grid],[data-fighter-rail]");
-  const needsFighters = fighterTargets.length || document.querySelector("[data-crew-grid],[data-roster-count],[data-fighter-count],[data-team-record],[data-results-list],[data-entry-list],[data-latest-result]");
+  const needsFighters = fighterTargets.length || document.querySelector("[data-crew-grid],[data-roster-count],[data-fighter-count],[data-team-record],[data-results-list],[data-latest-result]");
 
   function shieldHtml(name, photo, size = "") {
     const src = safeImg(photo);
@@ -287,8 +306,9 @@
   if (needsFighters && BOS) {
     try { bosRoster = await BOS.teamRoster(); } catch (error) { bosError = error; console.warn("BuhurtOS roster unavailable.", error); }
   }
+  const hiddenIds = new Set((TEAM.hiddenFighters || []).map(String));
   const siteByName = new Map(siteRoster.map(m => [norm(m.name), m]));
-  const fighters = bosRoster.fighters.map(f => {
+  const fighters = bosRoster.fighters.filter(f => !hiddenIds.has(String(f.id).toLowerCase())).map(f => {
     const match = siteByName.get(norm(f.name));
     return match ? { ...f, siteRole: match.role || "", sitePhoto: match.photo || "" } : f;
   });
@@ -320,14 +340,12 @@
   // ---------- team record + results from BuhurtOS ----------
   const recordEl = document.querySelector("[data-team-record]");
   const resultsEl = document.querySelector("[data-results-list]");
-  const entriesEl = document.querySelector("[data-entry-list]");
   const latestEls = document.querySelectorAll("[data-latest-result]");
   const ordinal = n => { const s = ["th", "st", "nd", "rd"], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]); };
 
-  const [stats, results, entries] = await Promise.all([
+  const [stats, results] = await Promise.all([
     recordEl && BOS ? BOS.teamStats().catch(() => null) : null,
-    (resultsEl || latestEls.length) && BOS ? BOS.teamResults().catch(() => null) : null,
-    entriesEl && BOS ? BOS.teamEntries().catch(() => null) : null
+    (resultsEl || latestEls.length) && BOS ? BOS.teamResults().catch(() => null) : null
   ]);
 
   const latestSite = (TEAM.results || [])[0];
@@ -354,24 +372,6 @@
       ? results.map((r, i) => `<a class="result-row" href="${escapeHtml(r.eventUrl)}" target="_blank" rel="noopener" data-reveal data-delay="${i % 3}"><span class="place ${r.place <= 3 ? `p${r.place}` : ""}">${r.place}</span><div><strong>${escapeHtml(r.event)}</strong><small>${escapeHtml(r.competition)} · ${escapeHtml(rangeText(r.startsOn, r.endsOn))}</small></div><span class="pts">${r.points ? `${escapeHtml(r.points)} pts` : ""}</span></a>`).join("")
       : `<div class="plate empty"><strong>${results ? "No placings yet" : "Results unavailable"}</strong><p>${results ? "When the Reavers finish a tournament run on BuhurtOS, every placing is recorded here automatically." : "The tournament record could not be loaded just now."}</p></div>`;
     reveal(resultsEl);
-  }
-
-  if (entriesEl) {
-    if (entries && entries.length) {
-      entriesEl.innerHTML = entries.map((e, i) => {
-        const sd = shortDate(e.startsOn);
-        return `<a class="plate event-card" href="${escapeHtml(e.url)}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none" data-reveal data-delay="${i % 3}">
-          <div class="seal" aria-hidden="true"><div><b>${escapeHtml(sd ? sd.day : "?")}</b><span>${escapeHtml(sd ? sd.month : "TBA")}</span></div></div>
-          <div><span class="label event-type">Entered on BuhurtOS</span><h3>${escapeHtml(e.name)}</h3>
-          <p class="event-meta"><span>${icon("clock")}${escapeHtml(rangeText(e.startsOn, e.endsOn))}</span>${e.where ? `<span>${icon("pin")}${escapeHtml(e.where)}</span>` : ""}</p>
-          ${e.competitions.length ? `<div class="chip-row">${e.competitions.map(c => `<span class="chip">${escapeHtml(c)}</span>`).join("")}</div>` : ""}</div>
-        </a>`;
-      }).join("");
-      reveal(entriesEl);
-    } else {
-      const wrap = entriesEl.closest("[data-entry-section]");
-      if (wrap) wrap.hidden = true;
-    }
   }
 
   // ---------- join form (opens the visitor's email app) ----------

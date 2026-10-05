@@ -149,3 +149,7 @@ input:focus,select:focus,textarea:focus{border-color:#f3cf7a;box-shadow:0 0 0 3p
 .bos-actions{display:flex;flex-wrap:wrap;gap:8px}
 .bos-actions a{display:inline-flex;align-items:center;min-height:40px;padding:8px 12px;border:1px solid rgba(214,168,76,.32);color:#f2e8d3;font-family:"Cinzel",Georgia,serif;font-size:.64rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;text-decoration:none}
 .bos-actions a.primary{border:0;background:linear-gradient(180deg,#ffa04d,#ff7b1c 45%,#c9530a);color:#1b0d03}
+.bos-row-actions{display:flex;align-items:center;gap:10px;flex:0 0 auto}
+.bos-list li.is-hidden b{opacity:.55;text-decoration:line-through}
+.bos-list li.is-hidden{border-style:dashed}
+@media(max-width:540px){.bos-list li{flex-wrap:wrap}.bos-row-actions{width:100%;justify-content:space-between}}

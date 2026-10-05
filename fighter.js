@@ -23,6 +23,12 @@
     return;
   }
 
+  const site = await (window.REAVERS_DATA_PROMISE || Promise.resolve(window.REAVERS_DATA || {}));
+  if ((site.hiddenFighters || []).map(String).includes(id.toLowerCase())) {
+    state("Profile not shown", "This fighter's profile is not displayed on the Reavers site right now.", `<a class="btn btn-ember" href="team.html">Meet the fighters</a>`);
+    return;
+  }
+
   let f = null;
   try { f = await BOS.fighter(id); }
   catch (error) {
