@@ -59,6 +59,7 @@
     try{state.bos=(await window.BUHURTOS.teamRoster()).fighters;state.bosError=false}catch{state.bos=null;state.bosError=true}
     try{state.bosEvents=await window.BUHURTOS.allEvents()}catch{state.bosEvents=null}
     renderBos();
+    renderCalendar();
   }
 
   function renderBos(){
@@ -81,7 +82,7 @@
         const up=state.bosEvents.filter(e=>!e.past),past=state.bosEvents.length-up.length;
         const rows=up.map(e=>`<li><div><b>${esc(e.name)}</b> <span>${e.reavers?`Reavers ${esc(e.reavers)} · `:""}${esc(dateLabel(e.startsOn))}${e.endsOn&&e.endsOn!==e.startsOn?` to ${esc(dateLabel(e.endsOn))}`:""}${e.where?` · ${esc(e.where)}`:""}</span></div><div class="bos-row-actions"><a href="${esc(e.url)}" target="_blank" rel="noopener">Open</a></div></li>`);
         if(!up.length)rows.push('<li><span>No upcoming events on BuhurtOS yet. When there are, they appear on the public Events page automatically.</span></li>');
-        rows.push(`<li><span>${past} past event${past===1?"":"s"} ${past===1?"is":"are"} also shown in the Events page archive.</span></li>`);
+        if(past)rows.push(`<li><span>Plus ${past} finished event${past===1?"":"s"}, shown under “Past events” on the website's Events page.</span></li>`);
         events.innerHTML=rows.join("");
       }
     }
@@ -106,6 +107,7 @@
     const today=new Date();
     const events=state.data?.events||[];
     const practices=(state.data?.practices||[]).filter(x=>x.active);
+    const bosEvents=Array.isArray(state.bosEvents)?state.bosEvents:[];
     let html="";
     for(let i=0;i<42;i++){
       const d=new Date(start);d.setDate(start.getDate()+i);
@@ -118,6 +120,10 @@
       html+=`<div class="calendar-day${outside?" outside":""}${isToday?" today":""}" data-date="${iso}"><span class="calendar-date">${d.getDate()}</span>`;
       for(const p of dayPractices)html+=`<span class="calendar-item practice" title="${esc(p.label)} practice">${esc(p.label)} practice</span>`;
       for(const e of dayEvents)html+=`<button type="button" class="calendar-item ${esc(e.event_type||"other")}" data-edit-event="${esc(e.id)}" title="${esc(e.title)}">${esc(e.title)}</button>`;
+      for(const e of bosEvents){
+        if(iso<e.startsOn||iso>(e.endsOn||e.startsOn))continue;
+        html+=`<a class="calendar-item bos${e.reavers?" reavers":""}${e.past?" past":""}" href="${esc(e.url)}" target="_blank" rel="noopener" title="${esc(e.name)} (on BuhurtOS${e.reavers?`, Reavers ${esc(e.reavers)}`:""})">${esc(e.name)}</a>`;
+      }
       html+="</div>";
     }
     grid.innerHTML=html;

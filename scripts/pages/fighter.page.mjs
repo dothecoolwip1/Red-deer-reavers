@@ -1,4 +1,4 @@
-import { head, header, footer, dock, scripts, V } from "./partials.mjs";
+import { head, header, footer, dock, scripts, V, BOS_SITE } from "./partials.mjs";
 
 export const file = "fighter.html";
 export default () => `${head({
@@ -18,6 +18,6 @@ export default () => `${head({
       </div>
     </section>
   </div>
-  <noscript><section class="section-tight"><div class="shell"><p class="lede">Fighter profiles load from BuhurtOS and need JavaScript. You can browse every profile at <a href="https://buhurtos.ca/teams/red-deer-reavers">buhurtos.ca</a>.</p></div></section></noscript>
+  <noscript><section class="section-tight"><div class="shell"><p class="lede">Fighter profiles load from BuhurtOS and need JavaScript. You can browse every profile at <a href="${BOS_SITE}/teams/red-deer-reavers">BuhurtOS</a>.</p></div></section></noscript>
 </main>
 ${footer()}${dock("team")}${scripts(`<script src="fighter.js?v=${V}" defer></script>`)}`;

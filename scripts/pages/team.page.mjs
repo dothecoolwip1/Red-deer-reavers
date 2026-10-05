@@ -1,4 +1,4 @@
-import { head, header, footer, dock, scripts, photo, icon } from "./partials.mjs";
+import { head, header, footer, dock, scripts, photo, icon, BOS_SITE } from "./partials.mjs";
 
 export const file = "team.html";
 export default () => `${head({
@@ -56,9 +56,9 @@ export default () => `${head({
         <article class="step" data-reveal data-delay="2"><span class="step-num">III</span><div><h3>Forge your profile</h3><p>Add a photo, your disciplines, a short bio and your socials. Results fill in as you compete.</p></div></article>
       </div>
       <div class="btn-row" style="justify-content:center;margin-top:34px">
-        <a class="btn btn-ember" data-bos-link="join" href="https://buhurtos.ca/team-manager?join=red-deer-reavers" target="_blank" rel="noopener">${icon("quill")} Create my profile ${icon("external")}</a>
-        <a class="btn btn-ink" data-bos-link="claim" href="https://buhurtos.ca/claim-profile" target="_blank" rel="noopener">My name is already listed</a>
-        <a class="btn btn-ink" data-bos-link="account" href="https://buhurtos.ca/account" target="_blank" rel="noopener">Edit my profile</a>
+        <a class="btn btn-ember" data-bos-link="join" href="${BOS_SITE}/team-manager?join=red-deer-reavers" target="_blank" rel="noopener">${icon("quill")} Create my profile ${icon("external")}</a>
+        <a class="btn btn-ink" data-bos-link="claim" href="${BOS_SITE}/claim-profile" target="_blank" rel="noopener">My name is already listed</a>
+        <a class="btn btn-ink" data-bos-link="account" href="${BOS_SITE}/account" target="_blank" rel="noopener">Edit my profile</a>
       </div>
       <p class="muted" style="text-align:center;margin:22px auto 0;max-width:60ch">Already on the roster but never signed in? The captain may have added you. Use “My name is already listed” to claim that profile and keep its history. Only your name, photo and the details you choose are shown publicly.</p>
     </div>

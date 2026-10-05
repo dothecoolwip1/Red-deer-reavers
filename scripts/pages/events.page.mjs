@@ -1,4 +1,4 @@
-import { head, header, footer, dock, scripts, photo, icon, SOCIAL } from "./partials.mjs";
+import { head, header, footer, dock, scripts, photo, icon, SOCIAL, BOS_SITE } from "./partials.mjs";
 
 export const file = "events.html";
 export default () => `${head({
@@ -67,7 +67,7 @@ export default () => `${head({
         <div data-latest-result style="margin-top:10px"><div class="hub-empty"><strong>Checking the record…</strong></div></div>
       </div>
       <div class="results-list" data-results-list></div>
-      <p style="text-align:center;margin:22px 0 0"><a class="text-link" data-bos-link="team" href="https://buhurtos.ca/teams/red-deer-reavers" target="_blank" rel="noopener">The Reavers on BuhurtOS ${icon("external")}</a></p>
+      <p style="text-align:center;margin:22px 0 0"><a class="text-link" data-bos-link="team" href="${BOS_SITE}/teams/red-deer-reavers" target="_blank" rel="noopener">The Reavers on BuhurtOS ${icon("external")}</a></p>
     </div>
   </section>
 
