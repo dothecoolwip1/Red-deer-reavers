@@ -1,4 +1,4 @@
-import { head, header, footer, dock, scripts, photo, icon, SOCIAL } from "./partials.mjs";
+import { head, header, footer, dock, scripts, photo, icon, SOCIAL, BOS_SITE } from "./partials.mjs";
 
 export const file = "social.html";
 export default () => `${head({
@@ -35,7 +35,7 @@ export default () => `${head({
           <p>Event announcements, photo albums and community news.</p>
           <span class="text-link">Follow ${icon("external")}</span>
         </a>
-        <a class="plate channel-card bos" href="https://buhurtos.ca/teams/red-deer-reavers" target="_blank" rel="noopener" data-reveal data-delay="2">
+        <a class="plate channel-card bos" href="${BOS_SITE}/teams/red-deer-reavers" target="_blank" rel="noopener" data-reveal data-delay="2">
           <span class="channel-icon">${icon("shield")}</span>
           <span class="label">BuhurtOS</span>
           <strong>Fighter records</strong>
