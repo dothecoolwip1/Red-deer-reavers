@@ -167,24 +167,36 @@
     return rows.filter(r => !r.synthetic).slice(0, limit).map(toResult);
   }
 
-  /** Upcoming published tournaments the team is entered in on BuhurtOS. */
-  async function teamEntries() {
+  /**
+   * Upcoming published events on BuhurtOS that the Reavers host or are entered in, soonest first.
+   * Fictional/test events are left out. Each one links to its BuhurtOS page for details and registration.
+   */
+  async function upcomingEvents() {
     const t = await team();
     if (!t) return [];
-    const rows = await rest(`entries?select=id,status,competitions!entries_competition_id_fkey(name,category,events(id,name,slug,starts_on,ends_on,status,city,region))&team_id=eq.${t.id}`);
     const today = new Date().toISOString().slice(0, 10);
-    const byEvent = new Map();
-    for (const row of rows) {
+    const columns = "id,name,slug,event_type,status,starts_on,ends_on,city,region,venue,description";
+    const [hosted, entered] = await Promise.all([
+      rest(`events?select=${columns}&host_team_id=eq.${t.id}&status=eq.published&ends_on=gte.${today}&order=starts_on&limit=30`),
+      rest(`entries?select=status,competitions!entries_competition_id_fkey(name,events(${columns}))&team_id=eq.${t.id}`).catch(() => [])
+    ]);
+    const byId = new Map();
+    const add = (ev, competition) => {
+      if (!ev || ev.status !== "published" || (ev.ends_on || ev.starts_on) < today) return;
+      const item = byId.get(ev.id) || { id: ev.id, name: ev.name, slug: ev.slug, type: ev.event_type || "tournament", startsOn: ev.starts_on, endsOn: ev.ends_on, where: [ev.venue, place(ev.city, ev.region)].filter(Boolean).join(", "), details: String(ev.description || "").replace(/\s+/g, " ").trim().slice(0, 220), url: links.event(ev.slug), competitions: [] };
+      if (competition && !item.competitions.includes(competition)) item.competitions.push(competition);
+      byId.set(ev.id, item);
+    };
+    for (const ev of hosted) add(ev, "");
+    for (const row of entered) {
       if (row.status === "withdrawn") continue;
       const comp = Array.isArray(row.competitions) ? row.competitions[0] : row.competitions;
       const ev = comp && (Array.isArray(comp.events) ? comp.events[0] : comp.events);
-      if (!ev || ev.status !== "published" || (ev.ends_on || ev.starts_on) < today) continue;
-      const item = byEvent.get(ev.id) || { id: ev.id, name: ev.name, slug: ev.slug, startsOn: ev.starts_on, endsOn: ev.ends_on, where: place(ev.city, ev.region), url: links.event(ev.slug), competitions: [] };
-      if (comp.name && !item.competitions.includes(comp.name)) item.competitions.push(comp.name);
-      byEvent.set(ev.id, item);
+      add(ev, comp?.name || "");
     }
-    const synthetic = await syntheticIds("event", [...byEvent.keys()]);
-    return [...byEvent.values()].filter(e => !synthetic.has(e.id)).sort((a, b) => String(a.startsOn).localeCompare(String(b.startsOn)));
+    // Fails closed: if test events cannot be identified, none are shown.
+    const synthetic = await syntheticIds("event", [...byId.keys()]);
+    return [...byId.values()].filter(e => !synthetic.has(e.id)).sort((a, b) => String(a.startsOn).localeCompare(String(b.startsOn)));
   }
 
   /** One fighter's public profile, career numbers and placings. Null when the id is unknown. */
@@ -217,5 +229,5 @@
     };
   }
 
-  window.BUHURTOS = { config: CONFIG, links, team, teamRoster, teamStats, teamResults, teamEntries, fighter, categoryName, avatarUrl, isId: id => UUID.test(String(id || "")) };
+  window.BUHURTOS = { config: CONFIG, links, team, teamRoster, teamStats, teamResults, upcomingEvents, fighter, categoryName, avatarUrl, isId: id => UUID.test(String(id || "")) };
 })();

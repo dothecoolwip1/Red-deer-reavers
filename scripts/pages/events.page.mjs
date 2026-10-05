@@ -37,19 +37,9 @@ export default () => `${head({
     <div class="shell">
       <div class="section-head split">
         <div><p class="eyebrow">The calendar</p><h2 id="calendar-title">Upcoming schedule</h2></div>
-        <p class="lede">Tournaments, demos, meetings and special team dates. Tap a date to add it to your own calendar.</p>
+        <p class="lede">Tournaments, demos, meetings and special team dates, including events the Reavers host or enter on BuhurtOS. Tap a date to add it to your own calendar.</p>
       </div>
       <div class="event-list" data-event-list></div>
-    </div>
-  </section>
-
-  <section class="section" style="padding-top:0" data-entry-section aria-labelledby="entries-title">
-    <div class="shell">
-      <div class="section-head split">
-        <div><p class="eyebrow">Tournament entries</p><h2 id="entries-title">Riding out</h2></div>
-        <p class="lede">Tournaments the Reavers are entered in on BuhurtOS. Follow the brackets live on the day.</p>
-      </div>
-      <div class="event-list" data-entry-list></div>
     </div>
   </section>
 
