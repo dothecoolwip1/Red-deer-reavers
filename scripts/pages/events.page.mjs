@@ -37,9 +37,21 @@ export default () => `${head({
     <div class="shell">
       <div class="section-head split">
         <div><p class="eyebrow">The calendar</p><h2 id="calendar-title">Upcoming schedule</h2></div>
-        <p class="lede">Tournaments, demos, meetings and special team dates, including every upcoming tournament on BuhurtOS. Tap a date to add it to your own calendar.</p>
+        <p class="lede">Tournaments, demos, meetings and special team dates, including every upcoming event on BuhurtOS. Tap a date to add it to your own calendar.</p>
       </div>
       <div class="event-list" data-event-list></div>
+    </div>
+  </section>
+
+  <section class="section" style="padding-top:0" id="past" aria-labelledby="past-title">
+    <div class="shell">
+      <div class="section-head split">
+        <div><p class="eyebrow">The archive</p><h2 id="past-title">Past events</h2></div>
+        <p class="lede">Every event recorded on BuhurtOS, newest first, kept permanently. Tap one for its results and details.</p>
+      </div>
+      <p class="muted" data-past-count aria-live="polite" style="margin:-14px 0 16px"></p>
+      <div class="event-list" data-past-events><div class="plate skeleton skeleton-card" aria-hidden="true"></div></div>
+      <div class="btn-row" style="justify-content:center;margin-top:24px" data-past-more-row hidden><button type="button" class="btn" data-past-more>Show more past events</button></div>
     </div>
   </section>
 

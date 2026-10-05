@@ -785,3 +785,8 @@ a.post-card:hover .post-media img,a.strip-card:hover .post-media img{transform:s
   .hero-media img{object-position:var(--pos-landscape,50% 35%)}
 }
 .mail-address{display:block;margin-bottom:4px;color:var(--gilt-hi);font-weight:700;overflow-wrap:anywhere}
+
+/* past events: same cards, quieter */
+.event-past{color:var(--bone);text-decoration:none;transition:transform .25s var(--ease),border-color .25s}
+.event-past:hover{color:var(--bone);transform:translateY(-3px);border-color:rgba(214,168,76,.5)}
+.event-past .seal{filter:grayscale(.55) brightness(.85)}

@@ -24,7 +24,7 @@
 
   // ---------- installable app / offline shell ----------
   if ("serviceWorker" in navigator) {
-    const register = () => navigator.serviceWorker.register("sw.js?v=23", { updateViaCache: "none" }).then(registration => registration.update()).catch(() => {});
+    const register = () => navigator.serviceWorker.register("sw.js?v=24", { updateViaCache: "none" }).then(registration => registration.update()).catch(() => {});
     if (document.readyState === "complete") register(); else window.addEventListener("load", register);
   }
 
@@ -193,14 +193,17 @@
     return a.getFullYear() === b.getFullYear() ? `${md(a)} – ${md(b)}, ${a.getFullYear()}` : `${md(a)}, ${a.getFullYear()} – ${md(b)}, ${b.getFullYear()}`;
   };
 
-  // Events from BuhurtOS (hosted or entered by the Reavers) join the team's own calendar, so every page shows one list.
-  let bosEvents = [];
-  if (BOS && (document.querySelector("[data-event-list],[data-upcoming-event]"))) {
-    try { bosEvents = await BOS.upcomingEvents(); } catch (error) { console.warn("BuhurtOS events unavailable.", error); }
+  // Every event on BuhurtOS joins the team's own calendar: upcoming ones merge into one list, past ones get their own list.
+  let bosAll = [];
+  let bosFailed = false;
+  if (BOS && document.querySelector("[data-event-list],[data-upcoming-event],[data-past-events]")) {
+    try { bosAll = await BOS.allEvents(); } catch (error) { bosFailed = true; console.warn("BuhurtOS events unavailable.", error); }
   }
-  if (bosEvents.length) {
+  const bosUpcoming = bosAll.filter(e => !e.past);
+  const bosPast = bosAll.filter(e => e.past);
+  if (bosUpcoming.length) {
     const have = new Set((TEAM.events || []).map(e => `${norm(e.title)}|${e.rawDate}`));
-    const added = bosEvents.filter(e => !have.has(`${norm(e.name)}|${e.startsOn}`)).map(e => ({
+    const added = bosUpcoming.filter(e => !have.has(`${norm(e.name)}|${e.startsOn}`)).map(e => ({
       id: `bos-${e.id}`, title: e.name, type: e.type, rawDate: e.startsOn, rawEndDate: e.endsOn && e.endsOn !== e.startsOn ? e.endsOn : "",
       rawStartTime: "", rawEndTime: "", date: rangeText(e.startsOn, e.endsOn), startTime: "", endTime: "", location: e.where,
       details: e.reavers === "entered" && e.competitions.length ? `Reavers entered: ${e.competitions.join(", ")}` : e.details, href: e.url, source: "buhurtos", reavers: e.reavers, competitions: e.competitions
@@ -253,6 +256,38 @@
       </article>`;
     }).join("") : `<div class="plate empty"><strong>No dates posted yet</strong><p>Confirmed tournaments, demos and team events appear here as soon as the team adds them.</p></div>`;
     reveal(eventList);
+  }
+
+  // ---------- past events (from BuhurtOS), newest first ----------
+  const pastEl = document.querySelector("[data-past-events]");
+  if (pastEl) {
+    const moreRow = document.querySelector("[data-past-more-row]");
+    const more = document.querySelector("[data-past-more]");
+    const count = document.querySelector("[data-past-count]");
+    let limit = 12;
+    const pastCard = (e, i) => {
+      const sd = shortDate(e.startsOn);
+      const tag = e.reavers ? ` <span class="pennant gilt">Reavers ${escapeHtml(e.reavers)}</span>` : "";
+      return `<a class="plate event-card event-past" href="${escapeHtml(safeHref(e.url))}" target="_blank" rel="noopener" data-reveal data-delay="${i % 3}">
+        <div class="seal" aria-hidden="true"><div><b>${escapeHtml(sd ? sd.day : "?")}</b><span>${escapeHtml(sd ? sd.month : "")}</span></div></div>
+        <div>
+          <span class="label event-type">${escapeHtml(String(e.type || "event").replace(/_/g, " "))}</span>${tag}
+          <h3>${escapeHtml(e.name)}</h3>
+          <p class="event-meta"><span>${icon("clock")}${escapeHtml(rangeText(e.startsOn, e.endsOn))}</span>${e.where ? `<span>${icon("pin")}${escapeHtml(e.where)}</span>` : ""}</p>
+          <span class="text-link">Results &amp; details on BuhurtOS ${icon("external")}</span>
+        </div>
+      </a>`;
+    };
+    const renderPast = () => {
+      if (bosFailed) pastEl.innerHTML = `<div class="plate empty"><strong>Past events out of reach</strong><p>The event history could not be loaded from BuhurtOS just now. It will be back on the next visit.</p></div>`;
+      else if (!bosPast.length) pastEl.innerHTML = `<div class="plate empty"><strong>No past events yet</strong><p>Once events have finished on BuhurtOS, they are kept here permanently, newest first.</p></div>`;
+      else pastEl.innerHTML = bosPast.slice(0, limit).map(pastCard).join("");
+      if (moreRow) moreRow.hidden = bosPast.length <= limit;
+      if (count) count.textContent = bosPast.length ? `${Math.min(limit, bosPast.length)} of ${bosPast.length} shown` : "";
+      reveal(pastEl);
+    };
+    more?.addEventListener("click", () => { limit += 12; renderPast(); });
+    renderPast();
   }
 
   // ---------- proclamations (team updates) ----------
