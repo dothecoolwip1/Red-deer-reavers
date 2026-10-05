@@ -24,7 +24,7 @@
 
   // ---------- installable app / offline shell ----------
   if ("serviceWorker" in navigator) {
-    const register = () => navigator.serviceWorker.register("sw.js?v=22", { updateViaCache: "none" }).then(registration => registration.update()).catch(() => {});
+    const register = () => navigator.serviceWorker.register("sw.js?v=23", { updateViaCache: "none" }).then(registration => registration.update()).catch(() => {});
     if (document.readyState === "complete") register(); else window.addEventListener("load", register);
   }
 
@@ -203,7 +203,7 @@
     const added = bosEvents.filter(e => !have.has(`${norm(e.name)}|${e.startsOn}`)).map(e => ({
       id: `bos-${e.id}`, title: e.name, type: e.type, rawDate: e.startsOn, rawEndDate: e.endsOn && e.endsOn !== e.startsOn ? e.endsOn : "",
       rawStartTime: "", rawEndTime: "", date: rangeText(e.startsOn, e.endsOn), startTime: "", endTime: "", location: e.where,
-      details: e.details || (e.competitions.length ? `Reavers entered: ${e.competitions.join(", ")}` : ""), href: e.url, source: "buhurtos", competitions: e.competitions
+      details: e.reavers === "entered" && e.competitions.length ? `Reavers entered: ${e.competitions.join(", ")}` : e.details, href: e.url, source: "buhurtos", reavers: e.reavers, competitions: e.competitions
     }));
     const merged = [...(TEAM.events || []), ...added].sort((a, b) => `${a.rawDate} ${a.rawStartTime || ""}`.localeCompare(`${b.rawDate} ${b.rawStartTime || ""}`));
     TEAM.events = merged;
@@ -243,7 +243,7 @@
       return `<article class="plate event-card" data-reveal data-delay="${i % 3}">
         <div class="seal" aria-hidden="true"><div><b>${escapeHtml(sd ? sd.day : "?")}</b><span>${escapeHtml(sd ? sd.month : "TBA")}</span></div></div>
         <div>
-          <span class="label event-type">${escapeHtml(String(event.type || "event").replace(/_/g, " "))}</span>${event.source === "buhurtos" ? ` <span class="pennant ember">On BuhurtOS</span>` : ""}
+          <span class="label event-type">${escapeHtml(String(event.type || "event").replace(/_/g, " "))}</span>${event.source === "buhurtos" ? (event.reavers ? ` <span class="pennant gilt">Reavers ${event.reavers}</span>` : ` <span class="pennant ember">On BuhurtOS</span>`) : ""}
           <h3>${escapeHtml(event.title)}</h3>
           <p class="event-meta"><span>${icon("clock")}${escapeHtml(event.date)}${event.startTime ? ` · ${escapeHtml(event.startTime)}${event.endTime ? ` to ${escapeHtml(event.endTime)}` : ""}` : ""}</span>${event.location ? `<span>${icon("pin")}${escapeHtml(event.location)}</span>` : ""}</p>
           ${event.details ? `<p class="details">${escapeHtml(event.details)}</p>` : ""}

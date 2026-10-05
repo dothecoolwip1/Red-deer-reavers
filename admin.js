@@ -77,8 +77,8 @@
     if(events){
       if(state.bosEvents===undefined)events.innerHTML='<li><span>Loading events from BuhurtOS…</span></li>';
       else if(state.bosEvents===null)events.innerHTML='<li><span>BuhurtOS could not be reached just now.</span></li>';
-      else if(!state.bosEvents.length)events.innerHTML='<li><span>No upcoming events hosted or entered by the Reavers on BuhurtOS yet. When there are, they appear on the public Events page automatically.</span></li>';
-      else events.innerHTML=state.bosEvents.map(e=>`<li><div><b>${esc(e.name)}</b> <span>${esc(dateLabel(e.startsOn))}${e.endsOn&&e.endsOn!==e.startsOn?` to ${esc(dateLabel(e.endsOn))}`:""}${e.where?` · ${esc(e.where)}`:""}</span></div><div class="bos-row-actions"><a href="${esc(e.url)}" target="_blank" rel="noopener">Open</a></div></li>`).join("");
+      else if(!state.bosEvents.length)events.innerHTML='<li><span>No upcoming tournaments on BuhurtOS yet. When there are, they appear on the public Events page automatically.</span></li>';
+      else events.innerHTML=state.bosEvents.map(e=>`<li><div><b>${esc(e.name)}</b> <span>${e.reavers?`Reavers ${esc(e.reavers)} · `:""}${esc(dateLabel(e.startsOn))}${e.endsOn&&e.endsOn!==e.startsOn?` to ${esc(dateLabel(e.endsOn))}`:""}${e.where?` · ${esc(e.where)}`:""}</span></div><div class="bos-row-actions"><a href="${esc(e.url)}" target="_blank" rel="noopener">Open</a></div></li>`).join("");
     }
   }
 

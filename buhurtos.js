@@ -168,31 +168,34 @@
   }
 
   /**
-   * Upcoming published events on BuhurtOS that the Reavers host or are entered in, soonest first.
-   * Fictional/test events are left out. Each one links to its BuhurtOS page for details and registration.
+   * Every upcoming published tournament on BuhurtOS, plus anything else the Reavers host or are entered in, soonest first.
+   * Events the Reavers are part of carry `reavers: "hosting" | "entered"`. Fictional/test events are left out.
+   * Each one links to its BuhurtOS page for details and registration.
    */
   async function upcomingEvents() {
     const t = await team();
-    if (!t) return [];
     const today = new Date().toISOString().slice(0, 10);
-    const columns = "id,name,slug,event_type,status,starts_on,ends_on,city,region,venue,description";
-    const [hosted, entered] = await Promise.all([
-      rest(`events?select=${columns}&host_team_id=eq.${t.id}&status=eq.published&ends_on=gte.${today}&order=starts_on&limit=30`),
-      rest(`entries?select=status,competitions!entries_competition_id_fkey(name,events(${columns}))&team_id=eq.${t.id}`).catch(() => [])
+    const columns = "id,name,slug,event_type,status,starts_on,ends_on,city,region,venue,description,host_team_id";
+    const [tournaments, hosted, entered] = await Promise.all([
+      rest(`events?select=${columns}&event_type=eq.tournament&status=eq.published&ends_on=gte.${today}&order=starts_on&limit=60`),
+      t ? rest(`events?select=${columns}&host_team_id=eq.${t.id}&status=eq.published&ends_on=gte.${today}&order=starts_on&limit=30`).catch(() => []) : [],
+      t ? rest(`entries?select=status,competitions!entries_competition_id_fkey(name,events(${columns}))&team_id=eq.${t.id}`).catch(() => []) : []
     ]);
     const byId = new Map();
-    const add = (ev, competition) => {
+    const add = (ev, { competition = "", reavers = "" } = {}) => {
       if (!ev || ev.status !== "published" || (ev.ends_on || ev.starts_on) < today) return;
-      const item = byId.get(ev.id) || { id: ev.id, name: ev.name, slug: ev.slug, type: ev.event_type || "tournament", startsOn: ev.starts_on, endsOn: ev.ends_on, where: [ev.venue, place(ev.city, ev.region)].filter(Boolean).join(", "), details: String(ev.description || "").replace(/\s+/g, " ").trim().slice(0, 220), url: links.event(ev.slug), competitions: [] };
+      const item = byId.get(ev.id) || { id: ev.id, name: ev.name, slug: ev.slug, type: ev.event_type || "tournament", startsOn: ev.starts_on, endsOn: ev.ends_on, where: [ev.venue, place(ev.city, ev.region)].filter(Boolean).join(", "), details: String(ev.description || "").replace(/\s+/g, " ").trim().slice(0, 220), url: links.event(ev.slug), competitions: [], reavers: "" };
       if (competition && !item.competitions.includes(competition)) item.competitions.push(competition);
+      if (reavers === "hosting" || (reavers && !item.reavers)) item.reavers = reavers;
       byId.set(ev.id, item);
     };
-    for (const ev of hosted) add(ev, "");
+    for (const ev of tournaments) add(ev, { reavers: t && ev.host_team_id === t.id ? "hosting" : "" });
+    for (const ev of hosted) add(ev, { reavers: "hosting" });
     for (const row of entered) {
       if (row.status === "withdrawn") continue;
       const comp = Array.isArray(row.competitions) ? row.competitions[0] : row.competitions;
       const ev = comp && (Array.isArray(comp.events) ? comp.events[0] : comp.events);
-      add(ev, comp?.name || "");
+      add(ev, { competition: comp?.name || "", reavers: "entered" });
     }
     // Fails closed: if test events cannot be identified, none are shown.
     const synthetic = await syntheticIds("event", [...byId.keys()]);

@@ -37,7 +37,7 @@ export default () => `${head({
     <div class="shell">
       <div class="section-head split">
         <div><p class="eyebrow">The calendar</p><h2 id="calendar-title">Upcoming schedule</h2></div>
-        <p class="lede">Tournaments, demos, meetings and special team dates, including events the Reavers host or enter on BuhurtOS. Tap a date to add it to your own calendar.</p>
+        <p class="lede">Tournaments, demos, meetings and special team dates, including every upcoming tournament on BuhurtOS. Tap a date to add it to your own calendar.</p>
       </div>
       <div class="event-list" data-event-list></div>
     </div>
