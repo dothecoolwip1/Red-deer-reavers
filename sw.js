@@ -1,4 +1,4 @@
-const CACHE="reavers-forged-v22";
+const CACHE="reavers-forged-v23";
 const STATIC=[
   "./",
   "./index.html",
@@ -9,12 +9,12 @@ const STATIC=[
   "./community.html",
   "./media.html",
   "./social.html",
-  "./styles.css?v=22",
-  "./app.js?v=22",
-  "./team-data.js?v=22",
-  "./buhurtos.js?v=22",
-  "./fighter.js?v=22",
-  "./gallery.js?v=22",
+  "./styles.css?v=23",
+  "./app.js?v=23",
+  "./team-data.js?v=23",
+  "./buhurtos.js?v=23",
+  "./fighter.js?v=23",
+  "./gallery.js?v=23",
   "./assets/icons.svg",
   "./assets/crest-96.webp",
   "./assets/crest-256.webp",
@@ -23,7 +23,7 @@ const STATIC=[
   "./vendor/fonts/cinzel-latin-wght-normal.woff2",
   "./vendor/fonts/alegreya-sans-latin-400-normal.woff2",
   "./vendor/fonts/alegreya-sans-latin-700-normal.woff2",
-  "./vendor/photoswipe/photoswipe.css?v=22",
+  "./vendor/photoswipe/photoswipe.css?v=23",
   "./vendor/photoswipe/photoswipe-lightbox.esm.js",
   "./vendor/photoswipe/photoswipe.esm.js"
 ];
