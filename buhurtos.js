@@ -73,6 +73,11 @@
   async function syntheticIds(type, ids) {
     if (!ids.length) return new Set();
     // Fails closed: if test records cannot be identified, nothing is shown rather than risk showing them.
+    if (ids.length > 40) {
+      const wanted = new Set(ids);
+      const all = await rest(`synthetic_records?select=entity_id&entity_type=eq.${type}&limit=2000`);
+      return new Set(all.map(r => r.entity_id).filter(id => wanted.has(id)));
+    }
     const rows = await rest(`synthetic_records?select=entity_id&entity_type=eq.${type}&entity_id=in.${inList(ids)}`);
     return new Set(rows.map(r => r.entity_id));
   }
@@ -168,38 +173,41 @@
   }
 
   /**
-   * Every upcoming published tournament on BuhurtOS, plus anything else the Reavers host or are entered in, soonest first.
-   * Events the Reavers are part of carry `reavers: "hosting" | "entered"`. Fictional/test events are left out.
-   * Each one links to its BuhurtOS page for details and registration.
+   * Every published event on BuhurtOS, past and future, each flagged `past`. Upcoming ones come soonest first and
+   * past ones newest first. Events the Reavers host or entered carry `reavers: "hosting" | "entered"`.
+   * Fictional/test events are left out. Each one links to its BuhurtOS page for details, registration and results.
    */
-  async function upcomingEvents() {
+  async function allEvents() {
     const t = await team();
     const today = new Date().toISOString().slice(0, 10);
     const columns = "id,name,slug,event_type,status,starts_on,ends_on,city,region,venue,description,host_team_id";
-    const [tournaments, hosted, entered] = await Promise.all([
-      rest(`events?select=${columns}&event_type=eq.tournament&status=eq.published&ends_on=gte.${today}&order=starts_on&limit=60`),
-      t ? rest(`events?select=${columns}&host_team_id=eq.${t.id}&status=eq.published&ends_on=gte.${today}&order=starts_on&limit=30`).catch(() => []) : [],
-      t ? rest(`entries?select=status,competitions!entries_competition_id_fkey(name,events(${columns}))&team_id=eq.${t.id}`).catch(() => []) : []
+    const [upcoming, past, entered] = await Promise.all([
+      rest(`events?select=${columns}&status=eq.published&ends_on=gte.${today}&order=starts_on.asc&limit=300`),
+      rest(`events?select=${columns}&status=eq.published&ends_on=lt.${today}&order=starts_on.desc&limit=600`).catch(() => []),
+      t ? rest(`entries?select=status,competitions!entries_competition_id_fkey(name,events(id))&team_id=eq.${t.id}`).catch(() => []) : []
     ]);
-    const byId = new Map();
-    const add = (ev, { competition = "", reavers = "" } = {}) => {
-      if (!ev || ev.status !== "published" || (ev.ends_on || ev.starts_on) < today) return;
-      const item = byId.get(ev.id) || { id: ev.id, name: ev.name, slug: ev.slug, type: ev.event_type || "tournament", startsOn: ev.starts_on, endsOn: ev.ends_on, where: [ev.venue, place(ev.city, ev.region)].filter(Boolean).join(", "), details: String(ev.description || "").replace(/\s+/g, " ").trim().slice(0, 220), url: links.event(ev.slug), competitions: [], reavers: "" };
-      if (competition && !item.competitions.includes(competition)) item.competitions.push(competition);
-      if (reavers === "hosting" || (reavers && !item.reavers)) item.reavers = reavers;
-      byId.set(ev.id, item);
-    };
-    for (const ev of tournaments) add(ev, { reavers: t && ev.host_team_id === t.id ? "hosting" : "" });
-    for (const ev of hosted) add(ev, { reavers: "hosting" });
+    const enteredIn = new Map();
     for (const row of entered) {
       if (row.status === "withdrawn") continue;
       const comp = Array.isArray(row.competitions) ? row.competitions[0] : row.competitions;
       const ev = comp && (Array.isArray(comp.events) ? comp.events[0] : comp.events);
-      add(ev, { competition: comp?.name || "", reavers: "entered" });
+      if (!ev?.id) continue;
+      const names = enteredIn.get(ev.id) || [];
+      if (comp.name && !names.includes(comp.name)) names.push(comp.name);
+      enteredIn.set(ev.id, names);
     }
+    const toItem = ev => ({
+      id: ev.id, name: ev.name, slug: ev.slug, type: ev.event_type || "tournament", startsOn: ev.starts_on, endsOn: ev.ends_on,
+      where: [ev.venue, place(ev.city, ev.region)].filter(Boolean).join(", "),
+      details: String(ev.description || "").replace(/\s+/g, " ").trim().slice(0, 220), url: links.event(ev.slug),
+      competitions: enteredIn.get(ev.id) || [],
+      reavers: t && ev.host_team_id === t.id ? "hosting" : enteredIn.has(ev.id) ? "entered" : "",
+      past: (ev.ends_on || ev.starts_on) < today
+    });
+    const rows = [...upcoming, ...past].filter(ev => ev && ev.status === "published");
     // Fails closed: if test events cannot be identified, none are shown.
-    const synthetic = await syntheticIds("event", [...byId.keys()]);
-    return [...byId.values()].filter(e => !synthetic.has(e.id)).sort((a, b) => String(a.startsOn).localeCompare(String(b.startsOn)));
+    const synthetic = await syntheticIds("event", rows.map(ev => ev.id));
+    return rows.filter(ev => !synthetic.has(ev.id)).map(toItem);
   }
 
   /** One fighter's public profile, career numbers and placings. Null when the id is unknown. */
@@ -232,5 +240,5 @@
     };
   }
 
-  window.BUHURTOS = { config: CONFIG, links, team, teamRoster, teamStats, teamResults, upcomingEvents, fighter, categoryName, avatarUrl, isId: id => UUID.test(String(id || "")) };
+  window.BUHURTOS = { config: CONFIG, links, team, teamRoster, teamStats, teamResults, allEvents, fighter, categoryName, avatarUrl, isId: id => UUID.test(String(id || "")) };
 })();

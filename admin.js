@@ -57,7 +57,7 @@
   async function loadBos(){
     if(!window.BUHURTOS)return;
     try{state.bos=(await window.BUHURTOS.teamRoster()).fighters;state.bosError=false}catch{state.bos=null;state.bosError=true}
-    try{state.bosEvents=await window.BUHURTOS.upcomingEvents()}catch{state.bosEvents=null}
+    try{state.bosEvents=await window.BUHURTOS.allEvents()}catch{state.bosEvents=null}
     renderBos();
   }
 
@@ -77,8 +77,13 @@
     if(events){
       if(state.bosEvents===undefined)events.innerHTML='<li><span>Loading events from BuhurtOS…</span></li>';
       else if(state.bosEvents===null)events.innerHTML='<li><span>BuhurtOS could not be reached just now.</span></li>';
-      else if(!state.bosEvents.length)events.innerHTML='<li><span>No upcoming tournaments on BuhurtOS yet. When there are, they appear on the public Events page automatically.</span></li>';
-      else events.innerHTML=state.bosEvents.map(e=>`<li><div><b>${esc(e.name)}</b> <span>${e.reavers?`Reavers ${esc(e.reavers)} · `:""}${esc(dateLabel(e.startsOn))}${e.endsOn&&e.endsOn!==e.startsOn?` to ${esc(dateLabel(e.endsOn))}`:""}${e.where?` · ${esc(e.where)}`:""}</span></div><div class="bos-row-actions"><a href="${esc(e.url)}" target="_blank" rel="noopener">Open</a></div></li>`).join("");
+      else{
+        const up=state.bosEvents.filter(e=>!e.past),past=state.bosEvents.length-up.length;
+        const rows=up.map(e=>`<li><div><b>${esc(e.name)}</b> <span>${e.reavers?`Reavers ${esc(e.reavers)} · `:""}${esc(dateLabel(e.startsOn))}${e.endsOn&&e.endsOn!==e.startsOn?` to ${esc(dateLabel(e.endsOn))}`:""}${e.where?` · ${esc(e.where)}`:""}</span></div><div class="bos-row-actions"><a href="${esc(e.url)}" target="_blank" rel="noopener">Open</a></div></li>`);
+        if(!up.length)rows.push('<li><span>No upcoming events on BuhurtOS yet. When there are, they appear on the public Events page automatically.</span></li>');
+        rows.push(`<li><span>${past} past event${past===1?"":"s"} ${past===1?"is":"are"} also shown in the Events page archive.</span></li>`);
+        events.innerHTML=rows.join("");
+      }
     }
   }
 
