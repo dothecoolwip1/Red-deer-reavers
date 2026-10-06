@@ -357,7 +357,7 @@
   var nudgeCheckedFor = null;
   // Red deer antlers over a Reavers shield with crossed swords. Fixed artwork, no data.
   var CREST = '<svg viewBox="0 0 64 84" width="50" height="66" aria-hidden="true" focusable="false">' +
-    '<g fill="none" stroke="#c9ced6" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">' +
+    '<g fill="none" stroke="#4f5865" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">' +
       '<path d="M26 18 C22 13 19 9 18 2"/><path d="M21.5 11 C17 10 13 8 10 4"/><path d="M19.2 6 L14.5 2.5"/>' +
       '<path d="M38 18 C42 13 45 9 46 2"/><path d="M42.5 11 C47 10 51 8 54 4"/><path d="M44.8 6 L49.5 2.5"/></g>' +
     '<path d="M32 15 L59 24 V46 C59 64 46 75 32 81 C18 75 5 64 5 46 V24 Z" fill="#800080" stroke="#FFA500" stroke-width="3"/>' +
