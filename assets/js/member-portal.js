@@ -489,12 +489,16 @@
   var NOM = { awaiting_acceptance: 'Awaiting acceptance', accepted: 'Accepted', declined: 'Declined', withdrawn: 'Withdrawn' };
   var NOM_CHIP = { awaiting_acceptance: 'pending', accepted: 'active', declined: 'cannot', withdrawn: '' };
   function agmName() { return state.agm.meeting.year + ' Red Deer Reavers AGM'; }
-  // DISPLAY ONLY. An office holder is shown from the officer records. For an office with no record (its holder has no BuhurtOS account yet) the
-  // page shows the name below instead of "not assigned". It decides nothing: it grants no permission, and it is ignored the moment the office has a real holder.
+  // DISPLAY ONLY. Every place that names an office holder goes through officerName(). The name comes from the officer records / the database.
+  //  * The database may label an office whose holder has no BuhurtOS account yet as "Kedrixx (no currently active account)": that awkward system
+  //    wording is shown as "Kedrixx (account not currently linked)". The data itself is not changed.
+  //  * If an office has no name at all, OFFICER_NO_ACCOUNT supplies the name below; otherwise it reads "not assigned".
+  // None of this decides anything or grants any permission, and the fallback names are ignored the moment an office has a real holder.
+  var NOT_LINKED = ' (account not currently linked)';
   var OFFICER_NO_ACCOUNT = { president: 'Kedrixx', treasurer: 'Carmalee' };
   function officerName(office, name) {
-    if (name) return name;
-    return OFFICER_NO_ACCOUNT[office] ? OFFICER_NO_ACCOUNT[office] + ' - no active account' : 'not assigned';
+    if (name) return String(name).replace(/\s*\(no currently active account\)\s*$/i, NOT_LINKED);
+    return OFFICER_NO_ACCOUNT[office] ? OFFICER_NO_ACCOUNT[office] + NOT_LINKED : 'not assigned';
   }
   function loadAgmx(redraw) {
     if (!state.agm || !state.agm.meeting) { state.agmx = null; return Promise.resolve(); }
