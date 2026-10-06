@@ -145,7 +145,7 @@ fieldset.plain .check { margin: 4px 0; }
 .fighter-nudge p { margin: 0 0 8px; font-size: .97rem; line-height: 1.45; }
 .fn-acts { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 8px; }
 .fn-acts .btn-rdr, .fn-acts .btn-line { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
-.fn-go .fn-x { margin-right: 6px; }
+.fighter-nudge .fn-x { margin-right: 6px; }
 .fn-go { background: linear-gradient(135deg, #8f1a8f, #5c005c); box-shadow: inset 0 0 0 1px rgba(255, 165, 0, .55), 0 2px 6px rgba(92, 0, 92, .3); color: #fff; }
 .fn-go:hover, .fn-go:focus-visible { background: linear-gradient(135deg, #a020a0, #6b006b); color: #fff; }
 .fn-later { background: rgba(255, 255, 255, .6); border-color: #b08a4a; color: #3a2a12; }
@@ -156,7 +156,7 @@ fieldset.plain .check { margin: 4px 0; }
 @media (max-width: 480px) {
   .fighter-nudge { display: block; padding: 14px 12px 12px; }
   .fn-crest { float: left; margin: 0 10px 2px 0; }
-  .fn-crest svg { width: 34px; height: 38px; }
+  .fn-crest svg { width: 36px; height: 48px; }
   .fn-acts { clear: both; }
   .fighter-nudge h2 { font-size: 1.15rem; }
   .fn-acts > * { flex: 1 1 100%; }

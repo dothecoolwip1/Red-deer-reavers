@@ -292,15 +292,19 @@
   // A Reavers member whose account has no BuhurtOS fighter profile yet gets one small notice. The check is BuhurtOS's own my_fighter_id():
   // it reads fighter_accounts for auth.uid() only (the same link the executive's member roster uses) and can never answer for anyone else.
   // A fighter profile is forged when the team captain accepts a join request (BuhurtOS /team-manager?join=), or claimed at /claim-profile.
-  // "Maybe later" lasts for this browser session; signing out forgets it, so a later sign-in may remind again until the profile exists.
+  // "Maybe Later" lasts for this browser session; signing out forgets it, so a later sign-in may remind again until the profile exists.
   var NUDGE_KEY = 'rdr-fighter-nudge-later:';
   var nudgeCheckedFor = null;
-  var CREST = '<svg viewBox="0 0 64 72" width="52" height="58" aria-hidden="true" focusable="false">' +
-    '<path d="M32 3 L59 12 V34 C59 52 46 63 32 69 C18 63 5 52 5 34 V12 Z" fill="#800080" stroke="#FFA500" stroke-width="3"/>' +
-    '<path d="M32 9 L53 16 V34 C53 48 43 57 32 62 C21 57 11 48 11 34 V16 Z" fill="none" stroke="#d9a5d9" stroke-width="1" opacity=".55"/>' +
-    '<g stroke="#e6e9ee" stroke-width="3.2" stroke-linecap="round"><path d="M19 21 L45 49"/><path d="M45 21 L19 49"/></g>' +
-    '<g stroke="#FFA500" stroke-width="3.2" stroke-linecap="round"><path d="M38 46 L48 40"/><path d="M26 46 L16 40"/></g>' +
-    '<g fill="#FFA500"><circle cx="48.5" cy="51.5" r="2.6"/><circle cx="15.5" cy="51.5" r="2.6"/></g></svg>';
+  // Red deer antlers over a Reavers shield with crossed swords. Fixed artwork, no data.
+  var CREST = '<svg viewBox="0 0 64 84" width="50" height="66" aria-hidden="true" focusable="false">' +
+    '<g fill="none" stroke="#c9ced6" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">' +
+      '<path d="M26 18 C22 13 19 9 18 2"/><path d="M21.5 11 C17 10 13 8 10 4"/><path d="M19.2 6 L14.5 2.5"/>' +
+      '<path d="M38 18 C42 13 45 9 46 2"/><path d="M42.5 11 C47 10 51 8 54 4"/><path d="M44.8 6 L49.5 2.5"/></g>' +
+    '<path d="M32 15 L59 24 V46 C59 64 46 75 32 81 C18 75 5 64 5 46 V24 Z" fill="#800080" stroke="#FFA500" stroke-width="3"/>' +
+    '<path d="M32 21 L53 28 V46 C53 60 43 69 32 74 C21 69 11 60 11 46 V28 Z" fill="none" stroke="#d9a5d9" stroke-width="1" opacity=".55"/>' +
+    '<g stroke="#e6e9ee" stroke-width="3.2" stroke-linecap="round"><path d="M19 33 L45 61"/><path d="M45 33 L19 61"/></g>' +
+    '<g stroke="#FFA500" stroke-width="3.2" stroke-linecap="round"><path d="M38 58 L48 52"/><path d="M26 58 L16 52"/></g>' +
+    '<g fill="#FFA500"><circle cx="48.5" cy="63.5" r="2.6"/><circle cx="15.5" cy="63.5" r="2.6"/></g></svg>';
   function laterSet(uid) { try { return sessionStorage.getItem(NUDGE_KEY + uid) === '1'; } catch (e) { return false; } }
   function hideFighterNudge() { var n = $('fighter-nudge'); n.hidden = true; n.textContent = ''; }
   function forgetFighterNudge(uid) {
@@ -327,15 +331,15 @@
     box.appendChild(h('aside', { class: 'fighter-nudge', role: 'region', 'aria-labelledby': 'fn-title', 'data-testid': 'fighter-nudge' },
       crest,
       h('div', { class: 'fn-body' },
-        h('h2', { id: 'fn-title' }, 'Hold, brave Reaver!'),
-        h('p', {}, 'Your Reavers account is ready, but your BuhurtOS fighter profile has not yet been forged.'),
-        h('p', {}, 'Once it is, your name on the Reavers site links straight to your fighter page: events, stats, team and tournament history.'),
+        h('h2', { id: 'fn-title' }, h('span', { class: 'fn-x', 'aria-hidden': 'true' }, '⚔️'), 'Hold, brave Reaver!'),
+        h('p', {}, 'Your Reavers account is ready, but your BuhurtOS fighter profile hasn\'t been forged yet.'),
+        h('p', {}, 'Forge your fighter profile so your name can link to your BuhurtOS page, events, stats, teams and fight history.'),
         h('div', { class: 'fn-acts' },
           h('a', { class: 'btn-rdr fn-go', href: CFG.appUrl + '/team-manager?join=' + encodeURIComponent(CFG.teamSlug), rel: 'noopener', 'data-testid': 'fighter-nudge-go' },
             h('span', { class: 'fn-x', 'aria-hidden': 'true' }, '⚔️'), 'Forge My Fighter Profile'),
-          h('button', { type: 'button', class: 'btn-line fn-later', onclick: later, 'data-testid': 'fighter-nudge-later' }, 'Maybe later')),
-        h('p', { class: 'fn-note' }, 'This asks to join the Reavers on BuhurtOS, with the same sign-in. When the captain accepts, your profile is forged. Fought before? ',
-          h('a', { href: CFG.appUrl + '/claim-profile', rel: 'noopener', 'data-testid': 'fighter-nudge-claim' }, 'Claim your existing profile'), '.'))));
+          h('button', { type: 'button', class: 'btn-line fn-later', onclick: later, 'data-testid': 'fighter-nudge-later' }, 'Maybe Later')),
+        h('p', { class: 'fn-note' }, 'Already fought before? ',
+          h('a', { href: CFG.appUrl + '/claim-profile', rel: 'noopener', 'data-testid': 'fighter-nudge-claim' }, 'Claim your existing profile')))));
     box.hidden = false;
   }
 
