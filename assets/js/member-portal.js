@@ -491,7 +491,7 @@
   var OFFICER_NO_ACCOUNT = { president: 'Kedrixx', treasurer: 'Carmalee' };
   function officerName(office, name) {
     if (name) return name;
-    return OFFICER_NO_ACCOUNT[office] ? OFFICER_NO_ACCOUNT[office] + ' (no currently active account)' : 'not assigned';
+    return OFFICER_NO_ACCOUNT[office] ? OFFICER_NO_ACCOUNT[office] + ' - no active account' : 'not assigned';
   }
   function loadAgmx(redraw) {
     if (!state.agm || !state.agm.meeting) { state.agmx = null; return Promise.resolve(); }

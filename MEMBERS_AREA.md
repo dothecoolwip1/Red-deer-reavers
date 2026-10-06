@@ -43,5 +43,4 @@ between them, and nothing here is a security boundary.
 Full design and setup are in the BuhurtOS repository: `docs/runbooks/CLUB_MEMBERSHIP.md`.
 
 **Officer names.** Who holds an office comes from the officer records. An office with no record (its holder has no BuhurtOS account yet) shows the
-display-only name in `OFFICER_NO_ACCOUNT` in `assets/js/member-portal.js` (President: Kedrixx, Treasurer: Carmalee) followed by "(no currently active
-account)". It grants nothing and is ignored as soon as the office has a real holder. Delete the entry once that person's account is assigned.
+display-only name in `OFFICER_NO_ACCOUNT` in `assets/js/member-portal.js` (President: Kedrixx, Treasurer: Carmalee) followed by " - no active account". It grants nothing and is ignored as soon as the office has a real holder. Delete the entry once that person's account is assigned.
