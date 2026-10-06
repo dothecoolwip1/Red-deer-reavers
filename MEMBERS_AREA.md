@@ -7,6 +7,11 @@ One account for the Red Deer Reavers and BuhurtOS. People can create that accoun
   - Sign in: email + password, Google, or an email code.
   - Forgot password (the email link comes back here and asks for a new password).
   - A first-time profile step: BuhurtOS's own `complete_my_profile`, so BuhurtOS never asks again.
+- **Fighter profile notice:** a Reavers member (pending, active or inactive) whose account has no BuhurtOS fighter profile sees one small
+  "⚔️ Hold, brave Reaver!" notice (parchment card, red deer antlers over a Reavers shield) above the tabs. The check is BuhurtOS's own `my_fighter_id()` (the caller's own `fighter_accounts` link, nothing
+  else; the same link the executive's member roster uses). "Forge My Fighter Profile" opens BuhurtOS `/team-manager?join=red-deer-reavers`
+  (a fighter profile is created when the captain accepts the join request); "Already fought before? Claim your existing profile" opens BuhurtOS `/claim-profile`.
+  "Maybe Later" hides it for the browser session; signing out forgets that, and it never shows once the account has a fighter profile.
 - **Join the Red Deer Reavers:**
   - The application, then Membership Application Pending, then Membership: Active.
   - The 2026 membership fee shows as WAIVED.
