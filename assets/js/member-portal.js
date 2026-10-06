@@ -268,9 +268,16 @@
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'club_memberships', filter: 'user_id=eq.' + uid }, function (payload) {
         var before = payload.old && payload.old.status, after = payload.new && payload.new.status;
         if (before === 'pending' && after === 'active') {
-          status('Membership approved. Refreshing…');
+          var approvalTitle = 'Red Deer Reavers Membership Approved';
+          var approvalBody = 'Your membership has been approved. Welcome to the Red Deer Reavers!';
+          status(approvalBody);
+          try {
+            if ('Notification' in window && Notification.permission === 'granted') {
+              new Notification(approvalTitle, { body: approvalBody });
+            }
+          } catch (e) {}
           state.view = 'mine';
-          reload();
+          window.setTimeout(function () { reload(); }, 1200);
         } else {
           reload();
         }
