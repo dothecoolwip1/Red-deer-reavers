@@ -257,6 +257,7 @@
           render();
           loadAgmx();
           fighterNudge();
+          if (myMembership()) ensureReaversPush(false);
         });
       });
     }).catch(function (x) { state.loading = false; status(words(x), true); });
@@ -284,6 +285,65 @@
         }
       })
       .subscribe();
+  }
+  function b64ToBytes(s) {
+    var pad = '='.repeat((4 - (s.length % 4)) % 4);
+    var raw = atob((s + pad).replace(/-/g, '+').replace(/_/g, '/'));
+    var out = new Uint8Array(raw.length);
+    for (var i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
+    return out;
+  }
+  function ensureReaversPush(ask) {
+    if (!state.session || !('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) return Promise.resolve(false);
+    var permission = Notification.permission;
+    var getPermission = ask && permission === 'default' ? Notification.requestPermission() : Promise.resolve(permission);
+    return getPermission.then(function (p) {
+      if (p !== 'granted') return false;
+      return Promise.all([
+        navigator.serviceWorker.register('/Red-deer-reavers/reavers-sw.js', { scope: '/Red-deer-reavers/' }),
+        sb.rpc('push_public_key')
+      ]).then(function (rs) {
+        var reg = rs[0], keyRes = rs[1];
+        if (keyRes.error || !keyRes.data) return false;
+        return reg.pushManager.getSubscription().then(function (sub) {
+          if (sub) return sub;
+          return reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64ToBytes(keyRes.data) });
+        }).then(function (sub) {
+          var json = sub.toJSON(), keys = json.keys || {};
+          if (!sub.endpoint || !keys.p256dh || !keys.auth) return false;
+          return sb.rpc('register_push_device', {
+            p_endpoint: sub.endpoint,
+            p_p256dh: keys.p256dh,
+            p_auth: keys.auth,
+            p_label: 'Red Deer Reavers approval alerts'
+          }).then(function (r) { return !r.error; });
+        });
+      });
+    }).catch(function () { return false; });
+  }
+  function approvalAlertControl() {
+    if (!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)) return null;
+    var wrap = h('div', { class: 'approval-alert' });
+    if (Notification.permission === 'granted') {
+      wrap.appendChild(h('p', { class: 'small' }, '🔔 Approval alerts are enabled on this device.'));
+      return wrap;
+    }
+    if (Notification.permission === 'denied') {
+      wrap.appendChild(h('p', { class: 'small' }, 'Approval alerts are blocked in this browser. You can allow notifications in your browser/site settings.'));
+      return wrap;
+    }
+    var btn = h('button', { type: 'button', class: 'btn-line small-btn' }, '🔔 Notify me when I’m approved');
+    var msg = h('span', { class: 'small' });
+    btn.addEventListener('click', function () {
+      busy(btn, true); msg.textContent = '';
+      ensureReaversPush(true).then(function (ok) {
+        busy(btn, false);
+        if (ok) { btn.textContent = '✓ Approval alerts enabled'; btn.disabled = true; msg.textContent = ' We’ll let you know when your membership is approved.'; }
+        else msg.textContent = ' Notifications were not enabled.';
+      });
+    });
+    wrap.appendChild(btn); wrap.appendChild(msg);
+    return wrap;
   }
   function myMembership() { var o = state.overview; return o ? (o.memberships || []).filter(function (x) { return x.year === o.current_year; })[0] || null : null; }
   function currentYear() { var o = state.overview; return o ? (o.years || []).filter(function (y) { return y.year === o.current_year; })[0] || null : null; }
@@ -458,6 +518,7 @@
         m.discord_name ? [h('dt', {}, 'Discord'), h('dd', {}, m.discord_name)] : null,
         h('dt', {}, 'Applied'), h('dd', {}, dateText(m.applied_at))),
       m.status === 'pending' ? h('p', { class: 'small' }, 'The club executive will review your application. You can already register for the AGM.') : null,
+      m.status === 'pending' ? approvalAlertControl() : null,
       m.status === 'active' && !m.fee_waived && m.dues_status === 'unpaid' ? h('p', { class: 'small' }, 'Pay your ' + money(year ? year.dues_cents : null) + ' dues to the Treasurer; they record it here.') : null,
       h('button', { type: 'button', class: 'btn-rdr', onclick: function () { go('agm'); } }, 'Register for the 2026 AGM')));
   }
