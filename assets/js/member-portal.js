@@ -209,7 +209,7 @@
     if (event === 'PASSWORD_RECOVERY') state.recovery = true;
     var before = state.session && state.session.user.id;
     state.session = session;
-    if (!session) { state.recovery = false; watchMembership(null); renderAll(); return; }
+    if (!session) { state.recovery = false; watchMembership(null); forgetFighterNudge(before); renderAll(); return; }
     if (before !== session.user.id) setTimeout(load, 0); else renderAll();
   });
   sb.auth.getSession().then(function (r) {
@@ -256,6 +256,7 @@
           if (params.get('view') === 'agm-admin' && !rs[0].data.can_view_roster) status('Admin sign in: this account is not a current executive, so there are no admin tools. Your member page is shown instead.');
           render();
           loadAgmx();
+          fighterNudge();
         });
       });
     }).catch(function (x) { state.loading = false; status(words(x), true); });
@@ -286,6 +287,57 @@
   }
   function myMembership() { var o = state.overview; return o ? (o.memberships || []).filter(function (x) { return x.year === o.current_year; })[0] || null : null; }
   function currentYear() { var o = state.overview; return o ? (o.years || []).filter(function (y) { return y.year === o.current_year; })[0] || null : null; }
+
+  // ---------------------------------------------------------------- BuhurtOS fighter profile nudge
+  // A Reavers member whose account has no BuhurtOS fighter profile yet gets one small notice. The check is BuhurtOS's own my_fighter_id():
+  // it reads fighter_accounts for auth.uid() only (the same link the executive's member roster uses) and can never answer for anyone else.
+  // A fighter profile is forged when the team captain accepts a join request (BuhurtOS /team-manager?join=), or claimed at /claim-profile.
+  // "Maybe later" lasts for this browser session; signing out forgets it, so a later sign-in may remind again until the profile exists.
+  var NUDGE_KEY = 'rdr-fighter-nudge-later:';
+  var nudgeCheckedFor = null;
+  var CREST = '<svg viewBox="0 0 64 72" width="52" height="58" aria-hidden="true" focusable="false">' +
+    '<path d="M32 3 L59 12 V34 C59 52 46 63 32 69 C18 63 5 52 5 34 V12 Z" fill="#800080" stroke="#FFA500" stroke-width="3"/>' +
+    '<path d="M32 9 L53 16 V34 C53 48 43 57 32 62 C21 57 11 48 11 34 V16 Z" fill="none" stroke="#d9a5d9" stroke-width="1" opacity=".55"/>' +
+    '<g stroke="#e6e9ee" stroke-width="3.2" stroke-linecap="round"><path d="M19 21 L45 49"/><path d="M45 21 L19 49"/></g>' +
+    '<g stroke="#FFA500" stroke-width="3.2" stroke-linecap="round"><path d="M38 46 L48 40"/><path d="M26 46 L16 40"/></g>' +
+    '<g fill="#FFA500"><circle cx="48.5" cy="51.5" r="2.6"/><circle cx="15.5" cy="51.5" r="2.6"/></g></svg>';
+  function laterSet(uid) { try { return sessionStorage.getItem(NUDGE_KEY + uid) === '1'; } catch (e) { return false; } }
+  function hideFighterNudge() { var n = $('fighter-nudge'); n.hidden = true; n.textContent = ''; }
+  function forgetFighterNudge(uid) {
+    nudgeCheckedFor = null; hideFighterNudge();
+    if (uid) try { sessionStorage.removeItem(NUDGE_KEY + uid); } catch (e) {}
+  }
+  function fighterNudge() {
+    var uid = state.session && state.session.user.id, m = myMembership();
+    if (!uid || !m || m.status === 'removed' || laterSet(uid) || nudgeCheckedFor === uid) return;
+    nudgeCheckedFor = uid;
+    sb.rpc('my_fighter_id').then(function (r) {
+      // Linked (or the check failed): say nothing. Only a definite "no fighter profile" shows the notice.
+      if (r.error || r.data || !state.session || state.session.user.id !== uid) return;
+      showFighterNudge(uid);
+    });
+  }
+  function showFighterNudge(uid) {
+    var box = $('fighter-nudge'); box.textContent = '';
+    var crest = h('div', { class: 'fn-crest' }); crest.innerHTML = CREST;   // fixed artwork, no data
+    var later = function () {
+      try { sessionStorage.setItem(NUDGE_KEY + uid, '1'); } catch (e) {}
+      hideFighterNudge();
+    };
+    box.appendChild(h('aside', { class: 'fighter-nudge', role: 'region', 'aria-labelledby': 'fn-title', 'data-testid': 'fighter-nudge' },
+      crest,
+      h('div', { class: 'fn-body' },
+        h('h2', { id: 'fn-title' }, 'Hold, brave Reaver!'),
+        h('p', {}, 'Your Reavers account is ready, but your BuhurtOS fighter profile has not yet been forged.'),
+        h('p', {}, 'Once it is, your name on the Reavers site links straight to your fighter page: events, stats, team and tournament history.'),
+        h('div', { class: 'fn-acts' },
+          h('a', { class: 'btn-rdr fn-go', href: CFG.appUrl + '/team-manager?join=' + encodeURIComponent(CFG.teamSlug), rel: 'noopener', 'data-testid': 'fighter-nudge-go' },
+            h('span', { class: 'fn-x', 'aria-hidden': 'true' }, '⚔️'), 'Forge My Fighter Profile'),
+          h('button', { type: 'button', class: 'btn-line fn-later', onclick: later, 'data-testid': 'fighter-nudge-later' }, 'Maybe later')),
+        h('p', { class: 'fn-note' }, 'This asks to join the Reavers on BuhurtOS, with the same sign-in. When the captain accepts, your profile is forged. Fought before? ',
+          h('a', { href: CFG.appUrl + '/claim-profile', rel: 'noopener', 'data-testid': 'fighter-nudge-claim' }, 'Claim your existing profile'), '.'))));
+    box.hidden = false;
+  }
 
   // ---------------------------------------------------------------- basic profile (BuhurtOS's own first-sign-in step)
   function renderProfileSetup() {

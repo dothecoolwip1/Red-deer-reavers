@@ -131,3 +131,33 @@ fieldset.plain .check { margin: 4px 0; }
 .help-body ol.browser-default li { list-style-type: decimal; padding-left: 2px; margin-bottom: 4px; }
 .help-role { padding: 8px 0; border-top: 1px solid #eee; }
 .help-role:first-of-type { border-top: 0; }
+/* BuhurtOS fighter profile nudge: a small guild notice, never a modal */
+.fighter-nudge { position: relative; display: flex; gap: 14px; align-items: flex-start; max-width: 600px; margin: 0 0 16px; padding: 16px 16px 14px;
+  border-radius: 12px; border: 1px solid #b08a4a; color: #3a2a12; box-sizing: border-box;
+  background: radial-gradient(120% 90% at 0% 0%, #fffaf0 0%, #f7ebcf 60%, #eedcb3 100%);
+  box-shadow: 0 0 0 4px #2f3540, 0 0 0 5px #8a929e, 0 8px 22px rgba(30, 20, 40, .22);
+  animation: fn-in .35s ease-out both; }
+.fighter-nudge::before { content: ""; position: absolute; inset: 5px; border: 1px dashed rgba(128, 0, 128, .35); border-radius: 8px; pointer-events: none; }
+.fighter-nudge::after { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 4px; border-radius: 12px 12px 0 0; background: linear-gradient(to right, #FFA500, #800080); }
+.fn-crest { flex: 0 0 auto; line-height: 0; margin-top: 2px; filter: drop-shadow(0 2px 2px rgba(0, 0, 0, .25)); }
+.fn-body { min-width: 0; flex: 1; overflow-wrap: anywhere; }
+.fighter-nudge h2 { font-family: 'Cinzel', serif; font-weight: 700; font-size: 1.3rem; line-height: 1.2; color: #5c005c; margin: 0 0 6px; letter-spacing: .02em; }
+.fighter-nudge p { margin: 0 0 8px; font-size: .97rem; line-height: 1.45; }
+.fn-acts { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 8px; }
+.fn-acts .btn-rdr, .fn-acts .btn-line { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
+.fn-go .fn-x { margin-right: 6px; }
+.fn-go { background: linear-gradient(135deg, #8f1a8f, #5c005c); box-shadow: inset 0 0 0 1px rgba(255, 165, 0, .55), 0 2px 6px rgba(92, 0, 92, .3); color: #fff; }
+.fn-go:hover, .fn-go:focus-visible { background: linear-gradient(135deg, #a020a0, #6b006b); color: #fff; }
+.fn-later { background: rgba(255, 255, 255, .6); border-color: #b08a4a; color: #3a2a12; }
+.fighter-nudge .fn-note { font-size: .85rem; color: #6a5532; margin: 0; }
+.fighter-nudge a:not(.btn-rdr) { color: #800080; font-weight: 600; text-decoration: underline; }
+@keyframes fn-in { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .fighter-nudge { animation: none; } }
+@media (max-width: 480px) {
+  .fighter-nudge { display: block; padding: 14px 12px 12px; }
+  .fn-crest { float: left; margin: 0 10px 2px 0; }
+  .fn-crest svg { width: 34px; height: 38px; }
+  .fn-acts { clear: both; }
+  .fighter-nudge h2 { font-size: 1.15rem; }
+  .fn-acts > * { flex: 1 1 100%; }
+}
