@@ -156,7 +156,7 @@ fieldset.plain .check { margin: 4px 0; }
 @media (max-width: 480px) {
   .fighter-nudge { display: block; padding: 14px 12px 12px; }
   .fn-crest { float: left; margin: 0 10px 2px 0; }
-  .fn-crest svg { width: 36px; height: 48px; }
+  .fn-crest svg { width: 40px; height: 53px; }
   .fn-acts { clear: both; }
   .fighter-nudge h2 { font-size: 1.15rem; }
   .fn-acts > * { flex: 1 1 100%; }
