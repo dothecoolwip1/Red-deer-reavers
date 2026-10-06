@@ -53,6 +53,7 @@
 
             <div data-auth-panel="signin">
                 <h2>Member sign in</h2>
+                <p class="small" id="admin-note" hidden><b>Admin sign in:</b> use your normal Reavers / BuhurtOS account. There is no separate admin login. The executive tools appear automatically if you currently hold an executive role.</p>
                 <p class="small">Already on BuhurtOS? Use the same email and password (or Google) here. Do not create a second account.</p>
                 <form id="password-form" autocomplete="on" novalidate>
                     <label class="fld">Email<input class="browser-default" id="email" type="email" autocomplete="username" required></label>
@@ -74,6 +75,7 @@
             <div data-auth-panel="signup" hidden>
                 <h2>Create your account</h2>
                 <p class="small">This creates your BuhurtOS account: the one account for the Reavers website and BuhurtOS. Next you can join the Red Deer Reavers.</p>
+                <p class="small">Thinking of joining? Read the <a href="https://drive.google.com/file/d/1R9EDu7BpUZ1KM790BDNN0iIaXZYtUtCE/view?usp=drivesdk" target="_blank" rel="noopener noreferrer" data-testid="bylaws-link-signup">Red Deer Reavers bylaws (PDF, opens in a new tab)</a> first. Creating an account does not make you a member.</p>
                 <form id="signup-form" autocomplete="on" novalidate>
                     <label class="fld">Your name<input class="browser-default" id="su-name" autocomplete="name" maxlength="80"></label>
                     <label class="fld">Email<input class="browser-default" id="su-email" type="email" autocomplete="username"></label>
@@ -161,6 +163,7 @@
                 <div class="col s12 m4 center-align">
                     <a href="index.html" class="white-text">Home</a><br>
                     <a href="contact.html" class="white-text">Contact Us</a>
+                    <div class="footer-signin" style="margin-top:14px;"><a href="members.html" class="white-text" style="display:inline-block; margin:4px; padding:8px 16px; border:2px solid #fff; border-radius:6px; color:#fff; font-weight:700; text-decoration:none;">Member Sign In</a><a href="members.html?view=agm-admin" class="white-text" style="display:inline-block; margin:4px; padding:8px 16px; border:2px solid #fff; border-radius:6px; color:#fff; font-weight:700; text-decoration:none;">Admin Sign In</a></div>
                 </div>
             </div>
         </div>
