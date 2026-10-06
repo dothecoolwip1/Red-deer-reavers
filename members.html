@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Red Deer Reavers members area: sign in with your BuhurtOS account to see your membership, dues and AGM voting status.">
+    <meta name="robots" content="noindex">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src https://mvbxlebznlgroptwwdsm.supabase.co wss://mvbxlebznlgroptwwdsm.supabase.co; base-uri 'self'; form-action 'self'">
+    <title>Members | Red Deer Reavers</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="assets/members.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="no-print">
+        <div class="nav-wrapper container">
+            <a href="index.html" class="brand-logo"><img src="assets/logo.jpg" alt="Red Deer Reavers logo"></a>
+            <a href="#" data-target="mobile-nav" class="sidenav-trigger"><i class="material-icons">menu</i></a>
+            <ul class="right hide-on-med-and-down">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="about.html">About Us</a></li>
+                <li><a href="programs.html">Programs & Events</a></li>
+                <li><a href="agm.html">AGM 2026</a></li>
+                <li><a href="contact.html">Contact Us</a></li>
+                <li class="active"><a href="members.html">Members</a></li>
+            </ul>
+        </div>
+    </nav>
+    <ul class="sidenav" id="mobile-nav">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="about.html">About Us</a></li>
+        <li><a href="programs.html">Programs & Events</a></li>
+        <li><a href="agm.html">AGM 2026</a></li>
+        <li><a href="contact.html">Contact Us</a></li>
+        <li><a href="members.html">Members</a></li>
+    </ul>
+
+    <main class="members container">
+        <h1 class="members-title">Members</h1>
+        <p class="lede no-print">Sign in with your <b>BuhurtOS account</b>. It is the same account you use on BuhurtOS: one email, one password, no separate Reavers account.</p>
+
+        <div id="status" role="status" aria-live="polite"></div>
+
+        <!-- Signed out -->
+        <section id="signed-out" class="card-panel" hidden>
+            <h2>Member sign in</h2>
+            <form id="password-form" autocomplete="on" novalidate>
+                <label class="fld">Email<input class="browser-default" id="email" type="email" autocomplete="username" required></label>
+                <label class="fld">Password<input class="browser-default" id="password" type="password" autocomplete="current-password"></label>
+                <button class="btn-rdr" type="submit" id="password-btn">Sign in</button>
+            </form>
+            <div class="or"><span>or</span></div>
+            <form id="code-form" novalidate>
+                <p class="small">No password, or you sign in to BuhurtOS with Google? Get a 6-digit code by email. A new email address gets a new BuhurtOS account.</p>
+                <button class="btn-line" type="submit" id="code-send-btn">Email me a sign-in code</button>
+                <div id="code-step" hidden>
+                    <label class="fld">6-digit code<input class="browser-default" id="code" inputmode="numeric" autocomplete="one-time-code" maxlength="10"></label>
+                    <button class="btn-rdr" type="button" id="code-verify-btn">Sign in with code</button>
+                </div>
+            </form>
+            <p class="small links">
+                <a id="link-forgot" href="#">Forgot password?</a> ·
+                <a id="link-signup" href="#">Create an account with a password</a>
+                <br>These open BuhurtOS. Come back here and sign in afterwards.
+            </p>
+        </section>
+
+        <!-- Signed in -->
+        <section id="signed-in" hidden>
+            <div class="account-bar no-print">
+                <span>Signed in as <b id="who"></b> <span class="small">(BuhurtOS account)</span></span>
+                <button class="btn-line small-btn" id="sign-out" type="button">Sign out</button>
+            </div>
+            <nav class="tabs-rdr no-print" id="tabs" hidden aria-label="Members area"></nav>
+            <div id="view"></div>
+            <p class="small no-print" id="buhurtos-link"></p>
+        </section>
+    </main>
+
+    <dialog id="dues-dialog" aria-labelledby="dues-title">
+        <form method="dialog" id="dues-form">
+            <h3 id="dues-title">Dues</h3>
+            <p class="small" id="dues-now"></p>
+            <div class="dues-pick" role="radiogroup" aria-label="Dues status">
+                <label><input type="radio" name="dues" value="paid"><span>Paid</span></label>
+                <label><input type="radio" name="dues" value="unpaid"><span>Unpaid</span></label>
+                <label><input type="radio" name="dues" value="waived"><span>Waived</span></label>
+                <label><input type="radio" name="dues" value="gear_contribution"><span>Gear contribution</span></label>
+            </div>
+            <label class="fld" id="dues-amount-wrap">Amount (empty = normal dues)<input class="browser-default" id="dues-amount" inputmode="decimal"></label>
+            <label class="fld">Note (optional)<input class="browser-default" id="dues-note" maxlength="300"></label>
+            <p class="small">Recorded in the dues history with your name and office.</p>
+            <p class="err" id="dues-err" role="alert"></p>
+            <div class="row-btns">
+                <button class="btn-rdr" id="dues-save" value="save" type="submit">Save dues</button>
+                <button class="btn-line" value="cancel" type="button" id="dues-cancel">Cancel</button>
+            </div>
+        </form>
+    </dialog>
+
+    <footer class="page-footer no-print">
+        <div class="container">
+            <div class="row" style="display:flex; align-items:center; flex-wrap:wrap;">
+                <div class="col s12 m8 center-align">
+                    <img src="assets/logo.jpg" alt="Red Deer Reavers logo" style="width:90px; margin-bottom:12px;">
+                    <h5 class="white-text" style="font-family:'Cinzel', serif;">Red Deer Reavers</h5>
+                    <p class="white-text">Historical Armored Combat in Central Alberta</p>
+                </div>
+                <div class="col s12 m4 center-align">
+                    <a href="index.html" class="white-text">Home</a><br>
+                    <a href="contact.html" class="white-text">Contact Us</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <script src="assets/js/vendor/supabase-js-2.117.2.umd.js"></script>
+    <script src="assets/js/buhurtos-config.js"></script>
+    <script src="assets/js/member-portal.js"></script>
+</body>
+</html>
