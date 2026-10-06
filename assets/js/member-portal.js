@@ -29,6 +29,7 @@
   var ATTEND = { present_in_person: 'Present in person', present_video: 'Present by video', absent: 'Absent' };
   var INTERESTS = [['fighter', 'Fighter'], ['volunteer', 'Volunteer / helper'], ['fan', 'Supporter / fan'], ['captain', 'Team captain'], ['organizer', 'Event organizer']];
   var MIN_PASSWORD = 8;
+  var membershipChannel = null;
 
   function today() { var d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
   function money(c) { return c == null ? '' : '$' + (c / 100).toFixed(c % 100 === 0 ? 0 : 2); }
@@ -208,7 +209,7 @@
     if (event === 'PASSWORD_RECOVERY') state.recovery = true;
     var before = state.session && state.session.user.id;
     state.session = session;
-    if (!session) { state.recovery = false; renderAll(); return; }
+    if (!session) { state.recovery = false; watchMembership(null); renderAll(); return; }
     if (before !== session.user.id) setTimeout(load, 0); else renderAll();
   });
   sb.auth.getSession().then(function (r) {
@@ -238,6 +239,7 @@
     bl.appendChild(h('a', { href: CFG.appUrl + '/', rel: 'noopener' }, 'Open BuhurtOS'));
     bl.appendChild(document.createTextNode(' with the same sign-in for events, teams and your fighter profile.'));
     var uid = state.session.user.id;
+    watchMembership(uid);
     sb.from('profiles').select('display_name,onboarded_at,interests,city,region,country').eq('id', uid).maybeSingle().then(function (p) {
       state.profile = p.data || null;
       if (!state.profile || !state.profile.onboarded_at) { state.loading = false; status(''); return renderProfileSetup(); }
@@ -259,6 +261,22 @@
     }).catch(function (x) { state.loading = false; status(words(x), true); });
   }
   function reload() { state.loading = false; state.overview = null; state.agmRows = null; state.agmx = null; load(); }
+  function watchMembership(uid) {
+    if (membershipChannel) { sb.removeChannel(membershipChannel); membershipChannel = null; }
+    if (!uid) return;
+    membershipChannel = sb.channel('reavers-membership-' + uid)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'club_memberships', filter: 'user_id=eq.' + uid }, function (payload) {
+        var before = payload.old && payload.old.status, after = payload.new && payload.new.status;
+        if (before === 'pending' && after === 'active') {
+          status('Membership approved. Refreshing…');
+          state.view = 'mine';
+          reload();
+        } else {
+          reload();
+        }
+      })
+      .subscribe();
+  }
   function myMembership() { var o = state.overview; return o ? (o.memberships || []).filter(function (x) { return x.year === o.current_year; })[0] || null : null; }
   function currentYear() { var o = state.overview; return o ? (o.years || []).filter(function (y) { return y.year === o.current_year; })[0] || null : null; }
 
