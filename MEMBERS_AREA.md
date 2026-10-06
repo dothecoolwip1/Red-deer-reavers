@@ -15,6 +15,9 @@ One account for the Red Deer Reavers and BuhurtOS. People can create that accoun
   - In Person, Video Call, Voting by Proxy or Not Attending.
   - Change the answer, change the proxy, or cancel the proxy.
   - The private video link appears once the executive adds it.
+  - **How the AGM Works**: six short, collapsed help sections under the AGM controls (who can vote, how to join, executive roles, how nominations
+    work, submitting a topic, RSVP and proxy voting). The date, place and fee come from the system; every button named in the help is a real button
+    (checked by the browser tests).
   - **Something you want discussed?** Submit a concern or topic for the AGM; see, edit or withdraw your own until the meeting starts.
   - **Executive Nominations** for President, Secretary and Treasurer: nominate yourself or another voting member; a nominated member accepts
     or declines (You've Been Nominated); the page lists current officers and accepted candidates. Only members who can vote may nominate.
@@ -38,3 +41,7 @@ between them, and nothing here is a security boundary.
 | `assets/members.css` | Styles |
 
 Full design and setup are in the BuhurtOS repository: `docs/runbooks/CLUB_MEMBERSHIP.md`.
+
+**Officer names.** Who holds an office comes from the officer records. An office with no record (its holder has no BuhurtOS account yet) shows the
+display-only name in `OFFICER_NO_ACCOUNT` in `assets/js/member-portal.js` (President: Kedrixx, Treasurer: Carmalee) followed by "(no currently active
+account)". It grants nothing and is ignored as soon as the office has a real holder. Delete the entry once that person's account is assigned.

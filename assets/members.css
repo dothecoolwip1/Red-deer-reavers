@@ -118,3 +118,16 @@ fieldset.plain .check { margin: 4px 0; }
 .cand-mine { margin: 8px 0 12px; }
 .nominate-box { margin: 14px 0; }
 .nominated-box .facts { margin-bottom: 14px; }
+/* How the AGM Works (member help) */
+.agm-help { margin-top: 16px; }
+.agm-help h3 { margin-bottom: 4px; }
+.help-item { border: 1px solid #ccc; border-radius: 8px; background: #fff; margin: 6px 0; }
+.help-item > summary { cursor: pointer; padding: 0 12px; min-height: 44px; display: flex; align-items: center; font-weight: 700; }
+.help-item[open] > summary { border-bottom: 1px solid #e5e5e5; }
+.help-body { padding: 4px 12px 12px; overflow-wrap: anywhere; }
+.help-body p { margin: 8px 0; }
+.help-body ul.browser-default, .help-body ol.browser-default { margin: 6px 0; padding-left: 22px; }
+.help-body ul.browser-default li { list-style-type: disc; }
+.help-body ol.browser-default li { list-style-type: decimal; padding-left: 2px; margin-bottom: 4px; }
+.help-role { padding: 8px 0; border-top: 1px solid #eee; }
+.help-role:first-of-type { border-top: 0; }
