@@ -218,6 +218,7 @@
 
   function renderAll() {
     var signedIn = !!state.session;
+    var adminNote = $('admin-note'); if (adminNote) adminNote.hidden = signedIn || new URLSearchParams(window.location.search).get('view') !== 'agm-admin';
     $('signed-out').hidden = signedIn;
     $('new-password').hidden = !(signedIn && state.recovery);
     $('signed-in').hidden = !signedIn || state.recovery;
@@ -250,6 +251,7 @@
           status('');
           var params = new URLSearchParams(window.location.search);
           if (!state.view) state.view = params.get('view') || (myMembership() ? 'mine' : 'join');
+          if (params.get('view') === 'agm-admin' && !rs[0].data.can_view_roster) status('Admin sign in: this account is not a current executive, so there are no admin tools. Your member page is shown instead.');
           render();
           loadAgmx();
         });
@@ -340,6 +342,7 @@
       h('label', { class: 'fld' }, 'Date of birth (optional if you confirm 18+ below)', dob),
       h('label', { class: 'check' }, adult, h('span', {}, 'I confirm I am 18 or older')),
       h('label', { class: 'check' }, bylaws, h('span', {}, 'I agree to follow the Red Deer Reavers bylaws and team standards')),
+      CFG.bylawsUrl ? h('p', { class: 'small' }, h('a', { href: CFG.bylawsUrl, target: '_blank', rel: 'noopener noreferrer', 'data-testid': 'bylaws-link-join' }, 'Read the bylaws (PDF, opens in a new tab)')) : null,
       h('p', { class: 'small' }, 'Members under 18 are welcome but cannot vote.'), err, btn);
     form.addEventListener('submit', function (e) {
       e.preventDefault(); err.textContent = '';
