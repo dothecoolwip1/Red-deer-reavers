@@ -15,9 +15,13 @@ One account for the Red Deer Reavers and BuhurtOS. People can create that accoun
   - In Person, Video Call, Voting by Proxy or Not Attending.
   - Change the answer, change the proxy, or cancel the proxy.
   - The private video link appears once the executive adds it.
+  - **Something you want discussed?** Submit a concern or topic for the AGM; see, edit or withdraw your own until the meeting starts.
+  - **Executive Nominations** for President, Secretary and Treasurer: nominate yourself or another voting member; a nominated member accepts
+    or declines (You've Been Nominated); the page lists current officers and accepted candidates. Only members who can vote may nominate.
+    Nominations never change who holds an office: that is decided at the AGM.
 - **Executive** (current Reavers executive only; the database checks it):
   - Members and dues.
-  - AGM admin: counts, filters, check-in, video link.
+  - AGM admin: counts, filters, check-in, video link; Concerns (set Submitted / Added to Agenda / Addressed); Nominations (candidates per office).
   - Proxies.
   - Printable AGM voting list and the saved official AGM record.
   - Dues history.

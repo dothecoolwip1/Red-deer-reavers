@@ -105,3 +105,16 @@ fieldset.plain .check { margin: 4px 0; }
   body { background: #fff; }
   .agm-count b, .agm-out span { color: #000; }
 }
+/* AGM concerns and executive nominations */
+.fld textarea { border: 1px solid #bbb; border-radius: 8px; padding: 10px 12px; font-size: 16px; background: #fff; width: 100%; box-sizing: border-box; min-height: 130px; resize: vertical; }
+.agm-extra { margin-top: 16px; }
+.agm-extra h4, .office-card h4 { font-size: 1.1rem; font-weight: 700; margin: 14px 0 8px; }
+.topic-details { white-space: pre-wrap; overflow-wrap: anywhere; }
+.nominated-box { border: 2px solid #23704a; border-radius: 10px; padding: 14px; background: #f1faf4; margin: 0 0 14px; }
+.nominated-box h3 { margin: 0 0 8px; }
+.nominated-box .row-btns .btn-rdr, .nominated-box .row-btns .btn-line { flex: 1 1 140px; min-height: 46px; }
+.office-card { border: 1px solid #ccc; border-radius: 8px; padding: 12px; margin: 0 0 10px; background: #fff; display: grid; gap: 4px; }
+.confirm-line { font-weight: 700; margin: 12px 0; }
+.cand-mine { margin: 8px 0 12px; }
+.nominate-box { margin: 14px 0; }
+.nominated-box .facts { margin-bottom: 14px; }

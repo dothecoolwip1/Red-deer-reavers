@@ -19,7 +19,8 @@
   var HERE = window.location.origin + window.location.pathname;
   var $ = function (id) { return document.getElementById(id); };
   var state = { session: null, profile: null, team: null, overview: null, agm: null, view: null, year: null, roster: null, filter: 'all', search: '',
-    duesFor: null, agmRows: null, agmFilter: 'all', agmSearch: '', proxyPick: false, recovery: false, loading: false };
+    duesFor: null, agmRows: null, agmFilter: 'all', agmSearch: '', proxyPick: false, recovery: false, loading: false,
+    agmx: null, agmxError: '', topicForm: null, topicNotice: '', nomMode: null, nomOffice: null, nomTarget: '', nomNotice: '', agmSection: 'people', topicFilter: 'all' };
 
   var MEMBERSHIP = { pending: 'Pending', active: 'Active', inactive: 'Inactive', removed: 'Removed' };
   var DUES = { unpaid: 'Unpaid', paid: 'Paid', waived: 'Waived', gear_contribution: 'Gear contribution' };
@@ -221,7 +222,7 @@
     $('new-password').hidden = !(signedIn && state.recovery);
     $('signed-in').hidden = !signedIn || state.recovery;
     $('lede').hidden = signedIn;
-    if (!signedIn) { $('view').textContent = ''; state.overview = null; state.agm = null; state.profile = null; state.team = null; }
+    if (!signedIn) { $('view').textContent = ''; state.overview = null; state.agm = null; state.agmx = null; state.profile = null; state.team = null; }
   }
 
   // ================================================================ load the signed-in person
@@ -250,11 +251,12 @@
           var params = new URLSearchParams(window.location.search);
           if (!state.view) state.view = params.get('view') || (myMembership() ? 'mine' : 'join');
           render();
+          loadAgmx();
         });
       });
     }).catch(function (x) { state.loading = false; status(words(x), true); });
   }
-  function reload() { state.loading = false; state.overview = null; state.agmRows = null; load(); }
+  function reload() { state.loading = false; state.overview = null; state.agmRows = null; state.agmx = null; load(); }
   function myMembership() { var o = state.overview; return o ? (o.memberships || []).filter(function (x) { return x.year === o.current_year; })[0] || null : null; }
   function currentYear() { var o = state.overview; return o ? (o.years || []).filter(function (y) { return y.year === o.current_year; })[0] || null : null; }
 
@@ -304,6 +306,7 @@
     });
     var v = $('view'); v.textContent = '';
     if (!o.enabled) { v.appendChild(h('p', {}, 'Membership is not set up yet.')); return; }
+    if (state.view !== 'agm' && state.agmx && (state.agmx.to_respond || []).length) v.appendChild(nominatedBanner());
     ({ join: renderJoin, mine: renderMine, agm: renderAgm, members: renderMembers, 'agm-admin': renderAgmAdmin, proxies: renderProxies, print: renderPrint, history: renderHistory })[state.view](v);
   }
   function go(view) { state.view = view; state.proxyPick = false; render(); window.scrollTo(0, 0); }
@@ -388,6 +391,7 @@
     if (!a || !a.meeting) { v.appendChild(h('p', {}, 'No AGM is scheduled yet.')); return; }
     var card = h('section', { class: 'card-panel', 'data-testid': 'agm-member' }, agmHeader(a));
     v.appendChild(card);
+    v.appendChild(agmExtras());
     if (!a.membership) {
       card.appendChild(h('p', {}, 'Only Red Deer Reavers members can register. Join first: it takes a minute.'));
       card.appendChild(h('button', { type: 'button', class: 'btn-rdr', onclick: function () { go('join'); } }, 'Join the Red Deer Reavers'));
@@ -471,6 +475,187 @@
   }
   function refreshAgm() {
     sb.rpc('club_meeting_member_view', { p_team: state.team.id }).then(function (r) { if (!r.error) state.agm = r.data; render(); });
+  }
+
+  // ================================================================ the AGM: concerns and executive nominations (member)
+  var OFFICE = { president: 'President', secretary: 'Secretary', treasurer: 'Treasurer' };
+  var TOPIC = { submitted: 'Submitted', on_agenda: 'Added to Agenda', addressed: 'Addressed', withdrawn: 'Withdrawn' };
+  var TOPIC_CHIP = { submitted: 'pending', on_agenda: 'rsvp', addressed: 'active', withdrawn: '' };
+  var NOM = { awaiting_acceptance: 'Awaiting acceptance', accepted: 'Accepted', declined: 'Declined', withdrawn: 'Withdrawn' };
+  var NOM_CHIP = { awaiting_acceptance: 'pending', accepted: 'active', declined: 'cannot', withdrawn: '' };
+  function agmName() { return state.agm.meeting.year + ' Red Deer Reavers AGM'; }
+  function loadAgmx(redraw) {
+    if (!state.agm || !state.agm.meeting) { state.agmx = null; return Promise.resolve(); }
+    return sb.rpc('club_agm_member_view', { p_meeting: state.agm.meeting.id }).then(function (r) {
+      state.agmx = r.error ? null : r.data; state.agmxError = r.error ? words(r.error) : '';
+      if (redraw !== false) render();
+    });
+  }
+  function swap(id, build) { var el = $(id); if (el) el.replaceWith(build()); }
+  function agmExtras() {
+    var box = h('div', { id: 'agm-extras' }), x = state.agmx;
+    if (state.agmxError) box.appendChild(h('p', { class: 'err', role: 'alert' }, state.agmxError));
+    if (!x || (!x.is_member && !x.board)) return box;
+    if (x.is_member) box.appendChild(topicsPanel());
+    box.appendChild(nominationsPanel());
+    return box;
+  }
+  function nominatedBanner() {
+    var n = state.agmx.to_respond[0];
+    return h('div', { class: 'nominated-box', role: 'status', 'data-testid': 'nominated-banner' },
+      h('h3', {}, 'You\'ve Been Nominated'),
+      h('p', {}, 'You have been nominated for ' + n.label + ' for the ' + agmName() + '.'),
+      h('button', { type: 'button', class: 'btn-rdr', onclick: function () { go('agm'); } }, 'Review nomination'));
+  }
+
+  // ---- concerns / topics
+  function topicsPanel() {
+    var x = state.agmx, box = h('section', { class: 'card-panel agm-extra', id: 'agm-topics', 'data-testid': 'agm-topics' },
+      h('h3', {}, 'Something you want discussed?'),
+      h('p', {}, 'If there is a concern, question, idea or topic you would like brought up at the AGM, submit it here.'));
+    if (x.topics_open) {
+      if (state.topicForm) box.appendChild(topicForm(state.topicForm));
+      else box.appendChild(h('button', { type: 'button', class: 'btn-rdr', 'data-testid': 'topic-new', onclick: function () { state.topicNotice = ''; state.topicForm = {}; swap('agm-topics', topicsPanel); } }, 'Submit AGM Concern / Topic'));
+    } else box.appendChild(h('p', { class: 'small' }, 'Topics closed when the AGM started. Speak to the executive.'));
+    if (state.topicNotice) box.appendChild(h('p', { class: 'ok-text', role: 'status', 'data-testid': 'topic-received' }, state.topicNotice));
+    var mine = x.my_topics || [];
+    if (mine.length) {
+      box.appendChild(h('h4', {}, 'Your AGM topics'));
+      mine.forEach(function (t) {
+        var row = h('div', { class: 'arow', 'data-testid': 'my-topic' },
+          h('div', { class: 'who' }, h('b', {}, t.subject)),
+          h('div', { class: 'chips' }, chip(TOPIC_CHIP[t.status], TOPIC[t.status]), h('span', { class: 'small' }, 'Submitted ' + dateText(t.created_at) + (t.updated_at !== t.created_at ? ' · edited ' + dateText(t.updated_at) : ''))),
+          h('div', { class: 'topic-details small' }, t.details));
+        if (t.can_edit) {
+          row.appendChild(h('div', { class: 'row-btns' },
+            h('button', { type: 'button', class: 'btn-line small-btn', onclick: function () { state.topicNotice = ''; state.topicForm = { id: t.id, subject: t.subject, details: t.details }; swap('agm-topics', topicsPanel); } }, 'Edit'),
+            h('button', { type: 'button', class: 'btn-line small-btn', onclick: function () { withdrawTopic(t); } }, 'Withdraw')));
+        } else if (t.status === 'addressed') row.appendChild(h('div', { class: 'small' }, 'The executive has addressed this topic, so it can no longer be changed.'));
+        box.appendChild(row);
+      });
+    }
+    return box;
+  }
+  function topicForm(f) {
+    var subj = h('input', { class: 'browser-default', id: 'topic-subject', maxlength: '120', placeholder: 'A short title', value: f.subject || '' });
+    var det = h('textarea', { class: 'browser-default', id: 'topic-details', maxlength: '4000', rows: '6', placeholder: 'Explain the concern, question, suggestion or topic' }, f.details || '');
+    var err = h('p', { class: 'err', role: 'alert' });
+    var save = h('button', { type: 'button', class: 'btn-rdr', 'data-testid': 'topic-submit' }, f.id ? 'Save changes' : 'Submit for AGM');
+    save.addEventListener('click', function () {
+      err.textContent = '';
+      var s1 = subj.value.trim(), d1 = det.value.trim();
+      if (s1.length < 3) { err.textContent = 'Give your topic a short title.'; return; }
+      if (!d1) { err.textContent = 'Add some details so the executive understands.'; return; }
+      busy(save, true);
+      var call = f.id ? sb.rpc('update_club_agm_topic', { p_topic: f.id, p_subject: s1, p_details: d1 }) : sb.rpc('submit_club_agm_topic', { p_meeting: state.agm.meeting.id, p_subject: s1, p_details: d1 });
+      call.then(function (r) {
+        busy(save, false);
+        if (r.error) { err.textContent = words(r.error); return; }
+        state.topicForm = null;
+        state.topicNotice = f.id ? 'Saved your changes to "' + s1 + '".' : 'Received. "' + s1 + '" has been sent to the executive for the AGM.';
+        loadAgmx(false).then(function () { swap('agm-topics', topicsPanel); });
+      });
+    });
+    return h('div', { class: 'topic-form', 'data-testid': 'topic-form' },
+      h('label', { class: 'fld' }, 'Subject', subj), h('label', { class: 'fld' }, 'Details', det), err,
+      h('div', { class: 'row-btns' }, save, h('button', { type: 'button', class: 'btn-line', onclick: function () { state.topicForm = null; swap('agm-topics', topicsPanel); } }, 'Cancel')));
+  }
+  function withdrawTopic(t) {
+    if (!window.confirm('Withdraw "' + t.subject + '"? The executive will see that you withdrew it.')) return;
+    sb.rpc('withdraw_club_agm_topic', { p_topic: t.id }).then(function (r) {
+      if (r.error) return status(words(r.error), true);
+      state.topicNotice = 'Withdrawn: "' + t.subject + '".';
+      loadAgmx(false).then(function () { swap('agm-topics', topicsPanel); });
+    });
+  }
+
+  // ---- nominations
+  function nominationsPanel() {
+    var x = state.agmx, box = h('section', { class: 'card-panel agm-extra', id: 'agm-nominations', 'data-testid': 'agm-nominations' }, h('h3', {}, 'Executive Nominations'));
+    (x.to_respond || []).forEach(function (n) { box.appendChild(nomineeCard(n)); });
+    (x.my_candidacies || []).forEach(function (c) {
+      if (c.status === 'accepted') box.appendChild(h('div', { class: 'cand-mine', 'data-testid': 'my-candidacy' },
+        h('span', {}, 'You are an accepted candidate for '), h('b', {}, c.label), h('span', {}, '. '),
+        h('button', { type: 'button', class: 'btn-line small-btn', onclick: function () { withdrawCandidacy(c); } }, 'Withdraw my candidacy')));
+      else if (c.status === 'declined' || c.status === 'withdrawn') box.appendChild(h('p', { class: 'small' }, 'Your nomination for ' + c.label + ': ' + NOM[c.status] + '.'));
+    });
+    if (state.nomNotice) box.appendChild(h('p', { class: 'ok-text', role: 'status', 'data-testid': 'nomination-notice' }, state.nomNotice));
+    if (x.can_nominate) box.appendChild(nominateForm());
+    else if (x.nominate_blocked) box.appendChild(h('p', { class: 'small', 'data-testid': 'nominate-blocked' }, x.nominate_blocked));
+    box.appendChild(h('h4', { 'data-testid': 'nominations-heading' }, state.agm.meeting.year + ' Executive Nominations'));
+    box.appendChild(h('p', { class: 'small' }, 'Nominations only prepare the list of candidates. They do not change who holds an office: current officers stay in place unless members vote otherwise at the AGM. Only accepted nominations are confirmed candidates.'));
+    (x.board || []).forEach(function (o) {
+      var acc = o.candidates.filter(function (c) { return c.status === 'accepted'; }), wait = o.candidates.filter(function (c) { return c.status === 'awaiting_acceptance'; });
+      box.appendChild(h('div', { class: 'office-card', 'data-testid': 'office-' + o.office },
+        h('h4', {}, o.label),
+        h('div', {}, 'Current Officer: ', h('b', {}, o.current_officer || 'not assigned')),
+        h('div', {}, 'Accepted Candidates: ', acc.length ? acc.map(function (c, i) { return h('b', {}, (i ? ', ' : '') + c.name); }) : h('span', { class: 'small' }, 'none yet')),
+        wait.length ? h('div', { class: 'small' }, 'Nominated, awaiting acceptance: ' + wait.map(function (c) { return c.name; }).join(', ')) : null));
+    });
+    return box;
+  }
+  function nomineeCard(n) {
+    var title = 'You\'ve Been Nominated';
+    var acc = h('button', { type: 'button', class: 'btn-rdr', 'data-testid': 'nomination-accept', onclick: function () { answerNomination(n, 'accept'); } }, 'Accept Nomination');
+    var dec = h('button', { type: 'button', class: 'btn-line', 'data-testid': 'nomination-decline', onclick: function () { answerNomination(n, 'decline'); } }, 'Decline Nomination');
+    return h('div', { class: 'nominated-box', 'data-testid': 'nominated-card' }, h('h3', {}, title),
+      h('p', {}, 'You have been nominated for ' + n.label + ' for the ' + agmName() + '.'),
+      h('dl', { class: 'facts' }, h('dt', {}, 'Nominated by'), h('dd', {}, (n.nominated_by || []).join(', ')), h('dt', {}, 'Role'), h('dd', {}, n.label), h('dt', {}, 'Date'), h('dd', {}, dateText(n.nominated_at))),
+      h('div', { class: 'row-btns' }, acc, dec));
+  }
+  function answerNomination(n, answer) {
+    if (answer === 'decline' && !window.confirm('Decline the nomination for ' + n.label + '?')) return;
+    sb.rpc('respond_to_club_nomination', { p_nomination: n.id, p_response: answer }).then(function (r) {
+      if (r.error) return status(words(r.error), true);
+      state.nomNotice = answer === 'accept' ? 'You accepted the nomination for ' + n.label + '. You are now a candidate.' : 'You declined the nomination for ' + n.label + '.';
+      status(''); loadAgmx();
+    });
+  }
+  function withdrawCandidacy(c) {
+    if (!window.confirm('Withdraw your candidacy for ' + c.label + '?')) return;
+    sb.rpc('respond_to_club_nomination', { p_nomination: c.id, p_response: 'withdraw' }).then(function (r) {
+      if (r.error) return status(words(r.error), true);
+      state.nomNotice = 'You withdrew your candidacy for ' + c.label + '.'; status(''); loadAgmx();
+    });
+  }
+  function nominateForm() {
+    var x = state.agmx, box = h('div', { class: 'nominate-box', 'data-testid': 'nominate-form' }), redraw = function () { swap('agm-nominations', nominationsPanel); };
+    var modes = h('div', { class: 'rsvp-opts', role: 'group', 'aria-label': 'Who are you nominating?' },
+      [['self', 'Nominate Myself'], ['other', 'Nominate Another Member']].map(function (m) {
+        return h('button', { type: 'button', class: 'rsvp-opt', 'aria-pressed': String(state.nomMode === m[0]), onclick: function () { state.nomMode = state.nomMode === m[0] ? null : m[0]; state.nomNotice = ''; redraw(); } }, m[1]);
+      }));
+    box.appendChild(modes);
+    if (!state.nomMode) return box;
+    var err = h('p', { class: 'err', role: 'alert' }), target = null;
+    if (state.nomMode === 'other') {
+      target = h('select', { class: 'browser-default', id: 'nominee' }, h('option', { value: '' }, 'Choose a member…'),
+        (x.nominees || []).map(function (c) { return h('option', { value: c.membership_id, selected: state.nomTarget === c.membership_id }, c.name); }));
+      target.addEventListener('change', function () { state.nomTarget = target.value; redraw(); });
+      box.appendChild(h('label', { class: 'fld' }, 'Member (voting members only)', target));
+    }
+    box.appendChild(h('div', { class: 'small' }, 'Executive role'));
+    box.appendChild(h('div', { class: 'rsvp-opts', role: 'group', 'aria-label': 'Executive role' }, [['president', 'President'], ['secretary', 'Secretary'], ['treasurer', 'Treasurer']].map(function (o) {
+      return h('button', { type: 'button', class: 'rsvp-opt', 'aria-pressed': String(state.nomOffice === o[0]), onclick: function () { state.nomOffice = o[0]; redraw(); } }, o[1]);
+    })));
+    var nominee = state.nomMode === 'other' ? (x.nominees || []).filter(function (c) { return c.membership_id === state.nomTarget; })[0] : null;
+    var ready = !!state.nomOffice && (state.nomMode === 'self' || !!nominee);
+    if (ready) box.appendChild(h('p', { class: 'confirm-line', 'data-testid': 'nomination-confirm' },
+      state.nomMode === 'self' ? 'You are nominating yourself for ' + OFFICE[state.nomOffice] + ' at the ' + agmName() + '.'
+        : 'You are nominating ' + nominee.name + ' for ' + OFFICE[state.nomOffice] + ' at the ' + agmName() + '. ' + nominee.name + ' must accept before becoming a candidate.'));
+    var go1 = h('button', { type: 'button', class: 'btn-rdr', 'data-testid': 'nomination-submit', disabled: !ready }, 'Confirm Nomination');
+    go1.addEventListener('click', function () {
+      busy(go1, true); err.textContent = '';
+      var self = state.nomMode === 'self', label = OFFICE[state.nomOffice], nm = nominee && nominee.name;
+      sb.rpc('nominate_for_club_office', { p_meeting: state.agm.meeting.id, p_office: state.nomOffice, p_nominee: self ? null : state.nomTarget }).then(function (r) {
+        busy(go1, false);
+        if (r.error) { err.textContent = words(r.error); return; }
+        state.nomNotice = self ? 'Done: you are a candidate for ' + label + '.' : 'Nomination sent. ' + nm + ' must accept the nomination for ' + label + ' before becoming a candidate.';
+        state.nomMode = null; state.nomOffice = null; state.nomTarget = '';
+        loadAgmx(false).then(redraw);
+      });
+    });
+    box.appendChild(err); box.appendChild(go1);
+    return box;
   }
 
   // ================================================================ executive: members and dues (from the previous release)
@@ -626,6 +811,9 @@
     var count = function (f) { return rows.filter(f).length; };
     var set = function (f) { return function () { state.agmFilter = f; drawAgmAdmin(v); }; };
     v.appendChild(agmHeader(a));
+    v.appendChild(agmSwitch(v));
+    if (state.agmSection === 'concerns') { drawConcernsAdmin(v.appendChild(h('div', {}))); return; }
+    if (state.agmSection === 'nominations') { drawNominationsAdmin(v.appendChild(h('div', {}))); return; }
     v.appendChild(h('div', { class: 'tiles seven', 'data-testid': 'agm-summary' },
       tile(rows.length, 'Total members', '', set('all')), tile(count(function (r) { return r.eligible; }), 'Voting eligible', 'yes', set('eligible')),
       tile(count(function (r) { return r.response === 'in_person'; }), 'In person', '', set('in_person')), tile(count(function (r) { return r.response === 'video'; }), 'Video call', '', set('video')),
@@ -655,6 +843,64 @@
       v.appendChild(row);
     });
     if (manage) v.appendChild(videoForm());
+  }
+  // ---------------------------------------------------------------- executive: AGM concerns and nominations (inside AGM admin)
+  function agmSwitch(v) {
+    return h('div', { class: 'filters', role: 'group', 'aria-label': 'AGM admin section' }, [['people', 'People and check-in'], ['concerns', 'Concerns'], ['nominations', 'Nominations']].map(function (t) {
+      return h('button', { type: 'button', 'aria-pressed': String(state.agmSection === t[0]), onclick: function () { state.agmSection = t[0]; drawAgmAdmin(v); } }, t[1]);
+    }));
+  }
+  function drawConcernsAdmin(body) {
+    body.appendChild(h('p', { class: 'small' }, 'Loading…'));
+    sb.rpc('club_agm_topics_admin', { p_meeting: state.agm.meeting.id }).then(function (r) {
+      body.textContent = '';
+      if (r.error) { body.appendChild(h('p', { class: 'err' }, words(r.error))); return; }
+      var rows = r.data || [], manage = !!state.agm.can_manage;
+      var f = state.topicFilter, cnt = function (st) { return rows.filter(function (t) { return st === 'all' || t.status === st; }).length; };
+      var redraw = function () { body.textContent = ''; drawConcernsAdmin(body); };
+      body.appendChild(h('div', { class: 'filters', role: 'group', 'aria-label': 'Show topics' }, [['all', 'All'], ['submitted', 'Submitted'], ['on_agenda', 'Added to Agenda'], ['addressed', 'Addressed'], ['withdrawn', 'Withdrawn']].map(function (t) {
+        return h('button', { type: 'button', 'aria-pressed': String(f === t[0]), onclick: function () { state.topicFilter = t[0]; redraw(); } }, t[1] + ' (' + cnt(t[0]) + ')');
+      })));
+      var shown = rows.filter(function (t) { return f === 'all' || t.status === f; });
+      if (!shown.length) body.appendChild(h('p', { 'data-testid': 'topics-empty' }, rows.length ? 'No topics match.' : 'No topics submitted yet.'));
+      shown.forEach(function (t) {
+        var row = h('div', { class: 'arow', 'data-testid': 'topic-row' },
+          h('div', { class: 'who' }, h('b', {}, t.subject)),
+          h('div', { class: 'chips' }, chip(TOPIC_CHIP[t.status], TOPIC[t.status]), h('span', { class: 'small' }, t.member_name + ' · ' + timeText(t.created_at) + (t.edited ? ' · edited ' + timeText(t.updated_at) : ''))),
+          h('div', { class: 'topic-details' }, t.details));
+        if (manage && t.status !== 'withdrawn') row.appendChild(h('div', { class: 'checkin', role: 'group', 'aria-label': 'Status of ' + t.subject },
+          [['submitted', 'Submitted'], ['on_agenda', 'Add to agenda'], ['addressed', 'Addressed']].map(function (s) {
+            return h('button', { type: 'button', class: 'small-btn ' + (t.status === s[0] ? 'btn-rdr' : 'btn-line'), 'aria-pressed': String(t.status === s[0]), onclick: function () {
+              sb.rpc('set_club_agm_topic_status', { p_topic: t.topic_id, p_status: s[0] }).then(function (x) { if (x.error) return status(words(x.error), true); status('"' + t.subject + '": ' + TOPIC[s[0]] + '.'); redraw(); });
+            } }, s[1]);
+          })));
+        if (t.status === 'withdrawn') row.appendChild(h('div', { class: 'small' }, 'The member withdrew this topic.'));
+        body.appendChild(row);
+      });
+    });
+  }
+  function drawNominationsAdmin(body) {
+    body.appendChild(h('p', { class: 'small' }, 'Loading…'));
+    sb.rpc('club_agm_nominations_admin', { p_meeting: state.agm.meeting.id }).then(function (r) {
+      body.textContent = '';
+      if (r.error) { body.appendChild(h('p', { class: 'err' }, words(r.error))); return; }
+      body.appendChild(h('p', { class: 'small' }, 'Nominations prepare the candidate list. They never change who holds an office: that is decided by the vote at the AGM.'));
+      (r.data.offices || []).forEach(function (o) {
+        var n = function (st) { return o.nominations.filter(function (x) { return x.status === st; }).length; };
+        var card = h('section', { class: 'card-panel office-card', 'data-testid': 'admin-office-' + o.office },
+          h('h3', {}, o.label), h('div', {}, 'Current Officer: ', h('b', {}, o.current_officer || 'not assigned')),
+          h('div', { class: 'small', 'data-testid': 'office-counts' }, 'Accepted ' + n('accepted') + ' · Awaiting acceptance ' + n('awaiting_acceptance') + ' · Declined ' + n('declined') + ' · Withdrawn ' + n('withdrawn')));
+        if (!o.nominations.length) card.appendChild(h('p', { class: 'small' }, 'No nominations yet.'));
+        o.nominations.forEach(function (x) {
+          card.appendChild(h('div', { class: 'arow', 'data-testid': 'nomination-row' },
+            h('div', { class: 'who' }, h('b', {}, x.nominee)),
+            h('div', { class: 'chips' }, chip(NOM_CHIP[x.status], NOM[x.status]), chip('rsvp', x.self_nominated ? 'Self nomination' : 'Member nomination')),
+            x.nominated_by.length ? h('div', { class: 'small' }, 'Nominated by ' + x.nominated_by.join(', ')) : null,
+            h('div', { class: 'small' }, timeText(x.created_at) + (x.responded_at && x.status !== 'awaiting_acceptance' ? ' · answered ' + timeText(x.responded_at) : ''))));
+        });
+        body.appendChild(card);
+      });
+    });
   }
   function checkIn(r, st, v) {
     sb.rpc('set_club_meeting_attendance', { p_meeting: state.agm.meeting.id, p_membership: r.membership_id, p_status: st }).then(function (x) {
