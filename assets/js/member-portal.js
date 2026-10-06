@@ -772,7 +772,27 @@
   }
 
   // ================================================================ executive: members and dues (from the previous release)
-  function fetchRoster() { return sb.rpc('club_member_roster', { p_team: state.team.id, p_year: state.year }); }
+  function fetchRoster() {
+    return Promise.all([
+      sb.rpc('club_member_roster', { p_team: state.team.id, p_year: state.year }),
+      sb.rpc('club_member_profile_links', { p_team: state.team.id, p_year: state.year })
+    ]).then(function (rs) {
+      if (rs[0].error) return rs[0];
+      var links = {};
+      (rs[1].data || []).forEach(function (x) { if (x.fighter_id) links[x.membership_id] = x.fighter_id; });
+      (rs[0].data || []).forEach(function (x) { x.fighter_id = links[x.membership_id] || null; });
+      return rs[0];
+    });
+  }
+  function buhurtosProfileLink(r) {
+    if (!r || !r.fighter_id) return h('b', {}, r.full_name);
+    return h('a', {
+      href: CFG.appUrl + '/fighters/' + encodeURIComponent(r.fighter_id),
+      target: '_blank',
+      rel: 'noopener noreferrer',
+      title: 'Open ' + r.full_name + ' on BuhurtOS'
+    }, h('b', {}, r.full_name));
+  }
   function waived() { var y = currentYear(); return !!(y && y.fee_waived); }
   function satisfied(s) { return waived() || s !== 'unpaid'; }
   var FILTERS = [['all', 'All'], ['eligible', 'Can vote'], ['not_eligible', 'Cannot vote'], ['paid', 'Fee paid / waived'], ['unpaid', 'Fee unpaid'], ['pending', 'Pending'], ['active', 'Active']];
@@ -827,7 +847,7 @@
     else if (!shown.length) v.appendChild(h('p', {}, 'Nobody matches.'));
     shown.forEach(function (r) {
       list.appendChild(h('div', { class: 'mrow' + (r.status === 'pending' ? ' pending' : ''), role: 'row', 'data-testid': 'member-row' },
-        h('span', { class: 'who', role: 'cell' }, h('b', {}, r.full_name), r.offices && r.offices.length ? h('small', {}, r.offices.join(', ')) : null),
+        h('span', { class: 'who', role: 'cell' }, buhurtosProfileLink(r), r.offices && r.offices.length ? h('small', {}, r.offices.join(', ')) : null),
         h('span', { class: 'st', role: 'cell' }, chip(r.status, MEMBERSHIP[r.status])),
         h('span', { class: 'du', role: 'cell' }, feeChip(r.dues_status, waived())),
         h('span', { class: 'vt', role: 'cell' }, chip(r.eligible ? 'can' : 'cannot', r.eligible ? 'Can vote' : 'Cannot vote'), !r.eligible && r.reasons.length ? h('small', {}, r.reasons.join(' · ')) : null),
