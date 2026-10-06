@@ -391,6 +391,8 @@
     if (!a || !a.meeting) { v.appendChild(h('p', {}, 'No AGM is scheduled yet.')); return; }
     var card = h('section', { class: 'card-panel', 'data-testid': 'agm-member' }, agmHeader(a));
     v.appendChild(card);
+    // the help is only an explanation: if it ever failed to build, the RSVP and everything else below must still work
+    try { v.appendChild(agmHelp()); } catch (e) { if (window.console) console.warn('help not shown', e); }
     v.appendChild(agmExtras());
     if (!a.membership) {
       card.appendChild(h('p', {}, 'Only Red Deer Reavers members can register. Join first: it takes a minute.'));
@@ -484,6 +486,13 @@
   var NOM = { awaiting_acceptance: 'Awaiting acceptance', accepted: 'Accepted', declined: 'Declined', withdrawn: 'Withdrawn' };
   var NOM_CHIP = { awaiting_acceptance: 'pending', accepted: 'active', declined: 'cannot', withdrawn: '' };
   function agmName() { return state.agm.meeting.year + ' Red Deer Reavers AGM'; }
+  // DISPLAY ONLY. An office holder is shown from the officer records. For an office with no record (its holder has no BuhurtOS account yet) the
+  // page shows the name below instead of "not assigned". It decides nothing: it grants no permission, and it is ignored the moment the office has a real holder.
+  var OFFICER_NO_ACCOUNT = { president: 'Kedrixx', treasurer: 'Carmalee' };
+  function officerName(office, name) {
+    if (name) return name;
+    return OFFICER_NO_ACCOUNT[office] ? OFFICER_NO_ACCOUNT[office] + ' (no currently active account)' : 'not assigned';
+  }
   function loadAgmx(redraw) {
     if (!state.agm || !state.agm.meeting) { state.agmx = null; return Promise.resolve(); }
     return sb.rpc('club_agm_member_view', { p_meeting: state.agm.meeting.id }).then(function (r) {
@@ -506,6 +515,78 @@
       h('h3', {}, 'You\'ve Been Nominated'),
       h('p', {}, 'You have been nominated for ' + n.label + ' for the ' + agmName() + '.'),
       h('button', { type: 'button', class: 'btn-rdr', onclick: function () { go('agm'); } }, 'Review nomination'));
+  }
+
+  // ================================================================ "How the AGM Works": plain-English help for members
+  // Every button name quoted here is the real button on this page (the browser tests check that). Dates, fee and officers come from the system.
+  function agmHelp() {
+    var a = state.agm, mt = a.meeting, yr = currentYear(), waivedYear = !!(yr && yr.fee_waived), board = state.agmx && state.agmx.board;
+    var q = function (t) { return h('b', {}, '“' + t + '”'); };
+    var ol = function () { return h('ol', { class: 'browser-default' }, Array.prototype.map.call(arguments, function (x) { return h('li', {}, x); })); };
+    var ul = function () { return h('ul', { class: 'browser-default' }, Array.prototype.map.call(arguments, function (x) { return h('li', {}, x); })); };
+    var item = function (id, title) {
+      var kids = Array.prototype.slice.call(arguments, 2);
+      return h('details', { class: 'help-item', 'data-testid': 'help-' + id }, h('summary', {}, title), h('div', { class: 'help-body' }, [].concat.apply([], kids)));
+    };
+    var feeLine = waivedYear ? ['Membership fees are waived for ' + mt.year + '. You do not need to pay the normal ' + money(yr.dues_cents) + ' fee to vote this year.']
+      : ['The ' + mt.year + ' membership fee is ' + (yr ? money(yr.dues_cents) : 'set by the club') + ', paid to the Treasurer.'];
+    var roles = [['president', 'President', 'Helps lead the society and meetings.'],
+      ['secretary', 'Secretary', 'Helps keep society records, meeting information and official paperwork organized.'],
+      ['treasurer', 'Treasurer', 'Helps manage the society\'s money and financial records.']];
+    var holder = function (office) { var b = (board || []).filter(function (x) { return x.office === office; })[0]; return officerName(office, b && b.current_officer); };
+    var where = mt.local_date + ' at ' + mt.local_time + (mt.location ? ', ' + mt.location : '');
+    return h('section', { class: 'card-panel agm-help', id: 'agm-help', 'data-testid': 'agm-help' },
+      h('h3', {}, 'How the AGM Works'),
+      h('p', { class: 'small' }, 'Tap a heading to open it.'),
+      item('vote', 'Who can vote?',
+        h('p', {}, 'You can vote at the AGM if you are:'),
+        ul('18 or older', 'an approved Red Deer Reavers member', 'shown on this page as ELIGIBLE TO VOTE'),
+        h('p', {}, feeLine),
+        h('p', {}, 'Making an account is not enough on its own. You also need an approved membership. Members under 18 are welcome but cannot vote.')),
+      item('join', 'How to join',
+        h('p', {}, 'BuhurtOS and the Reavers site use the ', h('b', {}, 'same account'), '. You never need two.'),
+        ol(['Open the Red Deer Reavers Members page.'],
+          ['Already have a BuhurtOS account? Sign in with it.'],
+          ['No account yet? On the sign-in page tap ', q('Create account'), ' and make one right there.'],
+          ['Finish your profile (tap ', q('Continue'), ').'],
+          ['On ', q('Join the Reavers'), ' fill in the form and tap ', q('Apply to join'), '.'],
+          ['Wait for the executive to approve you. Until then it says Membership Application Pending.'],
+          waivedYear ? ['The ' + mt.year + ' fee is waived, so there is nothing to pay.'] : ['Pay the ' + mt.year + ' fee to the Treasurer.'],
+          ['Once you are approved and eligible, this page says ELIGIBLE TO VOTE.'])),
+      item('roles', 'Executive roles',
+        h('p', {}, 'The Reavers have three executive positions.'),
+        roles.map(function (r) {
+          return h('div', { class: 'help-role', 'data-testid': 'help-role-' + r[0] }, h('b', {}, r[1]), h('div', {}, r[2]),
+            board ? h('div', { class: 'small' }, 'Currently: ', h('b', {}, holder(r[0]))) : null);
+        }),
+        board ? null : h('p', { class: 'small' }, 'Members can see who holds each position here.')),
+      item('nominate', 'How nominations work',
+        h('p', {}, 'Any member who can vote can put their name forward for President, Secretary or Treasurer. You can also nominate another member who can vote.'),
+        h('p', {}, 'A nomination does ', h('b', {}, 'not'), ' give anyone the job. The decision is made at the AGM election. If nobody runs against the current officer, they stay in the position.'),
+        h('p', {}, h('b', {}, 'Nominate yourself')),
+        ol(['Find ', q('Executive Nominations'), ' on this tab.'], ['Tap ', q('Nominate Myself'), '.'], ['Choose President, Secretary or Treasurer.'],
+          ['Read the message that appears.'], ['Tap ', q('Confirm Nomination'), '.']),
+        h('p', {}, 'Your name then shows as an accepted candidate for that position.'),
+        h('p', {}, h('b', {}, 'Nominate someone else')),
+        ol(['Find ', q('Executive Nominations'), ' on this tab.'], ['Tap ', q('Nominate Another Member'), '.'], ['Choose the member (only members who can vote are listed).'],
+          ['Choose President, Secretary or Treasurer.'], ['Tap ', q('Confirm Nomination'), '.']),
+        h('p', {}, 'The person you nominate must accept before they are a confirmed candidate. They can also decline. You cannot accept for them. They will see ', q('You\'ve Been Nominated'), ' when they sign in, with ', q('Accept Nomination'), ' and ', q('Decline Nomination'), ' buttons.'),
+        h('p', { class: 'small' }, 'Nominations close when the AGM starts.')),
+      item('topic', 'Submit an AGM topic',
+        h('p', {}, 'Have something you want discussed at the AGM? You can submit it before the meeting. It could be:'),
+        ul('an idea for the club', 'something you think should change', 'a question for the executive', 'an event or practice idea', 'anything you want the members to talk about'),
+        ol(['Find ', q('Something you want discussed?'), ' on this tab.'], ['Tap ', q('Submit AGM Concern / Topic'), '.'], ['Write a short subject.'],
+          ['Explain what you want discussed in the details.'], ['Tap ', q('Submit for AGM'), '.']),
+        h('p', {}, 'Your topic then shows under ', q('Your AGM topics'), '. You can edit or withdraw it until the AGM starts, unless the executive has marked it Addressed. Only you and the executive can see what you submit.')),
+      item('rsvp', 'RSVP and proxy voting',
+        h('p', {}, h('b', {}, 'AGM: '), where + '.'),
+        h('p', {}, 'Tell the club how you plan to take part by tapping one of the four choices at the top of this tab:'),
+        ul('In Person', 'Video Call (the link appears here once the executive adds it)', 'Voting by Proxy', 'Not Attending'),
+        h('p', {}, 'You can change your answer until the AGM starts.'),
+        h('p', {}, h('b', {}, 'Can\'t attend but still want your vote represented?')),
+        h('p', {}, 'If you can vote, you can choose another member who can vote to hold your proxy. That lets them represent your vote at the AGM.'),
+        ol(['Tap ', q('Voting by Proxy'), '.'], ['Choose the member who will hold your proxy.'], ['Tick the box that says you authorize them.'], ['Tap ', q('Save my proxy'), '.']),
+        h('p', {}, 'Before the AGM you can use ', q('Change proxy'), ' or ', q('Cancel proxy'), '.')));
   }
 
   // ---- concerns / topics
@@ -588,7 +669,7 @@
       var acc = o.candidates.filter(function (c) { return c.status === 'accepted'; }), wait = o.candidates.filter(function (c) { return c.status === 'awaiting_acceptance'; });
       box.appendChild(h('div', { class: 'office-card', 'data-testid': 'office-' + o.office },
         h('h4', {}, o.label),
-        h('div', {}, 'Current Officer: ', h('b', {}, o.current_officer || 'not assigned')),
+        h('div', {}, 'Current Officer: ', h('b', {}, officerName(o.office, o.current_officer))),
         h('div', {}, 'Accepted Candidates: ', acc.length ? acc.map(function (c, i) { return h('b', {}, (i ? ', ' : '') + c.name); }) : h('span', { class: 'small' }, 'none yet')),
         wait.length ? h('div', { class: 'small' }, 'Nominated, awaiting acceptance: ' + wait.map(function (c) { return c.name; }).join(', ')) : null));
     });
@@ -888,7 +969,7 @@
       (r.data.offices || []).forEach(function (o) {
         var n = function (st) { return o.nominations.filter(function (x) { return x.status === st; }).length; };
         var card = h('section', { class: 'card-panel office-card', 'data-testid': 'admin-office-' + o.office },
-          h('h3', {}, o.label), h('div', {}, 'Current Officer: ', h('b', {}, o.current_officer || 'not assigned')),
+          h('h3', {}, o.label), h('div', {}, 'Current Officer: ', h('b', {}, officerName(o.office, o.current_officer))),
           h('div', { class: 'small', 'data-testid': 'office-counts' }, 'Accepted ' + n('accepted') + ' · Awaiting acceptance ' + n('awaiting_acceptance') + ' · Declined ' + n('declined') + ' · Withdrawn ' + n('withdrawn')));
         if (!o.nominations.length) card.appendChild(h('p', { class: 'small' }, 'No nominations yet.'));
         o.nominations.forEach(function (x) {
