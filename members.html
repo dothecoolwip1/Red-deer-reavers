@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Red Deer Reavers members area: sign in with your BuhurtOS account to see your membership, dues and AGM voting status.">
+    <meta name="description" content="Red Deer Reavers members area: create your account or sign in, join the Reavers, and register for the 2026 AGM.">
     <meta name="robots" content="noindex">
     <meta name="referrer" content="strict-origin-when-cross-origin">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src https://mvbxlebznlgroptwwdsm.supabase.co wss://mvbxlebznlgroptwwdsm.supabase.co; base-uri 'self'; form-action 'self'">
@@ -39,32 +39,82 @@
 
     <main class="members container">
         <h1 class="members-title">Members</h1>
-        <p class="lede no-print">Sign in with your <b>BuhurtOS account</b>. It is the same account you use on BuhurtOS: one email, one password, no separate Reavers account.</p>
+        <p class="lede no-print" id="lede">One account for the Red Deer Reavers and BuhurtOS. Create it here or sign in with the account you already use on BuhurtOS: same email, same password.</p>
 
         <div id="status" role="status" aria-live="polite"></div>
 
         <!-- Signed out -->
         <section id="signed-out" class="card-panel" hidden>
-            <h2>Member sign in</h2>
-            <form id="password-form" autocomplete="on" novalidate>
-                <label class="fld">Email<input class="browser-default" id="email" type="email" autocomplete="username" required></label>
-                <label class="fld">Password<input class="browser-default" id="password" type="password" autocomplete="current-password"></label>
-                <button class="btn-rdr" type="submit" id="password-btn">Sign in</button>
-            </form>
-            <div class="or"><span>or</span></div>
-            <form id="code-form" novalidate>
-                <p class="small">No password, or you sign in to BuhurtOS with Google? Get a 6-digit code by email. A new email address gets a new BuhurtOS account.</p>
-                <button class="btn-line" type="submit" id="code-send-btn">Email me a sign-in code</button>
-                <div id="code-step" hidden>
-                    <label class="fld">6-digit code<input class="browser-default" id="code" inputmode="numeric" autocomplete="one-time-code" maxlength="10"></label>
-                    <button class="btn-rdr" type="button" id="code-verify-btn">Sign in with code</button>
+            <nav class="tabs-rdr" aria-label="Account">
+                <button type="button" data-auth-tab="signin" aria-selected="true">Sign in</button>
+                <button type="button" data-auth-tab="signup" aria-selected="false">Create account</button>
+                <button type="button" data-auth-tab="forgot" aria-selected="false">Forgot password</button>
+            </nav>
+
+            <div data-auth-panel="signin">
+                <h2>Member sign in</h2>
+                <p class="small">Already on BuhurtOS? Use the same email and password (or Google) here. Do not create a second account.</p>
+                <form id="password-form" autocomplete="on" novalidate>
+                    <label class="fld">Email<input class="browser-default" id="email" type="email" autocomplete="username" required></label>
+                    <label class="fld">Password<input class="browser-default" id="password" type="password" autocomplete="current-password"></label>
+                    <button class="btn-rdr" type="submit" id="password-btn">Sign in</button>
+                </form>
+                <div class="or"><span>or</span></div>
+                <button class="btn-line wide" type="button" id="google-btn">Continue with Google</button>
+                <form id="code-form" novalidate>
+                    <p class="small">No password? Get a 6-digit sign-in code by email (uses the email address above).</p>
+                    <button class="btn-line" type="submit" id="code-send-btn">Email me a sign-in code</button>
+                    <div id="code-step" hidden>
+                        <label class="fld">6-digit code<input class="browser-default" id="code" inputmode="numeric" autocomplete="one-time-code" maxlength="10"></label>
+                        <button class="btn-rdr" type="button" id="code-verify-btn">Sign in with code</button>
+                    </div>
+                </form>
+            </div>
+
+            <div data-auth-panel="signup" hidden>
+                <h2>Create your account</h2>
+                <p class="small">This creates your BuhurtOS account: the one account for the Reavers website and BuhurtOS. Next you can join the Red Deer Reavers.</p>
+                <form id="signup-form" autocomplete="on" novalidate>
+                    <label class="fld">Your name<input class="browser-default" id="su-name" autocomplete="name" maxlength="80"></label>
+                    <label class="fld">Email<input class="browser-default" id="su-email" type="email" autocomplete="username"></label>
+                    <label class="fld">Password (at least 8 characters)<input class="browser-default" id="su-password" type="password" autocomplete="new-password"></label>
+                    <label class="fld">Password again<input class="browser-default" id="su-password2" type="password" autocomplete="new-password"></label>
+                    <button class="btn-rdr" type="submit" id="signup-btn">Create account</button>
+                </form>
+                <div id="signup-check" hidden>
+                    <p id="signup-check-text"></p>
+                    <label class="fld">Code from the email (if it shows one)<input class="browser-default" id="su-code" inputmode="numeric" autocomplete="one-time-code" maxlength="10"></label>
+                    <div class="row-btns">
+                        <button class="btn-rdr" type="button" id="su-code-btn">Confirm with code</button>
+                        <button class="btn-line" type="button" id="su-resend-btn">Send the email again</button>
+                    </div>
+                    <p class="small">Already have an account with this email? <a href="#" data-goto="signin">Sign in</a> or <a href="#" data-goto="forgot">reset your password</a>.</p>
                 </div>
+            </div>
+
+            <div data-auth-panel="forgot" hidden>
+                <h2>Reset your password</h2>
+                <p class="small">Works for every BuhurtOS account. If you only ever used Google, this sets a password you can also use.</p>
+                <form id="forgot-form" novalidate>
+                    <label class="fld">Email<input class="browser-default" id="fp-email" type="email" autocomplete="username"></label>
+                    <button class="btn-rdr" type="submit" id="forgot-btn">Email me a reset link</button>
+                </form>
+                <div id="forgot-check" hidden>
+                    <p>If that address has an account, a reset email is on its way. Open its link on this device, or enter the code if the email shows one.</p>
+                    <label class="fld">Code from the email<input class="browser-default" id="fp-code" inputmode="numeric" autocomplete="one-time-code" maxlength="10"></label>
+                    <button class="btn-rdr" type="button" id="fp-code-btn">Continue</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- New password (after a reset link or code) -->
+        <section id="new-password" class="card-panel" hidden>
+            <h2>Choose a new password</h2>
+            <form id="newpw-form" novalidate>
+                <label class="fld">New password (at least 8 characters)<input class="browser-default" id="np-password" type="password" autocomplete="new-password"></label>
+                <label class="fld">New password again<input class="browser-default" id="np-password2" type="password" autocomplete="new-password"></label>
+                <button class="btn-rdr" type="submit" id="newpw-btn">Save new password</button>
             </form>
-            <p class="small links">
-                <a id="link-forgot" href="#">Forgot password?</a> ·
-                <a id="link-signup" href="#">Create an account with a password</a>
-                <br>These open BuhurtOS. Come back here and sign in afterwards.
-            </p>
         </section>
 
         <!-- Signed in -->

@@ -1,13 +1,14 @@
 /*
- * Red Deer Reavers members area.
+ * Red Deer Reavers members area: account, joining the Reavers, membership, the 2026 AGM, and the executive's tools.
  *
- * ONE account: this page signs in to the same Supabase Auth project as BuhurtOS, so the person is the same auth user on both sites.
- * There is no Reavers password database and no token is ever passed between the two websites. Each website keeps its own sign-in session
- * in its own browser storage (signing in here does not sign you in on buhurtos.ca and the other way round); the account behind both is one.
+ * ONE account. This page uses the same Supabase Auth project as BuhurtOS, so creating an account here creates the BuhurtOS account itself
+ * (one auth.users row, one profile), and an existing BuhurtOS account signs in here unchanged. There is no Reavers password database, no
+ * second profile and nothing is synchronised. The website and BuhurtOS are served from the same web origin, so the browser also keeps one
+ * sign-in for both; no token is ever put in a URL or passed between sites.
  *
- * Nothing here is a security boundary. What a person may see or change is decided by the BuhurtOS database (club_* functions, migration
- * 20261013000100): a regular member gets only their own record; the club's current executive gets the members list; only the current
- * President, Secretary or Treasurer may change dues or membership status. All text from the database is inserted with textContent.
+ * Nothing here is a security boundary. The BuhurtOS database decides everything (club_* and club_meeting_* functions, migrations
+ * 20261013000100 and 20261014000100): a member acts only on their own membership, RSVP and proxy; only the club's current President,
+ * Secretary or Treasurer change dues, membership status, check-in and the video link. All database text is inserted with textContent.
  */
 (function () {
   'use strict';
@@ -15,17 +16,26 @@
   var sb = window.supabase.createClient(CFG.supabaseUrl, CFG.publishableKey, {
     auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, flowType: 'pkce' }
   });
+  var HERE = window.location.origin + window.location.pathname;
   var $ = function (id) { return document.getElementById(id); };
-  var state = { session: null, team: null, overview: null, view: null, year: null, roster: null, filter: 'all', search: '', duesFor: null, asOf: today() };
+  var state = { session: null, profile: null, team: null, overview: null, agm: null, view: null, year: null, roster: null, filter: 'all', search: '',
+    duesFor: null, agmRows: null, agmFilter: 'all', agmSearch: '', proxyPick: false, recovery: false, loading: false };
 
   var MEMBERSHIP = { pending: 'Pending', active: 'Active', inactive: 'Inactive', removed: 'Removed' };
   var DUES = { unpaid: 'Unpaid', paid: 'Paid', waived: 'Waived', gear_contribution: 'Gear contribution' };
+  var RSVP = { in_person: 'In Person', video: 'Video Call', proxy: 'Voting by Proxy', not_attending: 'Not Attending' };
+  var RSVP_DONE = { in_person: 'Attending In Person', video: 'Attending by Video Call', proxy: 'Voting by Proxy', not_attending: 'Not Attending' };
+  var ATTEND = { present_in_person: 'Present in person', present_video: 'Present by video', absent: 'Absent' };
+  var INTERESTS = [['fighter', 'Fighter'], ['volunteer', 'Volunteer / helper'], ['fan', 'Supporter / fan'], ['captain', 'Team captain'], ['organizer', 'Event organizer']];
+  var MIN_PASSWORD = 8;
 
   function today() { var d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
   function money(c) { return c == null ? '' : '$' + (c / 100).toFixed(c % 100 === 0 ? 0 : 2); }
   function dateText(iso) { return new Date(iso).toLocaleDateString('en-CA', { year: 'numeric', month: 'long', day: 'numeric' }); }
+  function timeText(iso) { return new Date(iso).toLocaleString('en-CA', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }); }
+  function looksLikeEmail(s) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s.trim()); }
 
-  /** h('div', {class: 'x', onclick: fn}, 'text', child) — text is always text, never HTML. */
+  /** h('div', {class: 'x', onclick: fn}, 'text', child): text is always text, never HTML. */
   function h(tag, attrs) {
     var el = document.createElement(tag);
     Object.keys(attrs || {}).forEach(function (k) {
@@ -44,194 +54,430 @@
   }
   function chip(cls, text) { return h('span', { class: 'chip-s ' + cls }, text); }
   function status(msg, isErr) { var s = $('status'); s.textContent = msg || ''; s.className = isErr ? 'err' : ''; }
+  function feeChip(duesStatus, feeWaived) { return feeWaived && duesStatus === 'unpaid' ? chip('waived', 'Fee waived') : chip(duesStatus, DUES[duesStatus]); }
 
-  /** Words a person can act on. Database messages for permission problems never reveal more than "not allowed". */
+  /** Words a person can act on. Never says whether an email address has an account. */
   function words(err, fallback) {
     var e = err || {};
     if (navigator.onLine === false) return 'You are offline. Try again when you have signal.';
     if (e.code === '42501') return 'You do not have permission to do that.';
     if (['22023', 'P0001', 'P0002', '23505'].indexOf(e.code) >= 0 && e.message) return e.message.charAt(0).toUpperCase() + e.message.slice(1) + '.';
     var m = String(e.message || '').toLowerCase();
-    if (e.code === 'invalid_credentials' || m.indexOf('invalid login') >= 0) return 'That email and password do not match. Check them, or use "Forgot password?" or an email code.';
-    if (e.code === 'otp_expired' || (m.indexOf('token') >= 0 && m.indexOf('expired') >= 0) || m.indexOf('invalid') >= 0 && m.indexOf('otp') >= 0) return 'That code is not right or has expired. Ask for a new one.';
-    if (e.code === 'email_not_confirmed') return 'Confirm your email address first, using the link BuhurtOS emailed you.';
+    if (e.code === 'invalid_credentials' || m.indexOf('invalid login') >= 0) return 'That email and password do not match. Check them, or use "Forgot password", Google or an email code.';
+    if (e.code === 'otp_expired' || (m.indexOf('token') >= 0 && m.indexOf('expired') >= 0) || (m.indexOf('invalid') >= 0 && (m.indexOf('otp') >= 0 || m.indexOf('token') >= 0))) return 'That code or link is not right or has expired. Ask for a new one.';
+    if (e.code === 'email_not_confirmed') return 'Confirm your email address first: open the link in the email we sent when you created the account (you can send it again from "Create account").';
+    if (e.code === 'weak_password') return 'Choose a stronger password: at least ' + MIN_PASSWORD + ' characters, not a common one.';
+    if (e.code === 'same_password') return 'Your new password must be different from the old one.';
+    if (e.code === 'user_already_exists' || e.code === 'email_exists') return 'Could not create an account with that email. If you already have a BuhurtOS account, sign in or reset your password.';
+    if (e.code === 'signup_disabled' || e.code === 'email_provider_disabled') return 'New accounts cannot be created with email right now. Try "Continue with Google".';
+    if (e.code === 'email_address_not_authorized') return 'Account emails cannot be sent to that address right now. Please contact the club executive.';
+    if (e.code === 'email_address_invalid' || e.code === 'validation_failed') return 'Enter a valid email address.';
     if (e.status === 429 || m.indexOf('rate limit') >= 0) return 'Too many attempts. Wait a minute and try again.';
     if (m.indexOf('failed to fetch') >= 0 || m.indexOf('network') >= 0) return 'Could not reach BuhurtOS. Check your signal and try again.';
     return fallback || 'Something went wrong. Please try again.';
   }
+  function busy(btn, on) { btn.disabled = !!on; }
 
-  // ------------------------------------------------------------ sign in (same Supabase Auth as BuhurtOS)
-  var membershipPath = '/teams/' + CFG.teamSlug + '/membership';
-  $('link-forgot').href = CFG.appUrl + '/sign-in?next=' + encodeURIComponent(membershipPath);
-  $('link-signup').href = CFG.appUrl + '/sign-in?mode=signup&next=' + encodeURIComponent(membershipPath);
+  // ================================================================ account: sign in, create account, forgot password
+  function authTab(name) {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-auth-tab]'), function (b) { b.setAttribute('aria-selected', String(b.getAttribute('data-auth-tab') === name)); });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-auth-panel]'), function (p) { p.hidden = p.getAttribute('data-auth-panel') !== name; });
+    status('');
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('[data-auth-tab]'), function (b) { b.addEventListener('click', function () { authTab(b.getAttribute('data-auth-tab')); }); });
+  Array.prototype.forEach.call(document.querySelectorAll('[data-goto]'), function (a) { a.addEventListener('click', function (e) { e.preventDefault(); authTab(a.getAttribute('data-goto')); }); });
 
   $('password-form').addEventListener('submit', function (e) {
     e.preventDefault(); status('');
     var email = $('email').value.trim(), pw = $('password').value;
-    if (!email || !pw) return status('Enter your email and password, or use an email code.', true);
-    $('password-btn').disabled = true;
-    sb.auth.signInWithPassword({ email: email, password: pw }).then(function (r) {
-      $('password-btn').disabled = false;
-      if (r.error) status(words(r.error), true);
-    });
+    if (!email || !pw) return status('Enter your email and password, or use Google or an email code.', true);
+    busy($('password-btn'), true);
+    sb.auth.signInWithPassword({ email: email, password: pw }).then(function (r) { busy($('password-btn'), false); if (r.error) status(words(r.error), true); });
+  });
+  $('google-btn').addEventListener('click', function () {
+    sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: HERE } }).then(function (r) { if (r.error) status(words(r.error), true); });
   });
   $('code-form').addEventListener('submit', function (e) {
     e.preventDefault(); status('');
     var email = $('email').value.trim();
-    if (!email) return status('Enter your email address above first.', true);
-    $('code-send-btn').disabled = true;
-    sb.auth.signInWithOtp({ email: email, options: { shouldCreateUser: true } }).then(function (r) {
-      $('code-send-btn').disabled = false;
-      if (r.error) return status(words(r.error), true);
+    if (!looksLikeEmail(email)) return status('Enter your email address above first.', true);
+    busy($('code-send-btn'), true);
+    // Existing accounts only: new people use "Create account" so they choose a password and confirm their email.
+    sb.auth.signInWithOtp({ email: email, options: { shouldCreateUser: false } }).then(function (r) {
+      busy($('code-send-btn'), false);
+      if (r.error && r.error.code !== 'otp_disabled' && r.error.code !== 'user_not_found' && r.error.status !== 422 && r.error.status !== 400) return status(words(r.error), true);
       $('code-step').hidden = false; $('code').focus();
-      status('If that address can receive email, a 6-digit code is on its way. Enter it below.');
+      status('If that address has an account, a 6-digit code is on its way. Enter it below. New here? Use "Create account".');
     });
   });
   $('code-verify-btn').addEventListener('click', function () {
     status('');
     var email = $('email').value.trim(), code = $('code').value.replace(/\s/g, '');
     if (!code) return status('Enter the code from the email.', true);
-    $('code-verify-btn').disabled = true;
-    sb.auth.verifyOtp({ email: email, token: code, type: 'email' }).then(function (r) {
-      $('code-verify-btn').disabled = false;
-      if (r.error) status(words(r.error), true);
+    busy($('code-verify-btn'), true);
+    sb.auth.verifyOtp({ email: email, token: code, type: 'email' }).then(function (r) { busy($('code-verify-btn'), false); if (r.error) status(words(r.error), true); });
+  });
+
+  // Create account: Supabase Auth sign-up in the SAME project as BuhurtOS. The BuhurtOS profile row is created by the database for every
+  // new account (on_auth_user_created); the profile step below completes it with BuhurtOS's own complete_my_profile.
+  $('signup-form').addEventListener('submit', function (e) {
+    e.preventDefault(); status('');
+    var name = $('su-name').value.trim(), email = $('su-email').value.trim(), pw = $('su-password').value, pw2 = $('su-password2').value;
+    if (name.length < 2) return status('Enter your name.', true);
+    if (!looksLikeEmail(email)) return status('Enter a valid email address.', true);
+    if (pw.length < MIN_PASSWORD) return status('Use at least ' + MIN_PASSWORD + ' characters for your password.', true);
+    if (pw.length > 72) return status('Use at most 72 characters for your password.', true);
+    if (pw !== pw2) return status('The two passwords do not match.', true);
+    busy($('signup-btn'), true);
+    sb.auth.signUp({ email: email, password: pw, options: { emailRedirectTo: HERE, data: { full_name: name } } }).then(function (r) {
+      busy($('signup-btn'), false);
+      if (r.error) return status(words(r.error), true);
+      if (r.data && r.data.session) { status(''); return; }   // signed in straight away (email confirmation off): onAuthStateChange continues
+      // Confirmation needed. The same answer for a new address and an address that already has an account (no enumeration).
+      $('signup-form').hidden = true; $('signup-check').hidden = false;
+      $('signup-check-text').textContent = 'Check your email (' + email + '). Open the confirmation link on this device to finish creating your account and come straight back here. '
+        + 'If you already have a BuhurtOS account with this email, no new account is made: sign in instead, or reset your password.';
+    });
+  });
+  $('su-code-btn').addEventListener('click', function () {
+    var email = $('su-email').value.trim(), code = $('su-code').value.replace(/\s/g, '');
+    if (!code) return status('Enter the code from the email, or open its link.', true);
+    busy($('su-code-btn'), true);
+    sb.auth.verifyOtp({ email: email, token: code, type: 'signup' }).then(function (r) { busy($('su-code-btn'), false); if (r.error) status(words(r.error), true); });
+  });
+  $('su-resend-btn').addEventListener('click', function () {
+    var email = $('su-email').value.trim();
+    busy($('su-resend-btn'), true);
+    sb.auth.resend({ type: 'signup', email: email, options: { emailRedirectTo: HERE } }).then(function (r) {
+      busy($('su-resend-btn'), false);
+      if (r.error && r.error.code !== 'over_email_send_rate_limit') return status(words(r.error), true);
+      status('If that address is waiting for confirmation, the email is on its way again (or was sent a moment ago).');
+    });
+  });
+
+  $('forgot-form').addEventListener('submit', function (e) {
+    e.preventDefault(); status('');
+    var email = $('fp-email').value.trim();
+    if (!looksLikeEmail(email)) return status('Enter a valid email address.', true);
+    busy($('forgot-btn'), true);
+    sb.auth.resetPasswordForEmail(email, { redirectTo: HERE + '?reset=1' }).then(function (r) {
+      busy($('forgot-btn'), false);
+      // Supabase limits emails per ADDRESS; answering "too soon" differently would reveal that the address has an account.
+      if (r.error && r.error.code !== 'over_email_send_rate_limit') return status(words(r.error), true);
+      $('forgot-check').hidden = false;
+    });
+  });
+  $('fp-code-btn').addEventListener('click', function () {
+    var email = $('fp-email').value.trim(), code = $('fp-code').value.replace(/\s/g, '');
+    if (!code) return status('Enter the code from the email, or open its link.', true);
+    busy($('fp-code-btn'), true);
+    sb.auth.verifyOtp({ email: email, token: code, type: 'recovery' }).then(function (r) {
+      busy($('fp-code-btn'), false);
+      if (r.error) return status(words(r.error), true);
+      state.recovery = true; renderAll();
+    });
+  });
+  $('newpw-form').addEventListener('submit', function (e) {
+    e.preventDefault(); status('');
+    var pw = $('np-password').value, pw2 = $('np-password2').value;
+    if (pw.length < MIN_PASSWORD) return status('Use at least ' + MIN_PASSWORD + ' characters.', true);
+    if (pw !== pw2) return status('The two passwords do not match.', true);
+    busy($('newpw-btn'), true);
+    sb.auth.updateUser({ password: pw }).then(function (r) {
+      busy($('newpw-btn'), false);
+      if (r.error) return status(words(r.error), true);
+      state.recovery = false;
+      try { window.history.replaceState(null, '', HERE); } catch (x) { /* ignore */ }
+      status('Password saved. Use it here and on BuhurtOS.');
+      renderAll(); load();
     });
   });
   $('sign-out').addEventListener('click', function () { sb.auth.signOut(); });
 
+  // Arriving from an email link: a reset link lands with ?reset=1; a link opened in another browser cannot finish (PKCE) but the email is
+  // already confirmed by then, so say so instead of failing silently.
+  (function () {
+    var q = new URLSearchParams(window.location.search), hq = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+    if (q.get('reset') === '1') state.recovery = true;
+    var err = q.get('error_description') || hq.get('error_description');
+    if (err) status(/expired|invalid/i.test(err) ? 'That email link has expired or was already used. Ask for a new one.' : 'That email link could not be used: ' + err, true);
+  })();
+
   sb.auth.onAuthStateChange(function (event, session) {
+    if (event === 'PASSWORD_RECOVERY') state.recovery = true;
     var before = state.session && state.session.user.id;
     state.session = session;
-    if (!session) { showSignedOut(); return; }
-    if (before !== session.user.id || event === 'SIGNED_IN' && !state.overview) setTimeout(load, 0);
+    if (!session) { state.recovery = false; renderAll(); return; }
+    if (before !== session.user.id) setTimeout(load, 0); else renderAll();
+  });
+  sb.auth.getSession().then(function (r) {
+    if (r.error && /code|verifier|flow/i.test(String(r.error.message))) status('This link was opened in a different browser or app. Your email is confirmed: sign in below with your email and password.', true);
+    if (!r.data.session) renderAll();
   });
 
-  function showSignedOut() {
-    state.overview = null; state.team = null; state.roster = null;
-    $('signed-in').hidden = true; $('signed-out').hidden = false; $('view').textContent = '';
+  function renderAll() {
+    var signedIn = !!state.session;
+    $('signed-out').hidden = signedIn;
+    $('new-password').hidden = !(signedIn && state.recovery);
+    $('signed-in').hidden = !signedIn || state.recovery;
+    $('lede').hidden = signedIn;
+    if (!signedIn) { $('view').textContent = ''; state.overview = null; state.agm = null; state.profile = null; state.team = null; }
   }
 
-  // ------------------------------------------------------------ load the member's own view (and leadership tools when the database allows)
+  // ================================================================ load the signed-in person
   function load() {
-    status('Loading your membership…');
-    $('signed-out').hidden = true; $('signed-in').hidden = false;
+    if (!state.session || state.loading) return;
+    state.loading = true;
+    renderAll();
+    status('Loading…');
     $('who').textContent = state.session.user.email || '';
-    $('buhurtos-link').textContent = '';
-    $('buhurtos-link').appendChild(h('a', { href: CFG.appUrl + membershipPath, rel: 'noopener' }, 'Open the full membership tools in BuhurtOS'));
-    $('buhurtos-link').appendChild(document.createTextNode(' (executive roles, editing your application). You may need to sign in there too: same email and password.'));
-    sb.from('teams').select('id,name,slug').eq('slug', CFG.teamSlug).maybeSingle().then(function (t) {
-      if (t.error || !t.data) { status(words(t.error, 'Could not find the Red Deer Reavers in BuhurtOS.'), true); return; }
-      state.team = t.data;
-      return sb.rpc('club_membership_overview', { p_team: state.team.id }).then(function (r) {
-        if (r.error) { status(words(r.error, 'Could not load your membership.'), true); return; }
-        state.overview = r.data; state.year = r.data.current_year;
-        status('');
-        if (!state.view) state.view = r.data.can_view_roster ? 'members' : 'mine';
-        render();
+    var bl = $('buhurtos-link'); bl.textContent = '';
+    bl.appendChild(document.createTextNode('This is your BuhurtOS account. '));
+    bl.appendChild(h('a', { href: CFG.appUrl + '/', rel: 'noopener' }, 'Open BuhurtOS'));
+    bl.appendChild(document.createTextNode(' with the same sign-in for events, teams and your fighter profile.'));
+    var uid = state.session.user.id;
+    sb.from('profiles').select('display_name,onboarded_at,interests,city,region,country').eq('id', uid).maybeSingle().then(function (p) {
+      state.profile = p.data || null;
+      if (!state.profile || !state.profile.onboarded_at) { state.loading = false; status(''); return renderProfileSetup(); }
+      return sb.from('teams').select('id,name,slug').eq('slug', CFG.teamSlug).maybeSingle().then(function (t) {
+        if (t.error || !t.data) { state.loading = false; return status(words(t.error, 'Could not find the Red Deer Reavers in BuhurtOS.'), true); }
+        state.team = t.data;
+        return Promise.all([sb.rpc('club_membership_overview', { p_team: state.team.id }), sb.rpc('club_meeting_member_view', { p_team: state.team.id })]).then(function (rs) {
+          state.loading = false;
+          if (rs[0].error) return status(words(rs[0].error, 'Could not load your membership.'), true);
+          state.overview = rs[0].data; state.agm = rs[1].error ? null : rs[1].data; state.year = rs[0].data.current_year;
+          status('');
+          var params = new URLSearchParams(window.location.search);
+          if (!state.view) state.view = params.get('view') || (myMembership() ? 'mine' : 'join');
+          render();
+        });
+      });
+    }).catch(function (x) { state.loading = false; status(words(x), true); });
+  }
+  function reload() { state.loading = false; state.overview = null; state.agmRows = null; load(); }
+  function myMembership() { var o = state.overview; return o ? (o.memberships || []).filter(function (x) { return x.year === o.current_year; })[0] || null : null; }
+  function currentYear() { var o = state.overview; return o ? (o.years || []).filter(function (y) { return y.year === o.current_year; })[0] || null : null; }
+
+  // ---------------------------------------------------------------- basic profile (BuhurtOS's own first-sign-in step)
+  function renderProfileSetup() {
+    renderAll(); $('tabs').hidden = true;
+    var v = $('view'); v.textContent = '';
+    var meta = state.session.user.user_metadata || {};
+    var name = h('input', { class: 'browser-default', id: 'pf-name', maxlength: '80', autocomplete: 'name', value: (state.profile && state.profile.display_name) || meta.full_name || meta.name || '' });
+    var boxes = INTERESTS.map(function (i) { return h('label', { class: 'check' }, h('input', { type: 'checkbox', value: i[0], checked: i[0] === 'fighter' }), h('span', {}, i[1])); });
+    var city = h('input', { class: 'browser-default', id: 'pf-city', maxlength: '80', value: 'Red Deer' });
+    var region = h('input', { class: 'browser-default', id: 'pf-region', maxlength: '80', value: 'Alberta' });
+    var err = h('p', { class: 'err', role: 'alert' });
+    var btn = h('button', { class: 'btn-rdr', type: 'submit' }, 'Continue');
+    var form = h('form', { class: 'card-panel', 'data-testid': 'profile-setup', novalidate: true },
+      h('h2', {}, 'Set up your account'), h('p', { class: 'small' }, 'One quick step for your BuhurtOS account. Next: join the Red Deer Reavers.'),
+      h('label', { class: 'fld' }, 'Your name (shown to the club executive and team captains)', name),
+      h('fieldset', { class: 'plain' }, h('legend', {}, 'How do you take part?'), boxes),
+      h('label', { class: 'fld' }, 'City (optional)', city), h('label', { class: 'fld' }, 'Province (optional)', region), err, btn);
+    form.addEventListener('submit', function (e) {
+      e.preventDefault(); err.textContent = '';
+      var picks = boxes.map(function (b) { return b.querySelector('input'); }).filter(function (i) { return i.checked; }).map(function (i) { return i.value; });
+      if (name.value.trim().length < 2) { err.textContent = 'Enter your name.'; return; }
+      if (!picks.length) { err.textContent = 'Choose at least one.'; return; }
+      busy(btn, true);
+      sb.rpc('complete_my_profile', { p_name: name.value.trim(), p_interests: picks, p_city: city.value.trim() || null, p_region: region.value.trim() || null, p_country: 'Canada' }).then(function (r) {
+        busy(btn, false);
+        if (r.error) { err.textContent = words(r.error); return; }
+        reload();
       });
     });
+    v.appendChild(form);
   }
 
+  // ================================================================ tabs
   function render() {
-    var o = state.overview;
-    var tabs = [['mine', 'My membership']];
-    if (o.can_view_roster) tabs.push(['members', 'Members'], ['agm', 'AGM voters'], ['history', 'Dues history']);
-    var nav = $('tabs'); nav.textContent = ''; nav.hidden = tabs.length < 2;
+    renderAll();
+    var o = state.overview, mine = myMembership();
+    var tabs = [];
+    if (!mine) tabs.push(['join', 'Join the Reavers']); else tabs.push(['mine', 'My membership']);
+    tabs.push(['agm', '2026 AGM']);
+    if (o.can_view_roster) tabs.push(['members', 'Members'], ['agm-admin', 'AGM admin'], ['proxies', 'Proxies'], ['print', 'AGM voting list'], ['history', 'Dues history']);
+    if (!tabs.some(function (t) { return t[0] === state.view; })) state.view = tabs[0][0];
+    var nav = $('tabs'); nav.textContent = ''; nav.hidden = false;
     tabs.forEach(function (t) {
-      nav.appendChild(h('button', { type: 'button', 'aria-selected': String(state.view === t[0]), onclick: function () { state.view = t[0]; render(); } }, t[1]));
+      nav.appendChild(h('button', { type: 'button', 'aria-selected': String(state.view === t[0]), onclick: function () { state.view = t[0]; state.proxyPick = false; render(); } }, t[1]));
     });
     var v = $('view'); v.textContent = '';
-    if (!o.enabled) { v.appendChild(h('p', {}, 'Membership is not set up in BuhurtOS yet.')); return; }
-    if (state.view === 'mine') v.appendChild(renderMine(o));
-    else if (state.view === 'members') renderMembers(v);
-    else if (state.view === 'agm') renderAgm(v);
-    else if (state.view === 'history') renderHistory(v);
+    if (!o.enabled) { v.appendChild(h('p', {}, 'Membership is not set up yet.')); return; }
+    ({ join: renderJoin, mine: renderMine, agm: renderAgm, members: renderMembers, 'agm-admin': renderAgmAdmin, proxies: renderProxies, print: renderPrint, history: renderHistory })[state.view](v);
   }
+  function go(view) { state.view = view; state.proxyPick = false; render(); window.scrollTo(0, 0); }
 
   function voteBanner(eligible, reasons) {
     return h('div', { class: 'vote ' + (eligible ? 'yes' : 'no'), 'data-testid': 'vote-banner' },
-      h('b', {}, eligible ? 'ELIGIBLE TO VOTE' : 'NOT ELIGIBLE TO VOTE'),
+      h('b', {}, eligible ? 'ELIGIBLE TO VOTE' : 'NOT CURRENTLY ELIGIBLE TO VOTE'),
       !eligible && reasons && reasons.length ? h('span', {}, reasons.join(' · ')) : null);
   }
 
-  function renderMine(o) {
-    var wrap = h('div', {});
-    var m = (o.memberships || []).filter(function (x) { return x.year === o.current_year; })[0];
+  // ---------------------------------------------------------------- join (membership application)
+  function renderJoin(v) {
+    var o = state.overview, year = currentYear();
+    if (!year) { v.appendChild(h('p', {}, 'Membership is not open yet.')); return; }
+    if (!year.applications_open) { v.appendChild(h('p', {}, 'Applications for ' + year.year + ' are closed. Ask the club executive.')); return; }
     var offices = (o.offices || []).map(function (x) { return x.label; });
-    var year = (o.years || []).filter(function (y) { return y.year === o.current_year; })[0];
-    if (m) {
-      wrap.appendChild(h('section', { class: 'card-panel', 'data-testid': 'my-membership' },
-        voteBanner(m.eligible, m.reasons),
-        h('dl', { class: 'facts' },
-          h('dt', {}, 'Member'), h('dd', {}, m.full_name),
-          h('dt', {}, 'Membership'), h('dd', {}, chip(m.status, MEMBERSHIP[m.status]), ' ', String(m.year)),
-          h('dt', {}, m.year + ' dues'), h('dd', {}, chip(m.dues_status, DUES[m.dues_status]), ' ', money(m.dues_amount_cents)),
-          offices.length ? [h('dt', {}, 'Executive role'), h('dd', {}, offices.join(', '))] : null,
-          m.discord_name ? [h('dt', {}, 'Discord'), h('dd', {}, m.discord_name)] : null,
-          h('dt', {}, 'Applied'), h('dd', {}, dateText(m.applied_at))),
-        m.status === 'pending' ? h('p', { class: 'small' }, 'Your application is waiting for the club executive. Dues are recorded by the President, Secretary or Treasurer.') : null,
-        m.status === 'active' && m.dues_status === 'unpaid' ? h('p', { class: 'small' }, 'Pay your ' + money(year ? year.dues_cents : null) + ' dues to the Treasurer; they record it here.') : null));
-    } else {
-      if (offices.length) wrap.appendChild(h('p', {}, 'Your executive role: ', h('b', {}, offices.join(', ')), '. You have no ' + o.current_year + ' membership record yet.'));
-      if (year && year.applications_open) wrap.appendChild(applyForm(o, year));
-      else if (year) wrap.appendChild(h('p', {}, 'Applications for ' + year.year + ' are closed. Ask the club executive.'));
-    }
-    return wrap;
-  }
-
-  function applyForm(o, year) {
-    var name = h('input', { class: 'browser-default', id: 'ap-name', autocomplete: 'name', maxlength: '120', value: o.suggested_name || '' });
+    if (offices.length) v.appendChild(h('p', {}, 'Your executive role: ', h('b', {}, offices.join(', ')), '.'));
+    var name = h('input', { class: 'browser-default', id: 'ap-name', autocomplete: 'name', maxlength: '120', value: (state.profile && state.profile.display_name) || o.suggested_name || '' });
     var discord = h('input', { class: 'browser-default', id: 'ap-discord', maxlength: '64' });
     var dob = h('input', { class: 'browser-default', id: 'ap-dob', type: 'date', max: today() });
     var adult = h('input', { type: 'checkbox', id: 'ap-adult' });
     var bylaws = h('input', { type: 'checkbox', id: 'ap-bylaws' });
     var err = h('p', { class: 'err', role: 'alert' });
-    var btn = h('button', { class: 'btn-rdr', type: 'submit' }, 'Apply');
+    var btn = h('button', { class: 'btn-rdr', type: 'submit' }, 'Apply to join');
     var form = h('form', { class: 'card-panel', 'data-testid': 'apply-form', novalidate: true },
-      h('h2', {}, 'Apply to become a ' + year.year + ' member'),
-      h('p', { class: 'small' }, 'Annual dues for ' + year.year + ': ', h('b', {}, money(year.dues_cents)), ', paid to the Treasurer. Your account email: ' + (o.email || '') + '.'),
-      h('label', { class: 'fld' }, 'Full name', name),
+      h('h2', {}, 'Join the Red Deer Reavers'),
+      h('p', { class: 'small' }, year.fee_waived ? ['The ' + year.year + ' membership fee is ', h('b', {}, 'waived'), ': nothing to pay.'] : ['Annual dues for ' + year.year + ': ', h('b', {}, money(year.dues_cents)), ', paid to the Treasurer.'],
+        ' Account: ' + (o.email || '') + '.'),
+      h('label', { class: 'fld' }, 'Full name (for the membership register)', name),
       h('label', { class: 'fld' }, 'Discord name (optional)', discord),
       h('label', { class: 'fld' }, 'Date of birth (optional if you confirm 18+ below)', dob),
       h('label', { class: 'check' }, adult, h('span', {}, 'I confirm I am 18 or older')),
       h('label', { class: 'check' }, bylaws, h('span', {}, 'I agree to follow the Red Deer Reavers bylaws and team standards')),
-      err, btn);
+      h('p', { class: 'small' }, 'Members under 18 are welcome but cannot vote.'), err, btn);
     form.addEventListener('submit', function (e) {
       e.preventDefault(); err.textContent = '';
       if (name.value.trim().length < 2) { err.textContent = 'Enter your full name.'; return; }
       if (!dob.value && !adult.checked) { err.textContent = 'Give your date of birth, or confirm you are 18 or older.'; return; }
       if (!bylaws.checked) { err.textContent = 'You must agree to follow the bylaws and team standards.'; return; }
-      btn.disabled = true;
+      busy(btn, true);
       sb.rpc('apply_for_club_membership', {
         p_team: state.team.id, p_year: year.year, p_full_name: name.value.trim(), p_discord_name: discord.value.trim() || null,
         p_date_of_birth: dob.value || null, p_adult_confirmed: adult.checked, p_agree_bylaws: bylaws.checked
       }).then(function (r) {
-        btn.disabled = false;
+        busy(btn, false);
         if (r.error) { err.textContent = words(r.error); return; }
-        state.overview = null; load();
+        state.view = 'mine'; reload();
       });
     });
-    return form;
+    v.appendChild(form);
   }
 
-  // ------------------------------------------------------------ leadership (the database refuses anyone else)
-  function fetchRoster(asOf) {
-    var args = { p_team: state.team.id, p_year: state.year };
-    if (asOf) args.p_as_of = asOf;
-    return sb.rpc('club_member_roster', args);
+  // ---------------------------------------------------------------- my membership
+  function renderMine(v) {
+    var o = state.overview, m = myMembership(), year = currentYear();
+    var offices = (o.offices || []).map(function (x) { return x.label; });
+    v.appendChild(h('section', { class: 'card-panel', 'data-testid': 'my-membership' },
+      m.status === 'pending' ? h('h2', { 'data-testid': 'membership-heading' }, 'Membership Application Pending') : h('h2', { 'data-testid': 'membership-heading' }, 'Membership: ' + MEMBERSHIP[m.status]),
+      voteBanner(m.eligible, m.reasons),
+      h('dl', { class: 'facts' },
+        h('dt', {}, 'Member'), h('dd', {}, m.full_name),
+        h('dt', {}, 'Membership'), h('dd', {}, chip(m.status, MEMBERSHIP[m.status]), ' ', String(m.year)),
+        h('dt', {}, m.year + ' membership fee'), h('dd', { 'data-testid': 'fee' }, m.fee_waived ? h('b', { class: 'waived-text' }, 'WAIVED') : [chip(m.dues_status, DUES[m.dues_status]), ' ', money(m.dues_amount_cents)]),
+        offices.length ? [h('dt', {}, 'Executive role'), h('dd', {}, offices.join(', '))] : null,
+        m.discord_name ? [h('dt', {}, 'Discord'), h('dd', {}, m.discord_name)] : null,
+        h('dt', {}, 'Applied'), h('dd', {}, dateText(m.applied_at))),
+      m.status === 'pending' ? h('p', { class: 'small' }, 'The club executive will review your application. You can already register for the AGM.') : null,
+      m.status === 'active' && !m.fee_waived && m.dues_status === 'unpaid' ? h('p', { class: 'small' }, 'Pay your ' + money(year ? year.dues_cents : null) + ' dues to the Treasurer; they record it here.') : null,
+      h('button', { type: 'button', class: 'btn-rdr', onclick: function () { go('agm'); } }, 'Register for the 2026 AGM')));
   }
-  function satisfied(s) { return s !== 'unpaid'; }
-  function summarize(rows) {
-    var live = rows.filter(function (r) { return r.status !== 'removed'; });
-    return {
-      total: live.length, active: live.filter(function (r) { return r.status === 'active'; }).length,
-      voting: rows.filter(function (r) { return r.eligible; }).length,
-      paid: live.filter(function (r) { return satisfied(r.dues_status); }).length,
-      outstanding: live.filter(function (r) { return (r.status === 'active' || r.status === 'pending') && !satisfied(r.dues_status); }).length,
-      pending: live.filter(function (r) { return r.status === 'pending'; }).length
-    };
+
+  // ================================================================ the AGM (member)
+  function agmHeader(a) {
+    var mt = a.meeting;
+    return h('div', { class: 'agm-head', 'data-testid': 'agm-head' },
+      h('div', { class: 'agm-kicker' }, 'RED DEER REAVERS ' + mt.year + ' AGM'),
+      h('div', { class: 'agm-when' }, mt.local_date), h('div', { class: 'agm-when' }, mt.local_time + ' (' + (mt.timezone === 'America/Edmonton' ? 'Mountain time, Red Deer' : mt.timezone) + ')'),
+      mt.location ? h('div', { class: 'small' }, 'Location: ' + mt.location) : null);
   }
-  var FILTERS = [['all', 'All'], ['eligible', 'Can vote'], ['not_eligible', 'Cannot vote'], ['paid', 'Dues paid'], ['unpaid', 'Dues unpaid'], ['pending', 'Pending'], ['active', 'Active']];
+  function renderAgm(v) {
+    var a = state.agm;
+    if (!a || !a.meeting) { v.appendChild(h('p', {}, 'No AGM is scheduled yet.')); return; }
+    var card = h('section', { class: 'card-panel', 'data-testid': 'agm-member' }, agmHeader(a));
+    v.appendChild(card);
+    if (!a.membership) {
+      card.appendChild(h('p', {}, 'Only Red Deer Reavers members can register. Join first: it takes a minute.'));
+      card.appendChild(h('button', { type: 'button', class: 'btn-rdr', onclick: function () { go('join'); } }, 'Join the Red Deer Reavers'));
+      return;
+    }
+    if (a.membership.status === 'removed') { card.appendChild(h('p', {}, 'Your membership was removed. Ask the club executive.')); return; }
+    card.appendChild(h('dl', { class: 'facts' },
+      h('dt', {}, 'Membership'), h('dd', {}, MEMBERSHIP[a.membership.status]),
+      h('dt', {}, a.meeting.year + ' Membership Fee'), h('dd', {}, a.fee_waived ? h('b', { class: 'waived-text' }, 'WAIVED') : DUES[a.membership.dues_status]),
+      h('dt', {}, 'Voting Status'), h('dd', {}, h('b', { class: a.eligible ? 'ok-text' : 'err' }, a.eligible ? 'ELIGIBLE TO VOTE' : 'NOT CURRENTLY ELIGIBLE TO VOTE'),
+        !a.eligible && a.reasons.length ? h('div', { class: 'small' }, a.reasons.join(' · ')) : null)));
+    var resp = a.rsvp && a.rsvp.response;
+    if (resp) {
+      var line = h('div', { class: 'rsvp-now', 'data-testid': 'rsvp-now' }, h('b', {}, RSVP_DONE[resp]));
+      if (resp === 'proxy' && a.proxy) {
+        line.appendChild(h('div', {}, 'Your Proxy: ', h('b', { 'data-testid': 'proxy-holder' }, a.proxy.holder_name)));
+        if (a.proxy.problem) line.appendChild(h('div', { class: 'err' }, 'Not currently valid: ' + a.proxy.problem + '. Choose another member.'));
+      }
+      if (resp === 'video') {
+        if (a.video && a.video.link) line.appendChild(h('div', { 'data-testid': 'video-info' }, 'Video meeting: ', h('a', { href: a.video.link, rel: 'noopener noreferrer', target: '_blank' }, a.video.link), a.video.details ? h('div', { class: 'small' }, a.video.details) : null));
+        else line.appendChild(h('div', { class: 'small', 'data-testid': 'video-info' }, 'The video meeting link will appear here when the executive adds it.'));
+      }
+      card.appendChild(line);
+    }
+    if ((a.proxies_held || []).length) {
+      card.appendChild(h('div', { class: 'held' }, h('b', {}, 'Proxy authority you hold: '), a.proxies_held.map(function (p, i) { return (i ? ', ' : '') + p.grantor_name + (p.valid ? '' : ' (not currently valid)'); }),
+        h('div', { class: 'small' }, 'This is separate from your own vote. Nothing is voted automatically.')));
+    }
+    if (a.meeting.started) { card.appendChild(h('p', { class: 'small' }, 'The meeting has started. Ask the executive to record any change.')); return; }
+    card.appendChild(h('h3', {}, resp ? 'Change how you will participate' : 'How will you participate?'));
+    var opts = h('div', { class: 'rsvp-opts', role: 'group', 'aria-label': 'How will you participate?' });
+    ['in_person', 'video', 'proxy', 'not_attending'].forEach(function (k) {
+      opts.appendChild(h('button', { type: 'button', class: 'rsvp-opt', 'aria-pressed': String(resp === k), onclick: function () {
+        if (k === 'proxy') { state.proxyPick = true; render(); return; }
+        saveRsvp(k, null, false);
+      } }, RSVP[k]));
+    });
+    card.appendChild(opts);
+    if (resp === 'proxy' && a.proxy && !state.proxyPick) {
+      card.appendChild(h('div', { class: 'row-btns' },
+        h('button', { type: 'button', class: 'btn-line', onclick: function () { state.proxyPick = true; render(); } }, 'Change proxy'),
+        h('button', { type: 'button', class: 'btn-line', onclick: cancelProxy }, 'Cancel proxy')));
+    }
+    if (state.proxyPick) card.appendChild(proxyForm(a));
+  }
+  function proxyForm(a) {
+    var sel = h('select', { class: 'browser-default', id: 'proxy-holder' }, h('option', { value: '' }, 'Choose a member…'),
+      (a.proxy_candidates || []).map(function (c) { return h('option', { value: c.membership_id, selected: a.proxy && a.proxy.holder_membership_id === c.membership_id }, c.name); }));
+    var when = a.meeting.local_date.replace(/^[A-Za-z]+, /, '');
+    var ok = h('input', { type: 'checkbox', id: 'proxy-ok' });
+    var err = h('p', { class: 'err', role: 'alert' });
+    var save = h('button', { type: 'button', class: 'btn-rdr' }, 'Save my proxy');
+    save.addEventListener('click', function () {
+      err.textContent = '';
+      if (!sel.value) { err.textContent = 'Choose the member who will hold your proxy.'; return; }
+      if (!ok.checked) { err.textContent = 'Tick the authorization to continue.'; return; }
+      saveRsvp('proxy', sel.value, true, err);
+    });
+    return h('div', { class: 'proxy-box', 'data-testid': 'proxy-form' },
+      h('h3', {}, 'Voting by Proxy'),
+      (a.proxy_candidates || []).length ? null : h('p', { class: 'err' }, 'No member is eligible to hold a proxy right now.'),
+      h('label', { class: 'fld' }, 'Member who will hold your proxy (eligible voting members only)', sel),
+      h('label', { class: 'check' }, ok, h('span', {}, 'I authorize the selected member to act as my proxy for the ' + when + ' Red Deer Reavers AGM.')),
+      h('p', { class: 'small' }, 'Your proxy holder may vote on your behalf at the meeting. You can change or cancel this before the AGM.'),
+      err, h('div', { class: 'row-btns' }, save, h('button', { type: 'button', class: 'btn-line', onclick: function () { state.proxyPick = false; render(); } }, 'Back')));
+  }
+  function saveRsvp(response, holder, authorize, errEl) {
+    status('Saving…');
+    sb.rpc('set_club_meeting_rsvp', { p_meeting: state.agm.meeting.id, p_response: response, p_proxy_holder: holder, p_authorize: authorize }).then(function (r) {
+      if (r.error) { status(''); if (errEl) errEl.textContent = words(r.error); else status(words(r.error), true); return; }
+      state.proxyPick = false; status('Saved: ' + RSVP_DONE[response] + '.');
+      refreshAgm();
+    });
+  }
+  function cancelProxy() {
+    if (!window.confirm('Cancel your proxy? You can then choose how you will participate.')) return;
+    sb.rpc('cancel_club_meeting_proxy', { p_meeting: state.agm.meeting.id }).then(function (r) {
+      if (r.error) return status(words(r.error), true);
+      status('Proxy cancelled.'); refreshAgm();
+    });
+  }
+  function refreshAgm() {
+    sb.rpc('club_meeting_member_view', { p_team: state.team.id }).then(function (r) { if (!r.error) state.agm = r.data; render(); });
+  }
+
+  // ================================================================ executive: members and dues (from the previous release)
+  function fetchRoster() { return sb.rpc('club_member_roster', { p_team: state.team.id, p_year: state.year }); }
+  function waived() { var y = currentYear(); return !!(y && y.fee_waived); }
+  function satisfied(s) { return waived() || s !== 'unpaid'; }
+  var FILTERS = [['all', 'All'], ['eligible', 'Can vote'], ['not_eligible', 'Cannot vote'], ['paid', 'Fee paid / waived'], ['unpaid', 'Fee unpaid'], ['pending', 'Pending'], ['active', 'Active']];
   function keep(r) {
     var q = state.search.trim().toLowerCase();
     if (q && (r.full_name + ' ' + (r.discord_name || '') + ' ' + (r.email || '')).toLowerCase().indexOf(q) < 0) return false;
@@ -245,7 +491,6 @@
       default: return true;
     }
   }
-
   function renderMembers(v) {
     v.appendChild(h('p', { class: 'small' }, 'Loading members…'));
     fetchRoster().then(function (r) {
@@ -255,22 +500,30 @@
       drawMembers(v);
     });
   }
+  function tile(n, label, tone, onclick, testid) { return h('button', { type: 'button', class: 'tile ' + (tone || ''), onclick: onclick, 'data-testid': testid }, h('b', {}, String(n)), h('span', {}, label)); }
+  function searchBox(value, onchange, redraw) {
+    var s = h('input', { type: 'search', class: 'browser-default', placeholder: 'Find a member', 'aria-label': 'Find a member', value: value });
+    s.addEventListener('input', function () { var pos = s.selectionStart; onchange(s.value); var n = redraw(); var box = n.querySelector('input[type=search]'); box.focus(); box.setSelectionRange(pos, pos); });
+    return s;
+  }
   function drawMembers(v) {
     v.textContent = '';
-    var o = state.overview, rows = state.roster, s = summarize(rows);
-    var tile = function (n, label, tone, f) { return h('button', { type: 'button', class: 'tile ' + tone, onclick: function () { state.filter = f; drawMembers(v); } }, h('b', {}, String(n)), h('span', {}, label)); };
+    var o = state.overview, rows = state.roster, live = rows.filter(function (r) { return r.status !== 'removed'; });
+    var paid = live.filter(function (r) { return satisfied(r.dues_status); }).length;
+    var out = live.filter(function (r) { return (r.status === 'active' || r.status === 'pending') && !satisfied(r.dues_status); }).length;
+    var set = function (f) { return function () { state.filter = f; drawMembers(v); }; };
     v.appendChild(h('div', { class: 'tiles', 'data-testid': 'summary' },
-      tile(s.total, 'Total members', '', 'all'), tile(s.active, 'Active', '', 'active'), tile(s.voting, 'Can vote', 'yes', 'eligible'),
-      tile(s.paid, 'Dues paid', '', 'paid'), tile(s.outstanding, 'Dues outstanding', s.outstanding ? 'no' : '', 'unpaid'),
-      tile(s.pending, 'Pending applications', s.pending ? 'warn' : '', 'pending')));
+      tile(live.length, 'Total members', '', set('all')), tile(live.filter(function (r) { return r.status === 'active'; }).length, 'Active', '', set('active')),
+      tile(rows.filter(function (r) { return r.eligible; }).length, 'Can vote', 'yes', set('eligible')),
+      tile(paid, waived() ? 'Fee waived / paid' : 'Dues paid', '', set('paid')), tile(out, 'Dues outstanding', out ? 'no' : '', set('unpaid')),
+      tile(live.filter(function (r) { return r.status === 'pending'; }).length, 'Pending applications', live.some(function (r) { return r.status === 'pending'; }) ? 'warn' : '', set('pending'))));
+    if (waived()) v.appendChild(h('p', { class: 'small' }, 'The ' + state.year + ' membership fee is waived: nobody owes dues this year.'));
     v.appendChild(h('div', { class: 'filters', role: 'group', 'aria-label': 'Show' }, FILTERS.map(function (f) {
-      return h('button', { type: 'button', 'aria-pressed': String(state.filter === f[0]), onclick: function () { state.filter = f[0]; drawMembers(v); } }, f[1]);
+      return h('button', { type: 'button', 'aria-pressed': String(state.filter === f[0]), onclick: set(f[0]) }, f[1]);
     })));
-    var search = h('input', { type: 'search', class: 'browser-default', placeholder: 'Find a member', 'aria-label': 'Find a member', value: state.search });
-    search.addEventListener('input', function () { state.search = search.value; var pos = search.selectionStart; drawMembers(v); var n = v.querySelector('input[type=search]'); n.focus(); n.setSelectionRange(pos, pos); });
-    v.appendChild(search);
+    v.appendChild(searchBox(state.search, function (x) { state.search = x; }, function () { drawMembers(v); return v; }));
     var list = h('div', { role: 'table', 'aria-label': state.year + ' members' },
-      h('div', { class: 'mrow head', role: 'row' }, h('span', {}, 'Member'), h('span', {}, 'Membership'), h('span', {}, state.year + ' dues'), h('span', {}, 'Voting'), h('span', {}, 'Actions')));
+      h('div', { class: 'mrow head', role: 'row' }, h('span', {}, 'Member'), h('span', {}, 'Membership'), h('span', {}, state.year + ' fee'), h('span', {}, 'Voting'), h('span', {}, 'Actions')));
     var shown = rows.filter(keep);
     if (!rows.length) v.appendChild(h('p', {}, 'Nobody has applied for ' + state.year + ' yet.'));
     else if (!shown.length) v.appendChild(h('p', {}, 'Nobody matches.'));
@@ -278,30 +531,29 @@
       list.appendChild(h('div', { class: 'mrow' + (r.status === 'pending' ? ' pending' : ''), role: 'row', 'data-testid': 'member-row' },
         h('span', { class: 'who', role: 'cell' }, h('b', {}, r.full_name), r.offices && r.offices.length ? h('small', {}, r.offices.join(', ')) : null),
         h('span', { class: 'st', role: 'cell' }, chip(r.status, MEMBERSHIP[r.status])),
-        h('span', { class: 'du', role: 'cell' }, chip(r.dues_status, DUES[r.dues_status])),
+        h('span', { class: 'du', role: 'cell' }, feeChip(r.dues_status, waived())),
         h('span', { class: 'vt', role: 'cell' }, chip(r.eligible ? 'can' : 'cannot', r.eligible ? 'Can vote' : 'Cannot vote'), !r.eligible && r.reasons.length ? h('small', {}, r.reasons.join(' · ')) : null),
         h('span', { class: 'acts', role: 'cell' },
           o.can_change_dues ? h('button', { type: 'button', class: 'btn-line small-btn', 'aria-label': 'Change dues for ' + r.full_name, onclick: function () { openDues(r); } }, 'Dues') : null,
           o.can_change_dues && r.status === 'pending' ? h('button', { type: 'button', class: 'btn-rdr small-btn', 'aria-label': 'Approve ' + r.full_name, onclick: function () { approve(r); } }, 'Approve') : null)));
     });
     v.appendChild(list);
+    v.appendChild(h('p', { class: 'small' }, 'Executive roles are assigned in BuhurtOS (club page › Executive).'));
   }
-
   function approve(r) {
     if (!window.confirm('Approve ' + r.full_name + ' as an active ' + state.year + ' member?')) return;
     sb.rpc('set_club_membership_status', { p_membership: r.membership_id, p_status: 'active', p_note: null }).then(function (x) {
       if (x.error) return status(words(x.error), true);
-      status(''); renderMembers(clear());
+      status(r.full_name + ' approved.'); renderMembers(clear());
     });
   }
   function clear() { var v = $('view'); v.textContent = ''; return v; }
 
-  // dues dialog
   var dlg = $('dues-dialog');
   function openDues(r) {
     state.duesFor = r;
     $('dues-title').textContent = r.full_name + ': ' + state.year + ' dues';
-    $('dues-now').textContent = 'Now: ' + DUES[r.dues_status] + (r.dues_changed_by_name ? ' · last changed by ' + r.dues_changed_by_name : '');
+    $('dues-now').textContent = (waived() ? 'The ' + state.year + ' fee is waived for everyone. ' : '') + 'Recorded: ' + DUES[r.dues_status] + (r.dues_changed_by_name ? ' · last changed by ' + r.dues_changed_by_name : '');
     var pick = r.dues_status === 'unpaid' ? 'paid' : r.dues_status;
     Array.prototype.forEach.call(dlg.querySelectorAll('input[name=dues]'), function (i) { i.checked = i.value === pick; });
     $('dues-amount').value = r.dues_amount_cents != null ? String(r.dues_amount_cents / 100) : '';
@@ -320,38 +572,13 @@
       if (!/^\d{1,4}(\.\d{1,2})?$/.test(raw)) { $('dues-err').textContent = 'Enter an amount like 20 or 20.00, or leave it empty.'; return; }
       cents = Math.round(Number(raw) * 100);
     }
-    $('dues-save').disabled = true;
+    busy($('dues-save'), true);
     sb.rpc('set_club_dues', { p_membership: state.duesFor.membership_id, p_status: st, p_amount_cents: cents, p_note: $('dues-note').value.trim() || null }).then(function (r) {
-      $('dues-save').disabled = false;
+      busy($('dues-save'), false);
       if (r.error) { $('dues-err').textContent = words(r.error); return; }
       dlg.close(); renderMembers(clear());
     });
   });
-
-  function renderAgm(v) {
-    var date = h('input', { type: 'date', class: 'browser-default', value: state.asOf, 'aria-label': 'AGM date' });
-    date.addEventListener('change', function () { state.asOf = date.value || today(); renderAgm(clear()); });
-    v.appendChild(h('div', { class: 'no-print row-btns', style: 'align-items:end;margin-bottom:8px' },
-      h('label', { class: 'fld', style: 'max-width:220px;margin:0' }, 'AGM date (ages counted on)', date),
-      h('button', { type: 'button', class: 'btn-line', onclick: function () { window.print(); } }, 'Print')));
-    v.appendChild(h('p', { class: 'small no-print' }, 'Read-only snapshot. Nothing on this screen changes membership or dues.'));
-    var out = h('div', { 'data-testid': 'agm' }, h('p', { class: 'small' }, 'Loading…'));
-    v.appendChild(out);
-    fetchRoster(state.asOf).then(function (r) {
-      out.textContent = '';
-      if (r.error) { out.appendChild(h('p', { class: 'err' }, words(r.error))); return; }
-      var byName = function (a, b) { return a.full_name.localeCompare(b.full_name); };
-      var voters = r.data.filter(function (x) { return x.eligible; }).sort(byName);
-      var excluded = r.data.filter(function (x) { return !x.eligible && x.status !== 'removed'; }).sort(byName);
-      out.appendChild(h('h2', { style: 'font-family:Cinzel,serif;font-size:1.5rem;margin:0' }, (state.team.name) + ' · ' + state.year + ' eligible voters'));
-      out.appendChild(h('p', { class: 'small' }, 'As of ' + dateText(state.asOf + 'T12:00:00') + ' · from BuhurtOS'));
-      out.appendChild(h('div', { class: 'agm-count' }, h('b', { 'data-testid': 'agm-count' }, String(voters.length)), ' eligible voter' + (voters.length === 1 ? '' : 's')));
-      out.appendChild(h('h3', { style: 'font-size:1.2rem;font-weight:700' }, 'Eligible to vote'));
-      out.appendChild(voters.length ? h('ol', { class: 'agm-list' }, voters.map(function (x) { return h('li', {}, x.full_name, x.offices.length ? h('small', {}, ' (' + x.offices.join(', ') + ')') : null); })) : h('p', {}, 'Nobody is eligible yet.'));
-      out.appendChild(h('h3', { style: 'font-size:1.2rem;font-weight:700' }, 'Not eligible (' + excluded.length + ')'));
-      out.appendChild(excluded.length ? h('ul', { class: 'agm-out' }, excluded.map(function (x) { return h('li', {}, h('b', {}, x.full_name), h('span', {}, x.reasons.join(' · '))); })) : h('p', {}, 'Nobody is excluded.'));
-    });
-  }
 
   function renderHistory(v) {
     v.appendChild(h('p', { class: 'small' }, 'Every dues change, newest first. History cannot be edited or removed.'));
@@ -368,6 +595,167 @@
     });
   }
 
+  // ================================================================ executive: AGM administration
+  var AGM_FILTERS = [['all', 'All'], ['eligible', 'Voting eligible'], ['not_eligible', 'Not voting eligible'], ['in_person', 'In person'], ['video', 'Video'],
+    ['proxy', 'Proxy'], ['not_attending', 'Not attending'], ['none', 'No response'], ['checked', 'Checked in']];
+  function agmKeep(r) {
+    var q = state.agmSearch.trim().toLowerCase();
+    if (q && r.full_name.toLowerCase().indexOf(q) < 0) return false;
+    switch (state.agmFilter) {
+      case 'eligible': return r.eligible;
+      case 'not_eligible': return !r.eligible;
+      case 'none': return !r.response;
+      case 'checked': return !!r.attendance && r.attendance !== 'absent';
+      case 'all': return true;
+      default: return r.response === state.agmFilter;
+    }
+  }
+  function loadAgmRows() { return sb.rpc('club_meeting_dashboard', { p_meeting: state.agm.meeting.id }); }
+  function renderAgmAdmin(v) {
+    if (!state.agm || !state.agm.meeting) { v.appendChild(h('p', {}, 'No AGM is scheduled.')); return; }
+    v.appendChild(h('p', { class: 'small' }, 'Loading…'));
+    loadAgmRows().then(function (r) {
+      if (r.error) { v.textContent = ''; v.appendChild(h('p', { class: 'err' }, words(r.error))); return; }
+      state.agmRows = (r.data || []).filter(function (x) { return x.membership_status !== 'removed'; });
+      drawAgmAdmin(v);
+    });
+  }
+  function drawAgmAdmin(v) {
+    v.textContent = '';
+    var a = state.agm, rows = state.agmRows, manage = !!a.can_manage;
+    var count = function (f) { return rows.filter(f).length; };
+    var set = function (f) { return function () { state.agmFilter = f; drawAgmAdmin(v); }; };
+    v.appendChild(agmHeader(a));
+    v.appendChild(h('div', { class: 'tiles seven', 'data-testid': 'agm-summary' },
+      tile(rows.length, 'Total members', '', set('all')), tile(count(function (r) { return r.eligible; }), 'Voting eligible', 'yes', set('eligible')),
+      tile(count(function (r) { return r.response === 'in_person'; }), 'In person', '', set('in_person')), tile(count(function (r) { return r.response === 'video'; }), 'Video call', '', set('video')),
+      tile(count(function (r) { return r.response === 'proxy'; }), 'Voting by proxy', '', set('proxy')), tile(count(function (r) { return r.response === 'not_attending'; }), 'Not attending', '', set('not_attending')),
+      tile(count(function (r) { return !r.response; }), 'No response', count(function (r) { return !r.response; }) ? 'warn' : '', set('none'))));
+    v.appendChild(h('div', { class: 'filters', role: 'group', 'aria-label': 'Show' }, AGM_FILTERS.map(function (f) {
+      return h('button', { type: 'button', 'aria-pressed': String(state.agmFilter === f[0]), onclick: set(f[0]) }, f[1]);
+    })));
+    v.appendChild(searchBox(state.agmSearch, function (x) { state.agmSearch = x; }, function () { drawAgmAdmin(v); return v; }));
+    var shown = rows.filter(agmKeep);
+    if (!shown.length) v.appendChild(h('p', {}, 'Nobody matches.'));
+    shown.forEach(function (r) {
+      var row = h('div', { class: 'arow' + (r.attendance && r.attendance !== 'absent' ? ' here' : ''), 'data-testid': 'agm-row' },
+        h('div', { class: 'who' }, h('b', {}, r.full_name), r.offices.length ? h('small', {}, ' ' + r.offices.join(', ')) : null),
+        h('div', { class: 'chips' }, chip(r.membership_status, MEMBERSHIP[r.membership_status]), chip(r.eligible ? 'can' : 'cannot', r.eligible ? 'Can vote' : 'Cannot vote'),
+          feeChip(r.dues_status, r.fee_waived), r.response ? chip('rsvp', RSVP[r.response]) : chip('none', 'No response'),
+          r.attendance ? chip(r.attendance === 'absent' ? 'cannot' : 'can', ATTEND[r.attendance]) : null),
+        !r.eligible && r.reasons.length ? h('div', { class: 'small err' }, r.reasons.join(' · ')) : null,
+        r.proxy_holder_name ? h('div', { class: 'small' }, 'Proxy → ' + r.proxy_holder_name + (r.proxy_problem ? ' (not valid: ' + r.proxy_problem + ')' : '')) : null,
+        r.proxies_held_names.length ? h('div', { class: 'small' }, 'Holds ' + r.valid_proxies_held + ' valid prox' + (r.valid_proxies_held === 1 ? 'y' : 'ies') + ': ' + r.proxies_held_names.join(', ')) : null,
+        r.attendance ? h('div', { class: 'small' }, 'Checked by ' + r.attendance_recorded_by + ', ' + timeText(r.attendance_recorded_at)) : null,
+        manage ? h('div', { class: 'checkin', role: 'group', 'aria-label': 'Check in ' + r.full_name },
+          [['present_in_person', 'In person'], ['present_video', 'Video'], ['absent', 'Absent']].map(function (s) {
+            return h('button', { type: 'button', class: 'small-btn ' + (r.attendance === s[0] ? 'btn-rdr' : 'btn-line'), 'aria-pressed': String(r.attendance === s[0]),
+              'aria-label': ATTEND[s[0]] + ': ' + r.full_name, onclick: function () { checkIn(r, s[0], v); } }, s[1]);
+          })) : null);
+      v.appendChild(row);
+    });
+    if (manage) v.appendChild(videoForm());
+  }
+  function checkIn(r, st, v) {
+    sb.rpc('set_club_meeting_attendance', { p_meeting: state.agm.meeting.id, p_membership: r.membership_id, p_status: st }).then(function (x) {
+      if (x.error) return status(words(x.error), true);
+      status(r.full_name + ': ' + ATTEND[st] + '.');
+      loadAgmRows().then(function (y) { if (!y.error) { state.agmRows = y.data.filter(function (z) { return z.membership_status !== 'removed'; }); drawAgmAdmin(v); } });
+    });
+  }
+  function videoForm() {
+    var box = h('section', { class: 'card-panel', 'data-testid': 'video-form' }, h('h3', {}, 'Video meeting link'), h('p', { class: 'small' }, 'Shown only to signed-in Reavers members.'));
+    var link = h('input', { class: 'browser-default', id: 'vid-link', placeholder: 'https://…', inputmode: 'url' });
+    var det = h('input', { class: 'browser-default', id: 'vid-details', maxlength: '500', placeholder: 'Passcode or dial-in (optional)' });
+    var err = h('p', { class: 'err', role: 'alert' });
+    var btn = h('button', { type: 'button', class: 'btn-rdr' }, 'Save video link');
+    sb.rpc('club_meeting_admin_info', { p_meeting: state.agm.meeting.id }).then(function (r) { if (!r.error) { link.value = r.data.video_link || ''; det.value = r.data.video_details || ''; } });
+    btn.addEventListener('click', function () {
+      err.textContent = '';
+      sb.rpc('set_club_meeting_video', { p_meeting: state.agm.meeting.id, p_link: link.value.trim() || null, p_details: det.value.trim() || null }).then(function (r) {
+        if (r.error) { err.textContent = words(r.error); return; }
+        status('Video link saved.'); refreshAgm();
+      });
+    });
+    box.appendChild(h('label', { class: 'fld' }, 'Link', link)); box.appendChild(h('label', { class: 'fld' }, 'Details', det)); box.appendChild(err); box.appendChild(btn);
+    return box;
+  }
+
+  function renderProxies(v) {
+    if (!state.agm || !state.agm.meeting) { v.appendChild(h('p', {}, 'No AGM is scheduled.')); return; }
+    v.appendChild(h('p', { class: 'small' }, 'Loading…'));
+    sb.rpc('club_meeting_proxy_list', { p_meeting: state.agm.meeting.id }).then(function (r) {
+      v.textContent = '';
+      if (r.error) { v.appendChild(h('p', { class: 'err' }, words(r.error))); return; }
+      var active = r.data.filter(function (p) { return p.status === 'active'; }), ended = r.data.filter(function (p) { return p.status !== 'active'; });
+      v.appendChild(h('p', { class: 'small' }, 'Documented proxy authority only. Nothing here casts or counts a vote. A proxy is valid when both members are eligible to vote and the holder has not given away their own vote.'));
+      var byHolder = {};
+      active.forEach(function (p) { (byHolder[p.holder_name] = byHolder[p.holder_name] || { eligible: p.holder_eligible, valid: 0, all: [] }).all.push(p); if (p.valid) byHolder[p.holder_name].valid++; });
+      v.appendChild(h('h3', {}, 'Proxy holders'));
+      var holders = Object.keys(byHolder).sort();
+      if (!holders.length) v.appendChild(h('p', {}, 'No proxies yet.'));
+      holders.forEach(function (n) {
+        var x = byHolder[n];
+        v.appendChild(h('div', { class: 'arow', 'data-testid': 'proxy-holder-row' }, h('div', { class: 'who' }, h('b', {}, n)),
+          h('div', { class: 'small' }, 'Own vote: ' + (x.eligible ? 'eligible' : 'NOT eligible') + ' · Proxy authority held: ' + x.valid + ' valid'),
+          h('ul', { class: 'hist' }, x.all.map(function (p) { return h('li', {}, 'From ' + p.grantor_name + ' — ', p.valid ? chip('can', 'Valid') : chip('cannot', 'Not valid'), p.problem ? ' ' + p.problem : '', h('small', {}, ' · authorized ' + timeText(p.authorized_at))); }))));
+      });
+      if (ended.length) {
+        v.appendChild(h('h3', {}, 'Changed or cancelled'));
+        v.appendChild(h('ul', { class: 'hist' }, ended.map(function (p) { return h('li', {}, p.grantor_name + ' → ' + p.holder_name + ': ' + p.status + (p.end_reason ? ' (' + p.end_reason + ')' : '') + ', ' + timeText(p.ended_at)); })));
+      }
+    });
+  }
+
+  // ---------------------------------------------------------------- printable AGM voting list (live, or a saved official record)
+  function renderPrint(v) {
+    if (!state.agm || !state.agm.meeting) { v.appendChild(h('p', {}, 'No AGM is scheduled.')); return; }
+    var a = state.agm, bar = h('div', { class: 'row-btns no-print' });
+    v.appendChild(bar);
+    var out = h('div', { 'data-testid': 'agm-print' }, h('p', { class: 'small' }, 'Loading…'));
+    v.appendChild(out);
+    bar.appendChild(h('button', { type: 'button', class: 'btn-line', onclick: function () { window.print(); } }, 'Print'));
+    if (a.can_manage) bar.appendChild(h('button', { type: 'button', class: 'btn-rdr', onclick: function () {
+      if (!window.confirm('Save the official AGM record now? It keeps a frozen copy of this list that later changes cannot alter.')) return;
+      sb.rpc('record_club_meeting_snapshot', { p_meeting: a.meeting.id }).then(function (r) { if (r.error) return status(words(r.error), true); status('Official AGM record saved.'); go('print'); });
+    } }, 'Save official AGM record'));
+    Promise.all([loadAgmRows(), sb.rpc('club_meeting_proxy_list', { p_meeting: a.meeting.id }), sb.rpc('club_meeting_records', { p_meeting: a.meeting.id })]).then(function (rs) {
+      out.textContent = '';
+      if (rs[0].error || rs[1].error) { out.appendChild(h('p', { class: 'err' }, words(rs[0].error || rs[1].error))); return; }
+      var records = rs[2].error ? [] : rs[2].data;
+      if (records.length) {
+        var pick = h('select', { class: 'browser-default no-print', 'aria-label': 'Show' }, h('option', { value: '' }, 'Live list (now)'),
+          records.map(function (rec) { return h('option', { value: String(rec.id) }, 'Saved record: ' + timeText(rec.recorded_at) + ' by ' + rec.recorded_by_name); }));
+        pick.addEventListener('change', function () {
+          var rec = records.filter(function (x) { return String(x.id) === pick.value; })[0];
+          body.textContent = '';
+          body.appendChild(rec ? votingList(rec.snapshot.members, rec.snapshot.proxies, 'Saved official record, ' + timeText(rec.recorded_at) + ', by ' + rec.recorded_by_name) : votingList(rs[0].data, rs[1].data, 'Live list printed ' + timeText(new Date().toISOString())));
+        });
+        out.appendChild(h('label', { class: 'fld no-print', style: 'max-width:360px' }, 'Which list', pick));
+      }
+      var body = h('div', {}, votingList(rs[0].data, rs[1].data, 'Live list printed ' + timeText(new Date().toISOString())));
+      out.appendChild(body);
+    });
+  }
+  function votingList(members, proxies, note) {
+    var a = state.agm, live = members.filter(function (m) { return m.membership_status !== 'removed'; });
+    var byName = function (x, y) { return x.full_name.localeCompare(y.full_name); };
+    var eligible = live.filter(function (m) { return m.eligible; }).sort(byName), notEligible = live.filter(function (m) { return !m.eligible; }).sort(byName);
+    var present = function (s) { return live.filter(function (m) { return m.attendance === s; }).sort(byName); };
+    var valid = proxies.filter(function (p) { return p.status === 'active' && p.valid; });
+    var list = function (rows, fn) { return rows.length ? h('ol', { class: 'agm-list' }, rows.map(fn)) : h('p', { class: 'small' }, 'None.'); };
+    return h('div', { class: 'print-list' },
+      h('h2', { class: 'print-title' }, 'Red Deer Reavers ' + a.meeting.year + ' AGM: voting list'),
+      h('p', { class: 'small' }, a.meeting.local_date + ', ' + a.meeting.local_time + ' · ' + note),
+      h('p', { class: 'agm-count' }, h('b', { 'data-testid': 'print-eligible-count' }, String(eligible.length)), ' eligible voters · ', String(present('present_in_person').length + present('present_video').length), ' present · ', String(valid.length), ' valid proxies'),
+      h('h3', {}, 'Eligible voters'),
+      list(eligible, function (m) { return h('li', {}, m.full_name, ' — ', m.attendance ? ATTEND[m.attendance] : 'not checked in', m.valid_proxies_held ? ' · holds ' + m.valid_proxies_held + ' valid prox' + (m.valid_proxies_held === 1 ? 'y' : 'ies') : ''); }),
+      h('h3', {}, 'Present in person'), list(present('present_in_person'), function (m) { return h('li', {}, m.full_name + (m.eligible ? '' : ' (not eligible to vote)')); }),
+      h('h3', {}, 'Present by video'), list(present('present_video'), function (m) { return h('li', {}, m.full_name + (m.eligible ? '' : ' (not eligible to vote)')); }),
+      h('h3', {}, 'Valid proxies'), list(valid.slice().sort(function (x, y) { return x.holder_name.localeCompare(y.holder_name); }), function (p) { return h('li', {}, p.holder_name + ' holds the proxy of ' + p.grantor_name); }),
+      h('h3', {}, 'Not eligible to vote'), notEligible.length ? h('ul', { class: 'agm-out' }, notEligible.map(function (m) { return h('li', {}, h('b', {}, m.full_name), h('span', {}, m.reasons.join(' · '))); })) : h('p', { class: 'small' }, 'None.'),
+      h('h3', {}, 'No response'), list(live.filter(function (m) { return !m.response; }).sort(byName), function (m) { return h('li', {}, m.full_name); }));
+  }
+
   document.addEventListener('DOMContentLoaded', function () { if (window.M) window.M.Sidenav.init(document.querySelectorAll('.sidenav')); });
-  sb.auth.getSession().then(function (r) { if (!r.data.session) showSignedOut(); });
 })();
