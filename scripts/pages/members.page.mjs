@@ -33,7 +33,7 @@ export default () => `${head({
                 <p class="small" id="admin-note" hidden><b>Admin sign in:</b> use your normal Reavers / BuhurtOS account. There is no separate admin login. The executive tools appear automatically if you currently hold an executive role.</p>
                 <p class="small">Already on BuhurtOS? Use the same email and password (or Google) here. Do not create a second account.</p>
                 <form id="password-form" autocomplete="on" novalidate>
-                    <label class="fld">Email<input id="email" type="email" autocomplete="username" required></label>
+                    <label class="fld">Email<input id="email" type="email" autocomplete="email" required></label>
                     <label class="fld">Password<input id="password" type="password" autocomplete="current-password"></label>
                     <button class="btn-rdr" type="submit" id="password-btn">Sign in</button>
                 </form>
@@ -54,8 +54,8 @@ export default () => `${head({
                 <p class="small">This creates your BuhurtOS account: the one account for the Reavers website and BuhurtOS. Next you can join the Red Deer Reavers.</p>
                 <p class="small">Thinking of joining? Read the <a href="https://drive.google.com/file/d/1R9EDu7BpUZ1KM790BDNN0iIaXZYtUtCE/view?usp=drivesdk" target="_blank" rel="noopener noreferrer" data-testid="bylaws-link-signup">Red Deer Reavers bylaws (PDF, opens in a new tab)</a> first. Creating an account does not make you a member.</p>
                 <form id="signup-form" autocomplete="on" novalidate>
-                    <label class="fld">Your name<input id="su-name" autocomplete="name" maxlength="80"></label>
-                    <label class="fld">Email<input id="su-email" type="email" autocomplete="username"></label>
+                    <label class="fld">Your name<input id="su-name" type="text" maxlength="80"></label>
+                    <label class="fld">Email<input id="su-email" type="email" autocomplete="email"></label>
                     <label class="fld">Password (at least 8 characters)<input id="su-password" type="password" autocomplete="new-password"></label>
                     <label class="fld">Password again<input id="su-password2" type="password" autocomplete="new-password"></label>
                     <button class="btn-rdr" type="submit" id="signup-btn">Create account</button>
@@ -75,7 +75,7 @@ export default () => `${head({
                 <h2>Reset your password</h2>
                 <p class="small">Works for every BuhurtOS account. If you only ever used Google, this sets a password you can also use.</p>
                 <form id="forgot-form" novalidate>
-                    <label class="fld">Email<input id="fp-email" type="email" autocomplete="username"></label>
+                    <label class="fld">Email<input id="fp-email" type="email" autocomplete="email"></label>
                     <button class="btn-rdr" type="submit" id="forgot-btn">Email me a reset link</button>
                 </form>
                 <div id="forgot-check" hidden>
