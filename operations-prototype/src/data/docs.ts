@@ -1,0 +1,40 @@
+import type { Doc } from '../types'
+
+export const docCategories = ['Governance', 'Bylaws', 'AGM', 'Meeting Minutes', 'Finance', 'Insurance', 'Waivers', 'HACSA', 'Training', 'Practices', 'Programs', 'Grants', 'Fundraising', 'Sponsors', 'Equipment', 'Events', 'Receipts', 'Marketing', 'Photos', 'Social Media']
+
+const D = (id: string, title: string, category: string, fileType: string, uploader: string, date: string, tags: string[], related?: Doc['related'], extra: Partial<Doc> = {}): Doc =>
+  ({ id, title, category, fileType, uploader, date, tags, related, starred: false, sizeKb: 120 + id.length * 37, summary: 'Mock document. No real file attached.', ...extra })
+export const docs: Doc[] = [
+  D('d1', 'Reavers Bylaws (2024 revision)', 'Bylaws', 'PDF', 'Cass Delaney', '2024-05-01', ['governance', 'official'], undefined, { starred: true, lastOpened: '2026-10-05' }),
+  D('d2', 'Governance Policy Handbook', 'Governance', 'PDF', 'Cass Delaney', '2025-01-10', ['policy']),
+  D('d3', 'Certificate of Insurance 2026', 'Insurance', 'PDF', 'Brynn Okafor', '2026-04-16', ['insurance', 'renewal'], { type: 'event', id: 'ev6' }, { starred: true }),
+  D('d4', 'Participation Waiver Template 2026', 'Waivers', 'DOCX', 'Cass Delaney', '2026-01-02', ['waiver', 'template'], undefined, { lastOpened: '2026-10-03' }),
+  D('d5', 'Signed waiver — Kira Novak (pending)', 'Waivers', 'PDF', 'Cass Delaney', '2026-10-01', ['waiver'], { type: 'member', id: 'm11' }),
+  D('d6', 'HACSA Affiliation Certificate', 'HACSA', 'PDF', 'Alex Hartwell', '2026-09-15', ['hacsa']),
+  D('d7', 'AGM 2025 Minutes', 'AGM', 'PDF', 'Cass Delaney', '2025-10-20', ['minutes', 'agm'], { type: 'meeting', id: 'mt3' }),
+  D('d8', 'Executive Minutes — Sept 2026', 'Meeting Minutes', 'PDF', 'Cass Delaney', '2026-09-09', ['minutes'], { type: 'meeting', id: 'mt1' }),
+  D('d9', 'General Meeting Minutes — Aug 2026', 'Meeting Minutes', 'PDF', 'Cass Delaney', '2026-08-13', ['minutes'], { type: 'meeting', id: 'mt2' }),
+  D('d10', '2025 Annual Report', 'AGM', 'PDF', 'Alex Hartwell', '2025-10-15', ['annual report'], undefined, { starred: true }),
+  D('d11', 'Financial Statements 2025', 'Finance', 'XLSX', 'Brynn Okafor', '2026-01-30', ['finance', 'audit']),
+  D('d12', 'Budget 2026', 'Finance', 'XLSX', 'Brynn Okafor', '2026-01-05', ['budget'], undefined, { lastOpened: '2026-10-04' }),
+  D('d13', 'Beginner Curriculum v2', 'Training', 'DOCX', 'Dmitri Volkov', '2026-07-10', ['training', 'beginner'], { type: 'program', id: 'p2' }, { lastOpened: '2026-10-06' }),
+  D('d14', 'Youth Safety Policy (draft)', 'Programs', 'DOCX', 'Iris Lindqvist', '2026-06-20', ['youth', 'policy'], { type: 'program', id: 'p1' }),
+  D('d15', 'Equipment Grant — Draft Application', 'Grants', 'DOCX', 'Brynn Okafor', '2026-10-01', ['grant', 'draft'], { type: 'grant', id: 'g1' }, { starred: true, lastOpened: '2026-10-06' }),
+  D('d16', 'Local Rec Micro-Grant — Award Letter', 'Grants', 'PDF', 'Alex Hartwell', '2026-06-10', ['grant', 'award'], { type: 'grant', id: 'g2' }),
+  D('d17', 'Ironworks Sponsorship Agreement', 'Sponsors', 'PDF', 'Alex Hartwell', '2026-02-01', ['agreement'], { type: 'sponsor', id: 's1' }),
+  D('d18', 'Armour Fundraiser — Run Sheet', 'Fundraising', 'DOCX', 'Alex Hartwell', '2026-08-15', ['run sheet'], { type: 'fundraiser', id: 'f1' }),
+  D('d19', 'Armour Fundraiser — Photos (album)', 'Photos', 'ZIP', 'Finn Gallagher', '2026-08-23', ['photos', 'fundraiser'], { type: 'post', id: 'sp2' }),
+  D('d20', 'Receipt — Spring Demo supplies', 'Receipts', 'JPG', 'Alex Hartwell', '2026-03-10', ['receipt'], { type: 'event', id: 'ev1' }),
+  D('d21', 'Receipt — Training gloves', 'Receipts', 'JPG', 'Gwen Takahashi', '2026-05-12', ['receipt']),
+  D('d22', 'Receipt — Armour materials (Webb)', 'Receipts', 'PDF', 'Gwen Takahashi', '2026-08-05', ['receipt'], { type: 'expense', id: 'x3' }),
+  D('d23', 'Receipt — Legion Hall deposit', 'Receipts', 'PDF', 'Alex Hartwell', '2026-08-21', ['receipt'], { type: 'expense', id: 'x1' }),
+  D('d24', 'Receipt — Raffle prizes', 'Receipts', 'JPG', 'Cass Delaney', '2026-08-22', ['receipt'], { type: 'expense', id: 'x4' }),
+  D('d25', 'Receipt — Banner printing', 'Receipts', 'PDF', 'Finn Gallagher', '2026-09-05', ['receipt'], { type: 'expense', id: 'x2' }),
+  D('d26', 'Practice Plan — Oct 6', 'Practices', 'DOCX', 'Dmitri Volkov', '2026-10-05', ['practice'], { type: 'practice', id: 'pr1' }),
+  D('d27', 'Equipment Inspection Checklist', 'Equipment', 'XLSX', 'Gwen Takahashi', '2026-06-01', ['inspection'], { type: 'equipment', id: 'e2' }),
+  D('d28', 'Event Planning Template', 'Events', 'DOCX', 'Alex Hartwell', '2026-02-02', ['template']),
+  D('d29', 'Brand Guide (colours, logo)', 'Marketing', 'PDF', 'Finn Gallagher', '2026-03-01', ['brand'], undefined, { starred: true }),
+  D('d30', 'Social Media Policy', 'Social Media', 'PDF', 'Finn Gallagher', '2026-05-15', ['policy', 'social']),
+  D('d31', 'Sponsor Package 2027', 'Sponsors', 'PDF', 'Alex Hartwell', '2026-09-20', ['sponsorship'], undefined, { lastOpened: '2026-10-02' }),
+  D('d32', 'Facility Agreement 2026', 'Governance', 'PDF', 'Cass Delaney', '2025-12-15', ['facility']),
+]
