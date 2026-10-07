@@ -1,0 +1,640 @@
+[
+  {
+    "index": 1,
+    "alt": "Red Deer Reavers photo 1",
+    "original": "assets/gallery/image (1).jpg",
+    "width": 2400,
+    "height": 3600,
+    "derivatives": {
+      "360": {
+        "src": "assets/generated/gallery/image-01-360.webp",
+        "width": 360,
+        "height": 540
+      },
+      "720": {
+        "src": "assets/generated/gallery/image-01-720.webp",
+        "width": 720,
+        "height": 1080
+      },
+      "1200": {
+        "src": "assets/generated/gallery/image-01-1200.webp",
+        "width": 1200,
+        "height": 1800
+      },
+      "1600": {
+        "src": "assets/generated/gallery/image-01-1600.webp",
+        "width": 1600,
+        "height": 2400
+      }
+    }
+  },
+  {
+    "index": 2,
+    "alt": "Red Deer Reavers photo 2",
+    "original": "assets/gallery/image (2).jpg",
+    "width": 3600,
+    "height": 2400,
+    "derivatives": {
+      "360": {
+        "src": "assets/generated/gallery/image-02-360.webp",
+        "width": 360,
+        "height": 240
+      },
+      "720": {
+        "src": "assets/generated/gallery/image-02-720.webp",
+        "width": 720,
+        "height": 480
+      },
+      "1200": {
+        "src": "assets/generated/gallery/image-02-1200.webp",
+        "width": 1200,
+        "height": 800
+      },
+      "1600": {
+        "src": "assets/generated/gallery/image-02-1600.webp",
+        "width": 1600,
+        "height": 1067
+      }
+    }
+  },
+  {
+    "index": 3,
+    "alt": "Red Deer Reavers photo 3",
+    "original": "assets/gallery/image (3).jpg",
+    "width": 3600,
+    "height": 2400,
+    "derivatives": {
+      "360": {
+        "src": "assets/generated/gallery/image-03-360.webp",
+        "width": 360,
+        "height": 240
+      },
+      "720": {
+        "src": "assets/generated/gallery/image-03-720.webp",
+        "width": 720,
+        "height": 480
+      },
+      "1200": {
+        "src": "assets/generated/gallery/image-03-1200.webp",
+        "width": 1200,
+        "height": 800
+      },
+      "1600": {
+        "src": "assets/generated/gallery/image-03-1600.webp",
+        "width": 1600,
+        "height": 1067
+      }
+    }
+  },
+  {
+    "index": 4,
+    "alt": "Red Deer Reavers photo 4",
+    "original": "assets/gallery/image (4).jpg",
+    "width": 3600,
+    "height": 2400,
+    "derivatives": {
+      "360": {
+        "src": "assets/generated/gallery/image-04-360.webp",
+        "width": 360,
+        "height": 240
+      },
+      "720": {
+        "src": "assets/generated/gallery/image-04-720.webp",
+        "width": 720,
+        "height": 480
+      },
+      "1200": {
+        "src": "assets/generated/gallery/image-04-1200.webp",
+        "width": 1200,
+        "height": 800
+      },
+      "1600": {
+        "src": "assets/generated/gallery/image-04-1600.webp",
+        "width": 1600,
+        "height": 1067
+      }
+    }
+  },
+  {
+    "index": 5,
+    "alt": "Red Deer Reavers photo 5",
+    "original": "assets/gallery/image (5).jpg",
+    "width": 2400,
+    "height": 3600,
+    "derivatives": {
+      "360": {
+        "src": "assets/generated/gallery/image-05-360.webp",
+        "width": 360,
+        "height": 540
+      },
+      "720": {
+        "src": "assets/generated/gallery/image-05-720.webp",
+        "width": 720,
+        "height": 1080
+      },
+      "1200": {
+        "src": "assets/generated/gallery/image-05-1200.webp",
+        "width": 1200,
+        "height": 1800
+      },
+      "1600": {
+        "src": "assets/generated/gallery/image-05-1600.webp",
+        "width": 1600,
+        "height": 2400
+      }
+    }
+  },
+  {
+    "index": 6,
+    "alt": "Red Deer Reavers photo 6",
+    "original": "assets/gallery/image (6).jpg",
+    "width": 2400,
+    "height": 3600,
+    "derivatives": {
+      "360": {
+        "src": "assets/generated/gallery/image-06-360.webp",
+        "width": 360,
+        "height": 540
+      },
+      "720": {
+        "src": "assets/generated/gallery/image-06-720.webp",
+        "width": 720,
+        "height": 1080
+      },
+      "1200": {
+        "src": "assets/generated/gallery/image-06-1200.webp",
+        "width": 1200,
+        "height": 1800
+      },
+      "1600": {
+        "src": "assets/generated/gallery/image-06-1600.webp",
+        "width": 1600,
+        "height": 2400
+      }
+    }
+  },
+  {
+    "index": 7,
+    "alt": "Red Deer Reavers photo 7",
+    "original": "assets/gallery/image (7).jpg",
+    "width": 3600,
+    "height": 2400,
+    "derivatives": {
+      "360": {
+        "src": "assets/generated/gallery/image-07-360.webp",
+        "width": 360,
+        "height": 240
+      },
+      "720": {
+        "src": "assets/generated/gallery/image-07-720.webp",
+        "width": 720,
+        "height": 480
+      },
+      "1200": {
+        "src": "assets/generated/gallery/image-07-1200.webp",
+        "width": 1200,
+        "height": 800
+      },
+      "1600": {
+        "src": "assets/generated/gallery/image-07-1600.webp",
+        "width": 1600,
+        "height": 1067
+      }
+    }
+  },
+  {
+    "index": 8,
+    "alt": "Red Deer Reavers photo 8",
+    "original": "assets/gallery/image (8).jpg",
+    "width": 3600,
+    "height": 2400,
+    "derivatives": {
+      "360": {
+        "src": "assets/generated/gallery/image-08-360.webp",
+        "width": 360,
+        "height": 240
+      },
+      "720": {
+        "src": "assets/generated/gallery/image-08-720.webp",
+        "width": 720,
+        "height": 480
+      },
+      "1200": {
+        "src": "assets/generated/gallery/image-08-1200.webp",
+        "width": 1200,
+        "height": 800
+      },
+      "1600": {
+        "src": "assets/generated/gallery/image-08-1600.webp",
+        "width": 1600,
+        "height": 1067
+      }
+    }
+  },
+  {
+    "index": 9,
+    "alt": "Red Deer Reavers photo 9",
+    "original": "assets/gallery/image (9).jpg",
+    "width": 3600,
+    "height": 2400,
+    "derivatives": {
+      "360": {
+        "src": "assets/generated/gallery/image-09-360.webp",
+        "width": 360,
+        "height": 240
+      },
+      "720": {
+        "src": "assets/generated/gallery/image-09-720.webp",
+        "width": 720,
+        "height": 480
+      },
+      "1200": {
+        "src": "assets/generated/gallery/image-09-1200.webp",
+        "width": 1200,
+        "height": 800
+      },
+      "1600": {
+        "src": "assets/generated/gallery/image-09-1600.webp",
+        "width": 1600,
+        "height": 1067
+      }
+    }
+  },
+  {
+    "index": 10,
+    "alt": "Red Deer Reavers photo 10",
+    "original": "assets/gallery/image (10).jpg",
+    "width": 3600,
+    "height": 2400,
+    "derivatives": {
+      "360": {
+        "src": "assets/generated/gallery/image-10-360.webp",
+        "width": 360,
+        "height": 240
+      },
+      "720": {
+        "src": "assets/generated/gallery/image-10-720.webp",
+        "width": 720,
+        "height": 480
+      },
+      "1200": {
+        "src": "assets/generated/gallery/image-10-1200.webp",
+        "width": 1200,
+        "height": 800
+      },
+      "1600": {
+        "src": "assets/generated/gallery/image-10-1600.webp",
+        "width": 1600,
+        "height": 1067
+      }
+    }
+  },
+  {
+    "index": 11,
+    "alt": "Red Deer Reavers photo 11",
+    "original": "assets/gallery/image (11).jpg",
+    "width": 3600,
+    "height": 2400,
+    "derivatives": {
+      "360": {
+        "src": "assets/generated/gallery/image-11-360.webp",
+        "width": 360,
+        "height": 240
+      },
+      "720": {
+        "src": "assets/generated/gallery/image-11-720.webp",
+        "width": 720,
+        "height": 480
+      },
+      "1200": {
+        "src": "assets/generated/gallery/image-11-1200.webp",
+        "width": 1200,
+        "height": 800
+      },
+      "1600": {
+        "src": "assets/generated/gallery/image-11-1600.webp",
+        "width": 1600,
+        "height": 1067
+      }
+    }
+  },
+  {
+    "index": 12,
+    "alt": "Red Deer Reavers photo 12",
+    "original": "assets/gallery/image (12).jpg",
+    "width": 3600,
+    "height": 2400,
+    "derivatives": {
+      "360": {
+        "src": "assets/generated/gallery/image-12-360.webp",
+        "width": 360,
+        "height": 240
+      },
+      "720": {
+        "src": "assets/generated/gallery/image-12-720.webp",
+        "width": 720,
+        "height": 480
+      },
+      "1200": {
+        "src": "assets/generated/gallery/image-12-1200.webp",
+        "width": 1200,
+        "height": 800
+      },
+      "1600": {
+        "src": "assets/generated/gallery/image-12-1600.webp",
+        "width": 1600,
+        "height": 1067
+      }
+    }
+  },
+  {
+    "index": 13,
+    "alt": "Red Deer Reavers photo 13",
+    "original": "assets/gallery/image (13).jpg",
+    "width": 3600,
+    "height": 2400,
+    "derivatives": {
+      "360": {
+        "src": "assets/generated/gallery/image-13-360.webp",
+        "width": 360,
+        "height": 240
+      },
+      "720": {
+        "src": "assets/generated/gallery/image-13-720.webp",
+        "width": 720,
+        "height": 480
+      },
+      "1200": {
+        "src": "assets/generated/gallery/image-13-1200.webp",
+        "width": 1200,
+        "height": 800
+      },
+      "1600": {
+        "src": "assets/generated/gallery/image-13-1600.webp",
+        "width": 1600,
+        "height": 1067
+      }
+    }
+  },
+  {
+    "index": 14,
+    "alt": "Red Deer Reavers photo 14",
+    "original": "assets/gallery/image (14).jpg",
+    "width": 3600,
+    "height": 2400,
+    "derivatives": {
+      "360": {
+        "src": "assets/generated/gallery/image-14-360.webp",
+        "width": 360,
+        "height": 240
+      },
+      "720": {
+        "src": "assets/generated/gallery/image-14-720.webp",
+        "width": 720,
+        "height": 480
+      },
+      "1200": {
+        "src": "assets/generated/gallery/image-14-1200.webp",
+        "width": 1200,
+        "height": 800
+      },
+      "1600": {
+        "src": "assets/generated/gallery/image-14-1600.webp",
+        "width": 1600,
+        "height": 1067
+      }
+    }
+  },
+  {
+    "index": 15,
+    "alt": "Red Deer Reavers photo 15",
+    "original": "assets/gallery/image (15).jpg",
+    "width": 3600,
+    "height": 2400,
+    "derivatives": {
+      "360": {
+        "src": "assets/generated/gallery/image-15-360.webp",
+        "width": 360,
+        "height": 240
+      },
+      "720": {
+        "src": "assets/generated/gallery/image-15-720.webp",
+        "width": 720,
+        "height": 480
+      },
+      "1200": {
+        "src": "assets/generated/gallery/image-15-1200.webp",
+        "width": 1200,
+        "height": 800
+      },
+      "1600": {
+        "src": "assets/generated/gallery/image-15-1600.webp",
+        "width": 1600,
+        "height": 1067
+      }
+    }
+  },
+  {
+    "index": 16,
+    "alt": "Red Deer Reavers photo 16",
+    "original": "assets/gallery/image (16).jpg",
+    "width": 3600,
+    "height": 2400,
+    "derivatives": {
+      "360": {
+        "src": "assets/generated/gallery/image-16-360.webp",
+        "width": 360,
+        "height": 240
+      },
+      "720": {
+        "src": "assets/generated/gallery/image-16-720.webp",
+        "width": 720,
+        "height": 480
+      },
+      "1200": {
+        "src": "assets/generated/gallery/image-16-1200.webp",
+        "width": 1200,
+        "height": 800
+      },
+      "1600": {
+        "src": "assets/generated/gallery/image-16-1600.webp",
+        "width": 1600,
+        "height": 1067
+      }
+    }
+  },
+  {
+    "index": 17,
+    "alt": "Red Deer Reavers photo 17",
+    "original": "assets/gallery/image (17).jpg",
+    "width": 3600,
+    "height": 2400,
+    "derivatives": {
+      "360": {
+        "src": "assets/generated/gallery/image-17-360.webp",
+        "width": 360,
+        "height": 240
+      },
+      "720": {
+        "src": "assets/generated/gallery/image-17-720.webp",
+        "width": 720,
+        "height": 480
+      },
+      "1200": {
+        "src": "assets/generated/gallery/image-17-1200.webp",
+        "width": 1200,
+        "height": 800
+      },
+      "1600": {
+        "src": "assets/generated/gallery/image-17-1600.webp",
+        "width": 1600,
+        "height": 1067
+      }
+    }
+  },
+  {
+    "index": 18,
+    "alt": "Red Deer Reavers photo 18",
+    "original": "assets/gallery/image (18).jpg",
+    "width": 3600,
+    "height": 2400,
+    "derivatives": {
+      "360": {
+        "src": "assets/generated/gallery/image-18-360.webp",
+        "width": 360,
+        "height": 240
+      },
+      "720": {
+        "src": "assets/generated/gallery/image-18-720.webp",
+        "width": 720,
+        "height": 480
+      },
+      "1200": {
+        "src": "assets/generated/gallery/image-18-1200.webp",
+        "width": 1200,
+        "height": 800
+      },
+      "1600": {
+        "src": "assets/generated/gallery/image-18-1600.webp",
+        "width": 1600,
+        "height": 1067
+      }
+    }
+  },
+  {
+    "index": 19,
+    "alt": "Red Deer Reavers photo 19",
+    "original": "assets/gallery/image (19).jpg",
+    "width": 3600,
+    "height": 2400,
+    "derivatives": {
+      "360": {
+        "src": "assets/generated/gallery/image-19-360.webp",
+        "width": 360,
+        "height": 240
+      },
+      "720": {
+        "src": "assets/generated/gallery/image-19-720.webp",
+        "width": 720,
+        "height": 480
+      },
+      "1200": {
+        "src": "assets/generated/gallery/image-19-1200.webp",
+        "width": 1200,
+        "height": 800
+      },
+      "1600": {
+        "src": "assets/generated/gallery/image-19-1600.webp",
+        "width": 1600,
+        "height": 1067
+      }
+    }
+  },
+  {
+    "index": 20,
+    "alt": "Red Deer Reavers photo 20",
+    "original": "assets/gallery/image (20).jpg",
+    "width": 3600,
+    "height": 2400,
+    "derivatives": {
+      "360": {
+        "src": "assets/generated/gallery/image-20-360.webp",
+        "width": 360,
+        "height": 240
+      },
+      "720": {
+        "src": "assets/generated/gallery/image-20-720.webp",
+        "width": 720,
+        "height": 480
+      },
+      "1200": {
+        "src": "assets/generated/gallery/image-20-1200.webp",
+        "width": 1200,
+        "height": 800
+      },
+      "1600": {
+        "src": "assets/generated/gallery/image-20-1600.webp",
+        "width": 1600,
+        "height": 1067
+      }
+    }
+  },
+  {
+    "index": 21,
+    "alt": "Red Deer Reavers photo 21",
+    "original": "assets/gallery/image (21).jpg",
+    "width": 3600,
+    "height": 2400,
+    "derivatives": {
+      "360": {
+        "src": "assets/generated/gallery/image-21-360.webp",
+        "width": 360,
+        "height": 240
+      },
+      "720": {
+        "src": "assets/generated/gallery/image-21-720.webp",
+        "width": 720,
+        "height": 480
+      },
+      "1200": {
+        "src": "assets/generated/gallery/image-21-1200.webp",
+        "width": 1200,
+        "height": 800
+      },
+      "1600": {
+        "src": "assets/generated/gallery/image-21-1600.webp",
+        "width": 1600,
+        "height": 1067
+      }
+    }
+  },
+  {
+    "index": 22,
+    "alt": "Red Deer Reavers photo 22",
+    "original": "assets/gallery/image (22).jpg",
+    "width": 3600,
+    "height": 2400,
+    "derivatives": {
+      "360": {
+        "src": "assets/generated/gallery/image-22-360.webp",
+        "width": 360,
+        "height": 240
+      },
+      "720": {
+        "src": "assets/generated/gallery/image-22-720.webp",
+        "width": 720,
+        "height": 480
+      },
+      "1200": {
+        "src": "assets/generated/gallery/image-22-1200.webp",
+        "width": 1200,
+        "height": 800
+      },
+      "1600": {
+        "src": "assets/generated/gallery/image-22-1600.webp",
+        "width": 1600,
+        "height": 1067
+      }
+    }
+  }
+]

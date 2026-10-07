@@ -7,6 +7,11 @@ One account for the Red Deer Reavers and BuhurtOS. People can create that accoun
   - Sign in: email + password, Google, or an email code.
   - Forgot password (the email link comes back here and asks for a new password).
   - A first-time profile step: BuhurtOS's own `complete_my_profile`, so BuhurtOS never asks again.
+- **Fighter profile notice:** a Reavers member (pending, active or inactive) whose account has no BuhurtOS fighter profile sees one small
+  "⚔️ Hold, brave Reaver!" notice (parchment card, red deer antlers over a Reavers shield) above the tabs. The check is BuhurtOS's own `my_fighter_id()` (the caller's own `fighter_accounts` link, nothing
+  else; the same link the executive's member roster uses). "Forge My Fighter Profile" opens BuhurtOS `/team-manager?join=red-deer-reavers`
+  (a fighter profile is created when the captain accepts the join request); "Already fought before? Claim your existing profile" opens BuhurtOS `/claim-profile`.
+  "Maybe Later" hides it for the browser session; signing out forgets that, and it never shows once the account has a fighter profile.
 - **Join the Red Deer Reavers:**
   - The application, then Membership Application Pending, then Membership: Active.
   - The 2026 membership fee shows as WAIVED.
@@ -15,9 +20,16 @@ One account for the Red Deer Reavers and BuhurtOS. People can create that accoun
   - In Person, Video Call, Voting by Proxy or Not Attending.
   - Change the answer, change the proxy, or cancel the proxy.
   - The private video link appears once the executive adds it.
+  - **How the AGM Works**: six short, collapsed help sections under the AGM controls (who can vote, how to join, executive roles, how nominations
+    work, submitting a topic, RSVP and proxy voting). The date, place and fee come from the system; every button named in the help is a real button
+    (checked by the browser tests).
+  - **Something you want discussed?** Submit a concern or topic for the AGM; see, edit or withdraw your own until the meeting starts.
+  - **Executive Nominations** for President, Secretary and Treasurer: nominate yourself or another voting member; a nominated member accepts
+    or declines (You've Been Nominated); the page lists current officers and accepted candidates. Only members who can vote may nominate.
+    Nominations never change who holds an office: that is decided at the AGM.
 - **Executive** (current Reavers executive only; the database checks it):
   - Members and dues.
-  - AGM admin: counts, filters, check-in, video link.
+  - AGM admin: counts, filters, check-in, video link; Concerns (set Submitted / Added to Agenda / Addressed); Nominations (candidates per office).
   - Proxies.
   - Printable AGM voting list and the saved official AGM record.
   - Dues history.
@@ -34,3 +46,11 @@ between them, and nothing here is a security boundary.
 | `assets/members.css` | Styles |
 
 Full design and setup are in the BuhurtOS repository: `docs/runbooks/CLUB_MEMBERSHIP.md`.
+
+**Officer names.** Who holds an office comes from the officer records. Every place that shows an office holder goes through one display function,
+`officerName()` in `assets/js/member-portal.js`:
+- the database's label for an office whose holder has no account yet, "Kedrixx (no currently active account)", is shown as
+  "Kedrixx (account not currently linked)" (the data is not changed);
+- an office with no name at all shows the display-only name in `OFFICER_NO_ACCOUNT` (President: Kedrixx, Treasurer: Carmalee) followed by
+  " (account not currently linked)", otherwise "not assigned".
+It grants nothing and is ignored as soon as the office has a real holder. Delete the `OFFICER_NO_ACCOUNT` entry once that person's account is assigned.

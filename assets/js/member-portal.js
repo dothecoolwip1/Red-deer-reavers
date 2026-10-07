@@ -12,14 +12,15 @@
  */
 (function () {
   'use strict';
-  var CFG = window.BUHURTOS;
+  var CFG = window.REAVERS_MEMBERS; // (not window.BUHURTOS, which belongs to the public site's buhurtos.js)
   var sb = window.supabase.createClient(CFG.supabaseUrl, CFG.publishableKey, {
     auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, flowType: 'pkce' }
   });
   var HERE = window.location.origin + window.location.pathname;
   var $ = function (id) { return document.getElementById(id); };
   var state = { session: null, profile: null, team: null, overview: null, agm: null, view: null, year: null, roster: null, filter: 'all', search: '',
-    duesFor: null, agmRows: null, agmFilter: 'all', agmSearch: '', proxyPick: false, recovery: false, loading: false };
+    duesFor: null, agmRows: null, agmFilter: 'all', agmSearch: '', proxyPick: false, recovery: false, loading: false,
+    agmx: null, agmxError: '', topicForm: null, topicNotice: '', nomMode: null, nomOffice: null, nomTarget: '', nomNotice: '', agmSection: 'people', topicFilter: 'all' };
 
   var MEMBERSHIP = { pending: 'Pending', active: 'Active', inactive: 'Inactive', removed: 'Removed' };
   var DUES = { unpaid: 'Unpaid', paid: 'Paid', waived: 'Waived', gear_contribution: 'Gear contribution' };
@@ -28,6 +29,7 @@
   var ATTEND = { present_in_person: 'Present in person', present_video: 'Present by video', absent: 'Absent' };
   var INTERESTS = [['fighter', 'Fighter'], ['volunteer', 'Volunteer / helper'], ['fan', 'Supporter / fan'], ['captain', 'Team captain'], ['organizer', 'Event organizer']];
   var MIN_PASSWORD = 8;
+  var membershipChannel = null;
 
   function today() { var d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
   function money(c) { return c == null ? '' : '$' + (c / 100).toFixed(c % 100 === 0 ? 0 : 2); }
@@ -207,7 +209,7 @@
     if (event === 'PASSWORD_RECOVERY') state.recovery = true;
     var before = state.session && state.session.user.id;
     state.session = session;
-    if (!session) { state.recovery = false; renderAll(); return; }
+    if (!session) { state.recovery = false; watchMembership(null); forgetFighterNudge(before); renderAll(); return; }
     if (before !== session.user.id) setTimeout(load, 0); else renderAll();
   });
   sb.auth.getSession().then(function (r) {
@@ -217,11 +219,12 @@
 
   function renderAll() {
     var signedIn = !!state.session;
+    var adminNote = $('admin-note'); if (adminNote) adminNote.hidden = signedIn || new URLSearchParams(window.location.search).get('view') !== 'agm-admin';
     $('signed-out').hidden = signedIn;
     $('new-password').hidden = !(signedIn && state.recovery);
     $('signed-in').hidden = !signedIn || state.recovery;
     $('lede').hidden = signedIn;
-    if (!signedIn) { $('view').textContent = ''; state.overview = null; state.agm = null; state.profile = null; state.team = null; }
+    if (!signedIn) { $('view').textContent = ''; state.overview = null; state.agm = null; state.agmx = null; state.profile = null; state.team = null; }
   }
 
   // ================================================================ load the signed-in person
@@ -236,6 +239,7 @@
     bl.appendChild(h('a', { href: CFG.appUrl + '/', rel: 'noopener' }, 'Open BuhurtOS'));
     bl.appendChild(document.createTextNode(' with the same sign-in for events, teams and your fighter profile.'));
     var uid = state.session.user.id;
+    watchMembership(uid);
     sb.from('profiles').select('display_name,onboarded_at,interests,city,region,country').eq('id', uid).maybeSingle().then(function (p) {
       state.profile = p.data || null;
       if (!state.profile || !state.profile.onboarded_at) { state.loading = false; status(''); return renderProfileSetup(); }
@@ -249,14 +253,155 @@
           status('');
           var params = new URLSearchParams(window.location.search);
           if (!state.view) state.view = params.get('view') || (myMembership() ? 'mine' : 'join');
+          if (params.get('view') === 'agm-admin' && !rs[0].data.can_view_roster) status('Admin sign in: this account is not a current executive, so there are no admin tools. Your member page is shown instead.');
           render();
+          loadAgmx();
+          fighterNudge();
+          if (myMembership()) ensureReaversPush(false);
         });
       });
     }).catch(function (x) { state.loading = false; status(words(x), true); });
   }
-  function reload() { state.loading = false; state.overview = null; state.agmRows = null; load(); }
+  function reload() { state.loading = false; state.overview = null; state.agmRows = null; state.agmx = null; load(); }
+  function watchMembership(uid) {
+    if (membershipChannel) { sb.removeChannel(membershipChannel); membershipChannel = null; }
+    if (!uid) return;
+    membershipChannel = sb.channel('reavers-membership-' + uid)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'club_memberships', filter: 'user_id=eq.' + uid }, function (payload) {
+        var before = payload.old && payload.old.status, after = payload.new && payload.new.status;
+        if (before === 'pending' && after === 'active') {
+          var approvalTitle = 'Red Deer Reavers Membership Approved';
+          var approvalBody = 'Your membership has been approved. Welcome to the Red Deer Reavers!';
+          status(approvalBody);
+          try {
+            if ('Notification' in window && Notification.permission === 'granted') {
+              new Notification(approvalTitle, { body: approvalBody });
+            }
+          } catch (e) {}
+          state.view = 'mine';
+          window.setTimeout(function () { reload(); }, 1200);
+        } else {
+          reload();
+        }
+      })
+      .subscribe();
+  }
+  function b64ToBytes(s) {
+    var pad = '='.repeat((4 - (s.length % 4)) % 4);
+    var raw = atob((s + pad).replace(/-/g, '+').replace(/_/g, '/'));
+    var out = new Uint8Array(raw.length);
+    for (var i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
+    return out;
+  }
+  function ensureReaversPush(ask) {
+    if (!state.session || !('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) return Promise.resolve(false);
+    var permission = Notification.permission;
+    var getPermission = ask && permission === 'default' ? Notification.requestPermission() : Promise.resolve(permission);
+    return getPermission.then(function (p) {
+      if (p !== 'granted') return false;
+      return Promise.all([
+        navigator.serviceWorker.register('sw.js?v=25', { updateViaCache: 'none' }),
+        sb.rpc('push_public_key')
+      ]).then(function (rs) {
+        var reg = rs[0], keyRes = rs[1];
+        if (keyRes.error || !keyRes.data) return false;
+        return reg.pushManager.getSubscription().then(function (sub) {
+          if (sub) return sub;
+          return reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64ToBytes(keyRes.data) });
+        }).then(function (sub) {
+          var json = sub.toJSON(), keys = json.keys || {};
+          if (!sub.endpoint || !keys.p256dh || !keys.auth) return false;
+          return sb.rpc('register_push_device', {
+            p_endpoint: sub.endpoint,
+            p_p256dh: keys.p256dh,
+            p_auth: keys.auth,
+            p_label: 'Red Deer Reavers approval alerts'
+          }).then(function (r) { return !r.error; });
+        });
+      });
+    }).catch(function () { return false; });
+  }
+  function approvalAlertControl() {
+    if (!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)) return null;
+    var wrap = h('div', { class: 'approval-alert' });
+    if (Notification.permission === 'granted') {
+      wrap.appendChild(h('p', { class: 'small' }, '🔔 Approval alerts are enabled on this device.'));
+      return wrap;
+    }
+    if (Notification.permission === 'denied') {
+      wrap.appendChild(h('p', { class: 'small' }, 'Approval alerts are blocked in this browser. You can allow notifications in your browser/site settings.'));
+      return wrap;
+    }
+    var btn = h('button', { type: 'button', class: 'btn-line small-btn' }, '🔔 Notify me when I’m approved');
+    var msg = h('span', { class: 'small' });
+    btn.addEventListener('click', function () {
+      busy(btn, true); msg.textContent = '';
+      ensureReaversPush(true).then(function (ok) {
+        busy(btn, false);
+        if (ok) { btn.textContent = '✓ Approval alerts enabled'; btn.disabled = true; msg.textContent = ' We’ll let you know when your membership is approved.'; }
+        else msg.textContent = ' Notifications were not enabled.';
+      });
+    });
+    wrap.appendChild(btn); wrap.appendChild(msg);
+    return wrap;
+  }
   function myMembership() { var o = state.overview; return o ? (o.memberships || []).filter(function (x) { return x.year === o.current_year; })[0] || null : null; }
   function currentYear() { var o = state.overview; return o ? (o.years || []).filter(function (y) { return y.year === o.current_year; })[0] || null : null; }
+
+  // ---------------------------------------------------------------- BuhurtOS fighter profile nudge
+  // A Reavers member whose account has no BuhurtOS fighter profile yet gets one small notice. The check is BuhurtOS's own my_fighter_id():
+  // it reads fighter_accounts for auth.uid() only (the same link the executive's member roster uses) and can never answer for anyone else.
+  // A fighter profile is forged when the team captain accepts a join request (BuhurtOS /team-manager?join=), or claimed at /claim-profile.
+  // "Maybe Later" lasts for this browser session; signing out forgets it, so a later sign-in may remind again until the profile exists.
+  var NUDGE_KEY = 'rdr-fighter-nudge-later:';
+  var nudgeCheckedFor = null;
+  // Red deer antlers over a Reavers shield with crossed swords. Fixed artwork, no data.
+  var CREST = '<svg viewBox="0 0 64 84" width="50" height="66" aria-hidden="true" focusable="false">' +
+    '<g fill="none" stroke="#4f5865" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">' +
+      '<path d="M26 18 C22 13 19 9 18 2"/><path d="M21.5 11 C17 10 13 8 10 4"/><path d="M19.2 6 L14.5 2.5"/>' +
+      '<path d="M38 18 C42 13 45 9 46 2"/><path d="M42.5 11 C47 10 51 8 54 4"/><path d="M44.8 6 L49.5 2.5"/></g>' +
+    '<path d="M32 15 L59 24 V46 C59 64 46 75 32 81 C18 75 5 64 5 46 V24 Z" fill="#800080" stroke="#FFA500" stroke-width="3"/>' +
+    '<path d="M32 21 L53 28 V46 C53 60 43 69 32 74 C21 69 11 60 11 46 V28 Z" fill="none" stroke="#d9a5d9" stroke-width="1" opacity=".55"/>' +
+    '<g stroke="#e6e9ee" stroke-width="3.2" stroke-linecap="round"><path d="M19 33 L45 61"/><path d="M45 33 L19 61"/></g>' +
+    '<g stroke="#FFA500" stroke-width="3.2" stroke-linecap="round"><path d="M38 58 L48 52"/><path d="M26 58 L16 52"/></g>' +
+    '<g fill="#FFA500"><circle cx="48.5" cy="63.5" r="2.6"/><circle cx="15.5" cy="63.5" r="2.6"/></g></svg>';
+  function laterSet(uid) { try { return sessionStorage.getItem(NUDGE_KEY + uid) === '1'; } catch (e) { return false; } }
+  function hideFighterNudge() { var n = $('fighter-nudge'); n.hidden = true; n.textContent = ''; }
+  function forgetFighterNudge(uid) {
+    nudgeCheckedFor = null; hideFighterNudge();
+    if (uid) try { sessionStorage.removeItem(NUDGE_KEY + uid); } catch (e) {}
+  }
+  function fighterNudge() {
+    var uid = state.session && state.session.user.id, m = myMembership();
+    if (!uid || !m || m.status === 'removed' || laterSet(uid) || nudgeCheckedFor === uid) return;
+    nudgeCheckedFor = uid;
+    sb.rpc('my_fighter_id').then(function (r) {
+      // Linked (or the check failed): say nothing. Only a definite "no fighter profile" shows the notice.
+      if (r.error || r.data || !state.session || state.session.user.id !== uid) return;
+      showFighterNudge(uid);
+    });
+  }
+  function showFighterNudge(uid) {
+    var box = $('fighter-nudge'); box.textContent = '';
+    var crest = h('div', { class: 'fn-crest' }); crest.innerHTML = CREST;   // fixed artwork, no data
+    var later = function () {
+      try { sessionStorage.setItem(NUDGE_KEY + uid, '1'); } catch (e) {}
+      hideFighterNudge();
+    };
+    box.appendChild(h('aside', { class: 'fighter-nudge', role: 'region', 'aria-labelledby': 'fn-title', 'data-testid': 'fighter-nudge' },
+      crest,
+      h('div', { class: 'fn-body' },
+        h('h2', { id: 'fn-title' }, h('span', { class: 'fn-x', 'aria-hidden': 'true' }, '⚔️'), 'Hold, brave Reaver!'),
+        h('p', {}, 'Your Reavers account is ready, but your BuhurtOS fighter profile hasn\'t been forged yet.'),
+        h('p', {}, 'Forge your fighter profile so your name can link to your BuhurtOS page, events, stats, teams and fight history.'),
+        h('div', { class: 'fn-acts' },
+          h('a', { class: 'btn-rdr fn-go', href: CFG.appUrl + '/team-manager?join=' + encodeURIComponent(CFG.teamSlug), rel: 'noopener', 'data-testid': 'fighter-nudge-go' },
+            h('span', { class: 'fn-x', 'aria-hidden': 'true' }, '⚔️'), 'Forge My Fighter Profile'),
+          h('button', { type: 'button', class: 'btn-line fn-later', onclick: later, 'data-testid': 'fighter-nudge-later' }, 'Maybe Later')),
+        h('p', { class: 'fn-note' }, 'Already fought before? ',
+          h('a', { href: CFG.appUrl + '/claim-profile', rel: 'noopener', 'data-testid': 'fighter-nudge-claim' }, 'Claim your existing profile')))));
+    box.hidden = false;
+  }
 
   // ---------------------------------------------------------------- basic profile (BuhurtOS's own first-sign-in step)
   function renderProfileSetup() {
@@ -304,6 +449,7 @@
     });
     var v = $('view'); v.textContent = '';
     if (!o.enabled) { v.appendChild(h('p', {}, 'Membership is not set up yet.')); return; }
+    if (state.view !== 'agm' && state.agmx && (state.agmx.to_respond || []).length) v.appendChild(nominatedBanner());
     ({ join: renderJoin, mine: renderMine, agm: renderAgm, members: renderMembers, 'agm-admin': renderAgmAdmin, proxies: renderProxies, print: renderPrint, history: renderHistory })[state.view](v);
   }
   function go(view) { state.view = view; state.proxyPick = false; render(); window.scrollTo(0, 0); }
@@ -337,6 +483,7 @@
       h('label', { class: 'fld' }, 'Date of birth (optional if you confirm 18+ below)', dob),
       h('label', { class: 'check' }, adult, h('span', {}, 'I confirm I am 18 or older')),
       h('label', { class: 'check' }, bylaws, h('span', {}, 'I agree to follow the Red Deer Reavers bylaws and team standards')),
+      CFG.bylawsUrl ? h('p', { class: 'small' }, h('a', { href: CFG.bylawsUrl, target: '_blank', rel: 'noopener noreferrer', 'data-testid': 'bylaws-link-join' }, 'Read the bylaws (PDF, opens in a new tab)')) : null,
       h('p', { class: 'small' }, 'Members under 18 are welcome but cannot vote.'), err, btn);
     form.addEventListener('submit', function (e) {
       e.preventDefault(); err.textContent = '';
@@ -371,6 +518,7 @@
         m.discord_name ? [h('dt', {}, 'Discord'), h('dd', {}, m.discord_name)] : null,
         h('dt', {}, 'Applied'), h('dd', {}, dateText(m.applied_at))),
       m.status === 'pending' ? h('p', { class: 'small' }, 'The club executive will review your application. You can already register for the AGM.') : null,
+      m.status === 'pending' ? approvalAlertControl() : null,
       m.status === 'active' && !m.fee_waived && m.dues_status === 'unpaid' ? h('p', { class: 'small' }, 'Pay your ' + money(year ? year.dues_cents : null) + ' dues to the Treasurer; they record it here.') : null,
       h('button', { type: 'button', class: 'btn-rdr', onclick: function () { go('agm'); } }, 'Register for the 2026 AGM')));
   }
@@ -388,6 +536,9 @@
     if (!a || !a.meeting) { v.appendChild(h('p', {}, 'No AGM is scheduled yet.')); return; }
     var card = h('section', { class: 'card-panel', 'data-testid': 'agm-member' }, agmHeader(a));
     v.appendChild(card);
+    // the help is only an explanation: if it ever failed to build, the RSVP and everything else below must still work
+    try { v.appendChild(agmHelp()); } catch (e) { if (window.console) console.warn('help not shown', e); }
+    v.appendChild(agmExtras());
     if (!a.membership) {
       card.appendChild(h('p', {}, 'Only Red Deer Reavers members can register. Join first: it takes a minute.'));
       card.appendChild(h('button', { type: 'button', class: 'btn-rdr', onclick: function () { go('join'); } }, 'Join the Red Deer Reavers'));
@@ -473,8 +624,292 @@
     sb.rpc('club_meeting_member_view', { p_team: state.team.id }).then(function (r) { if (!r.error) state.agm = r.data; render(); });
   }
 
+  // ================================================================ the AGM: concerns and executive nominations (member)
+  var OFFICE = { president: 'President', secretary: 'Secretary', treasurer: 'Treasurer' };
+  var TOPIC = { submitted: 'Submitted', on_agenda: 'Added to Agenda', addressed: 'Addressed', withdrawn: 'Withdrawn' };
+  var TOPIC_CHIP = { submitted: 'pending', on_agenda: 'rsvp', addressed: 'active', withdrawn: '' };
+  var NOM = { awaiting_acceptance: 'Awaiting acceptance', accepted: 'Accepted', declined: 'Declined', withdrawn: 'Withdrawn' };
+  var NOM_CHIP = { awaiting_acceptance: 'pending', accepted: 'active', declined: 'cannot', withdrawn: '' };
+  function agmName() { return state.agm.meeting.year + ' Red Deer Reavers AGM'; }
+  // DISPLAY ONLY. Every place that names an office holder goes through officerName(). The name comes from the officer records / the database.
+  //  * The database may label an office whose holder has no BuhurtOS account yet as "Kedrixx (no currently active account)": that awkward system
+  //    wording is shown as "Kedrixx (account not currently linked)". The data itself is not changed.
+  //  * If an office has no name at all, OFFICER_NO_ACCOUNT supplies the name below; otherwise it reads "not assigned".
+  // None of this decides anything or grants any permission, and the fallback names are ignored the moment an office has a real holder.
+  var NOT_LINKED = ' (account not currently linked)';
+  var OFFICER_NO_ACCOUNT = { president: 'Kedrixx', treasurer: 'Carmalee' };
+  function officerName(office, name) {
+    if (name) return String(name).replace(/\s*\(no currently active account\)\s*$/i, NOT_LINKED);
+    return OFFICER_NO_ACCOUNT[office] ? OFFICER_NO_ACCOUNT[office] + NOT_LINKED : 'not assigned';
+  }
+  function loadAgmx(redraw) {
+    if (!state.agm || !state.agm.meeting) { state.agmx = null; return Promise.resolve(); }
+    return sb.rpc('club_agm_member_view', { p_meeting: state.agm.meeting.id }).then(function (r) {
+      state.agmx = r.error ? null : r.data; state.agmxError = r.error ? words(r.error) : '';
+      if (redraw !== false) render();
+    });
+  }
+  function swap(id, build) { var el = $(id); if (el) el.replaceWith(build()); }
+  function agmExtras() {
+    var box = h('div', { id: 'agm-extras' }), x = state.agmx;
+    if (state.agmxError) box.appendChild(h('p', { class: 'err', role: 'alert' }, state.agmxError));
+    if (!x || (!x.is_member && !x.board)) return box;
+    if (x.is_member) box.appendChild(topicsPanel());
+    box.appendChild(nominationsPanel());
+    return box;
+  }
+  function nominatedBanner() {
+    var n = state.agmx.to_respond[0];
+    return h('div', { class: 'nominated-box', role: 'status', 'data-testid': 'nominated-banner' },
+      h('h3', {}, 'You\'ve Been Nominated'),
+      h('p', {}, 'You have been nominated for ' + n.label + ' for the ' + agmName() + '.'),
+      h('button', { type: 'button', class: 'btn-rdr', onclick: function () { go('agm'); } }, 'Review nomination'));
+  }
+
+  // ================================================================ "How the AGM Works": plain-English help for members
+  // Every button name quoted here is the real button on this page (the browser tests check that). Dates, fee and officers come from the system.
+  function agmHelp() {
+    var a = state.agm, mt = a.meeting, yr = currentYear(), waivedYear = !!(yr && yr.fee_waived), board = state.agmx && state.agmx.board;
+    var q = function (t) { return h('b', {}, '“' + t + '”'); };
+    var ol = function () { return h('ol', { class: 'browser-default' }, Array.prototype.map.call(arguments, function (x) { return h('li', {}, x); })); };
+    var ul = function () { return h('ul', { class: 'browser-default' }, Array.prototype.map.call(arguments, function (x) { return h('li', {}, x); })); };
+    var item = function (id, title) {
+      var kids = Array.prototype.slice.call(arguments, 2);
+      return h('details', { class: 'help-item', 'data-testid': 'help-' + id }, h('summary', {}, title), h('div', { class: 'help-body' }, [].concat.apply([], kids)));
+    };
+    var feeLine = waivedYear ? ['Membership fees are waived for ' + mt.year + '. You do not need to pay the normal ' + money(yr.dues_cents) + ' fee to vote this year.']
+      : ['The ' + mt.year + ' membership fee is ' + (yr ? money(yr.dues_cents) : 'set by the club') + ', paid to the Treasurer.'];
+    var roles = [['president', 'President', 'Helps lead the society and meetings.'],
+      ['secretary', 'Secretary', 'Helps keep society records, meeting information and official paperwork organized.'],
+      ['treasurer', 'Treasurer', 'Helps manage the society\'s money and financial records.']];
+    var holder = function (office) { var b = (board || []).filter(function (x) { return x.office === office; })[0]; return officerName(office, b && b.current_officer); };
+    var where = mt.local_date + ' at ' + mt.local_time + (mt.location ? ', ' + mt.location : '');
+    return h('section', { class: 'card-panel agm-help', id: 'agm-help', 'data-testid': 'agm-help' },
+      h('h3', {}, 'How the AGM Works'),
+      h('p', { class: 'small' }, 'Tap a heading to open it.'),
+      item('vote', 'Who can vote?',
+        h('p', {}, 'You can vote at the AGM if you are:'),
+        ul('18 or older', 'an approved Red Deer Reavers member', 'shown on this page as ELIGIBLE TO VOTE'),
+        h('p', {}, feeLine),
+        h('p', {}, 'Making an account is not enough on its own. You also need an approved membership. Members under 18 are welcome but cannot vote.')),
+      item('join', 'How to join',
+        h('p', {}, 'BuhurtOS and the Reavers site use the ', h('b', {}, 'same account'), '. You never need two.'),
+        ol(['Open the Red Deer Reavers Members page.'],
+          ['Already have a BuhurtOS account? Sign in with it.'],
+          ['No account yet? On the sign-in page tap ', q('Create account'), ' and make one right there.'],
+          ['Finish your profile (tap ', q('Continue'), ').'],
+          ['On ', q('Join the Reavers'), ' fill in the form and tap ', q('Apply to join'), '.'],
+          ['Wait for the executive to approve you. Until then it says Membership Application Pending.'],
+          waivedYear ? ['The ' + mt.year + ' fee is waived, so there is nothing to pay.'] : ['Pay the ' + mt.year + ' fee to the Treasurer.'],
+          ['Once you are approved and eligible, this page says ELIGIBLE TO VOTE.'])),
+      item('roles', 'Executive roles',
+        h('p', {}, 'The Reavers have three executive positions.'),
+        roles.map(function (r) {
+          return h('div', { class: 'help-role', 'data-testid': 'help-role-' + r[0] }, h('b', {}, r[1]), h('div', {}, r[2]),
+            board ? h('div', { class: 'small' }, 'Currently: ', h('b', {}, holder(r[0]))) : null);
+        }),
+        board ? null : h('p', { class: 'small' }, 'Members can see who holds each position here.')),
+      item('nominate', 'How nominations work',
+        h('p', {}, 'Any member who can vote can put their name forward for President, Secretary or Treasurer. You can also nominate another member who can vote.'),
+        h('p', {}, 'A nomination does ', h('b', {}, 'not'), ' give anyone the job. The decision is made at the AGM election. If nobody runs against the current officer, they stay in the position.'),
+        h('p', {}, h('b', {}, 'Nominate yourself')),
+        ol(['Find ', q('Executive Nominations'), ' on this tab.'], ['Tap ', q('Nominate Myself'), '.'], ['Choose President, Secretary or Treasurer.'],
+          ['Read the message that appears.'], ['Tap ', q('Confirm Nomination'), '.']),
+        h('p', {}, 'Your name then shows as an accepted candidate for that position.'),
+        h('p', {}, h('b', {}, 'Nominate someone else')),
+        ol(['Find ', q('Executive Nominations'), ' on this tab.'], ['Tap ', q('Nominate Another Member'), '.'], ['Choose the member (only members who can vote are listed).'],
+          ['Choose President, Secretary or Treasurer.'], ['Tap ', q('Confirm Nomination'), '.']),
+        h('p', {}, 'The person you nominate must accept before they are a confirmed candidate. They can also decline. You cannot accept for them. They will see ', q('You\'ve Been Nominated'), ' when they sign in, with ', q('Accept Nomination'), ' and ', q('Decline Nomination'), ' buttons.'),
+        h('p', { class: 'small' }, 'Nominations close when the AGM starts.')),
+      item('topic', 'Submit an AGM topic',
+        h('p', {}, 'Have something you want discussed at the AGM? You can submit it before the meeting. It could be:'),
+        ul('an idea for the club', 'something you think should change', 'a question for the executive', 'an event or practice idea', 'anything you want the members to talk about'),
+        ol(['Find ', q('Something you want discussed?'), ' on this tab.'], ['Tap ', q('Submit AGM Concern / Topic'), '.'], ['Write a short subject.'],
+          ['Explain what you want discussed in the details.'], ['Tap ', q('Submit for AGM'), '.']),
+        h('p', {}, 'Your topic then shows under ', q('Your AGM topics'), '. You can edit or withdraw it until the AGM starts, unless the executive has marked it Addressed. Only you and the executive can see what you submit.')),
+      item('rsvp', 'RSVP and proxy voting',
+        h('p', {}, h('b', {}, 'AGM: '), where + '.'),
+        h('p', {}, 'Tell the club how you plan to take part by tapping one of the four choices at the top of this tab:'),
+        ul('In Person', 'Video Call (the link appears here once the executive adds it)', 'Voting by Proxy', 'Not Attending'),
+        h('p', {}, 'You can change your answer until the AGM starts.'),
+        h('p', {}, h('b', {}, 'Can\'t attend but still want your vote represented?')),
+        h('p', {}, 'If you can vote, you can choose another member who can vote to hold your proxy. That lets them represent your vote at the AGM.'),
+        ol(['Tap ', q('Voting by Proxy'), '.'], ['Choose the member who will hold your proxy.'], ['Tick the box that says you authorize them.'], ['Tap ', q('Save my proxy'), '.']),
+        h('p', {}, 'Before the AGM you can use ', q('Change proxy'), ' or ', q('Cancel proxy'), '.')));
+  }
+
+  // ---- concerns / topics
+  function topicsPanel() {
+    var x = state.agmx, box = h('section', { class: 'card-panel agm-extra', id: 'agm-topics', 'data-testid': 'agm-topics' },
+      h('h3', {}, 'Something you want discussed?'),
+      h('p', {}, 'If there is a concern, question, idea or topic you would like brought up at the AGM, submit it here.'));
+    if (x.topics_open) {
+      if (state.topicForm) box.appendChild(topicForm(state.topicForm));
+      else box.appendChild(h('button', { type: 'button', class: 'btn-rdr', 'data-testid': 'topic-new', onclick: function () { state.topicNotice = ''; state.topicForm = {}; swap('agm-topics', topicsPanel); } }, 'Submit AGM Concern / Topic'));
+    } else box.appendChild(h('p', { class: 'small' }, 'Topics closed when the AGM started. Speak to the executive.'));
+    if (state.topicNotice) box.appendChild(h('p', { class: 'ok-text', role: 'status', 'data-testid': 'topic-received' }, state.topicNotice));
+    var mine = x.my_topics || [];
+    if (mine.length) {
+      box.appendChild(h('h4', {}, 'Your AGM topics'));
+      mine.forEach(function (t) {
+        var row = h('div', { class: 'arow', 'data-testid': 'my-topic' },
+          h('div', { class: 'who' }, h('b', {}, t.subject)),
+          h('div', { class: 'chips' }, chip(TOPIC_CHIP[t.status], TOPIC[t.status]), h('span', { class: 'small' }, 'Submitted ' + dateText(t.created_at) + (t.updated_at !== t.created_at ? ' · edited ' + dateText(t.updated_at) : ''))),
+          h('div', { class: 'topic-details small' }, t.details));
+        if (t.can_edit) {
+          row.appendChild(h('div', { class: 'row-btns' },
+            h('button', { type: 'button', class: 'btn-line small-btn', onclick: function () { state.topicNotice = ''; state.topicForm = { id: t.id, subject: t.subject, details: t.details }; swap('agm-topics', topicsPanel); } }, 'Edit'),
+            h('button', { type: 'button', class: 'btn-line small-btn', onclick: function () { withdrawTopic(t); } }, 'Withdraw')));
+        } else if (t.status === 'addressed') row.appendChild(h('div', { class: 'small' }, 'The executive has addressed this topic, so it can no longer be changed.'));
+        box.appendChild(row);
+      });
+    }
+    return box;
+  }
+  function topicForm(f) {
+    var subj = h('input', { class: 'browser-default', id: 'topic-subject', maxlength: '120', placeholder: 'A short title', value: f.subject || '' });
+    var det = h('textarea', { class: 'browser-default', id: 'topic-details', maxlength: '4000', rows: '6', placeholder: 'Explain the concern, question, suggestion or topic' }, f.details || '');
+    var err = h('p', { class: 'err', role: 'alert' });
+    var save = h('button', { type: 'button', class: 'btn-rdr', 'data-testid': 'topic-submit' }, f.id ? 'Save changes' : 'Submit for AGM');
+    save.addEventListener('click', function () {
+      err.textContent = '';
+      var s1 = subj.value.trim(), d1 = det.value.trim();
+      if (s1.length < 3) { err.textContent = 'Give your topic a short title.'; return; }
+      if (!d1) { err.textContent = 'Add some details so the executive understands.'; return; }
+      busy(save, true);
+      var call = f.id ? sb.rpc('update_club_agm_topic', { p_topic: f.id, p_subject: s1, p_details: d1 }) : sb.rpc('submit_club_agm_topic', { p_meeting: state.agm.meeting.id, p_subject: s1, p_details: d1 });
+      call.then(function (r) {
+        busy(save, false);
+        if (r.error) { err.textContent = words(r.error); return; }
+        state.topicForm = null;
+        state.topicNotice = f.id ? 'Saved your changes to "' + s1 + '".' : 'Received. "' + s1 + '" has been sent to the executive for the AGM.';
+        loadAgmx(false).then(function () { swap('agm-topics', topicsPanel); });
+      });
+    });
+    return h('div', { class: 'topic-form', 'data-testid': 'topic-form' },
+      h('label', { class: 'fld' }, 'Subject', subj), h('label', { class: 'fld' }, 'Details', det), err,
+      h('div', { class: 'row-btns' }, save, h('button', { type: 'button', class: 'btn-line', onclick: function () { state.topicForm = null; swap('agm-topics', topicsPanel); } }, 'Cancel')));
+  }
+  function withdrawTopic(t) {
+    if (!window.confirm('Withdraw "' + t.subject + '"? The executive will see that you withdrew it.')) return;
+    sb.rpc('withdraw_club_agm_topic', { p_topic: t.id }).then(function (r) {
+      if (r.error) return status(words(r.error), true);
+      state.topicNotice = 'Withdrawn: "' + t.subject + '".';
+      loadAgmx(false).then(function () { swap('agm-topics', topicsPanel); });
+    });
+  }
+
+  // ---- nominations
+  function nominationsPanel() {
+    var x = state.agmx, box = h('section', { class: 'card-panel agm-extra', id: 'agm-nominations', 'data-testid': 'agm-nominations' }, h('h3', {}, 'Executive Nominations'));
+    (x.to_respond || []).forEach(function (n) { box.appendChild(nomineeCard(n)); });
+    (x.my_candidacies || []).forEach(function (c) {
+      if (c.status === 'accepted') box.appendChild(h('div', { class: 'cand-mine', 'data-testid': 'my-candidacy' },
+        h('span', {}, 'You are an accepted candidate for '), h('b', {}, c.label), h('span', {}, '. '),
+        h('button', { type: 'button', class: 'btn-line small-btn', onclick: function () { withdrawCandidacy(c); } }, 'Withdraw my candidacy')));
+      else if (c.status === 'declined' || c.status === 'withdrawn') box.appendChild(h('p', { class: 'small' }, 'Your nomination for ' + c.label + ': ' + NOM[c.status] + '.'));
+    });
+    if (state.nomNotice) box.appendChild(h('p', { class: 'ok-text', role: 'status', 'data-testid': 'nomination-notice' }, state.nomNotice));
+    if (x.can_nominate) box.appendChild(nominateForm());
+    else if (x.nominate_blocked) box.appendChild(h('p', { class: 'small', 'data-testid': 'nominate-blocked' }, x.nominate_blocked));
+    box.appendChild(h('h4', { 'data-testid': 'nominations-heading' }, state.agm.meeting.year + ' Executive Nominations'));
+    box.appendChild(h('p', { class: 'small' }, 'Nominations only prepare the list of candidates. They do not change who holds an office: current officers stay in place unless members vote otherwise at the AGM. Only accepted nominations are confirmed candidates.'));
+    (x.board || []).forEach(function (o) {
+      var acc = o.candidates.filter(function (c) { return c.status === 'accepted'; }), wait = o.candidates.filter(function (c) { return c.status === 'awaiting_acceptance'; });
+      box.appendChild(h('div', { class: 'office-card', 'data-testid': 'office-' + o.office },
+        h('h4', {}, o.label),
+        h('div', {}, 'Current Officer: ', h('b', {}, officerName(o.office, o.current_officer))),
+        h('div', {}, 'Accepted Candidates: ', acc.length ? acc.map(function (c, i) { return h('b', {}, (i ? ', ' : '') + c.name); }) : h('span', { class: 'small' }, 'none yet')),
+        wait.length ? h('div', { class: 'small' }, 'Nominated, awaiting acceptance: ' + wait.map(function (c) { return c.name; }).join(', ')) : null));
+    });
+    return box;
+  }
+  function nomineeCard(n) {
+    var title = 'You\'ve Been Nominated';
+    var acc = h('button', { type: 'button', class: 'btn-rdr', 'data-testid': 'nomination-accept', onclick: function () { answerNomination(n, 'accept'); } }, 'Accept Nomination');
+    var dec = h('button', { type: 'button', class: 'btn-line', 'data-testid': 'nomination-decline', onclick: function () { answerNomination(n, 'decline'); } }, 'Decline Nomination');
+    return h('div', { class: 'nominated-box', 'data-testid': 'nominated-card' }, h('h3', {}, title),
+      h('p', {}, 'You have been nominated for ' + n.label + ' for the ' + agmName() + '.'),
+      h('dl', { class: 'facts' }, h('dt', {}, 'Nominated by'), h('dd', {}, (n.nominated_by || []).join(', ')), h('dt', {}, 'Role'), h('dd', {}, n.label), h('dt', {}, 'Date'), h('dd', {}, dateText(n.nominated_at))),
+      h('div', { class: 'row-btns' }, acc, dec));
+  }
+  function answerNomination(n, answer) {
+    if (answer === 'decline' && !window.confirm('Decline the nomination for ' + n.label + '?')) return;
+    sb.rpc('respond_to_club_nomination', { p_nomination: n.id, p_response: answer }).then(function (r) {
+      if (r.error) return status(words(r.error), true);
+      state.nomNotice = answer === 'accept' ? 'You accepted the nomination for ' + n.label + '. You are now a candidate.' : 'You declined the nomination for ' + n.label + '.';
+      status(''); loadAgmx();
+    });
+  }
+  function withdrawCandidacy(c) {
+    if (!window.confirm('Withdraw your candidacy for ' + c.label + '?')) return;
+    sb.rpc('respond_to_club_nomination', { p_nomination: c.id, p_response: 'withdraw' }).then(function (r) {
+      if (r.error) return status(words(r.error), true);
+      state.nomNotice = 'You withdrew your candidacy for ' + c.label + '.'; status(''); loadAgmx();
+    });
+  }
+  function nominateForm() {
+    var x = state.agmx, box = h('div', { class: 'nominate-box', 'data-testid': 'nominate-form' }), redraw = function () { swap('agm-nominations', nominationsPanel); };
+    var modes = h('div', { class: 'rsvp-opts', role: 'group', 'aria-label': 'Who are you nominating?' },
+      [['self', 'Nominate Myself'], ['other', 'Nominate Another Member']].map(function (m) {
+        return h('button', { type: 'button', class: 'rsvp-opt', 'aria-pressed': String(state.nomMode === m[0]), onclick: function () { state.nomMode = state.nomMode === m[0] ? null : m[0]; state.nomNotice = ''; redraw(); } }, m[1]);
+      }));
+    box.appendChild(modes);
+    if (!state.nomMode) return box;
+    var err = h('p', { class: 'err', role: 'alert' }), target = null;
+    if (state.nomMode === 'other') {
+      target = h('select', { class: 'browser-default', id: 'nominee' }, h('option', { value: '' }, 'Choose a member…'),
+        (x.nominees || []).map(function (c) { return h('option', { value: c.membership_id, selected: state.nomTarget === c.membership_id }, c.name); }));
+      target.addEventListener('change', function () { state.nomTarget = target.value; redraw(); });
+      box.appendChild(h('label', { class: 'fld' }, 'Member (voting members only)', target));
+    }
+    box.appendChild(h('div', { class: 'small' }, 'Executive role'));
+    box.appendChild(h('div', { class: 'rsvp-opts', role: 'group', 'aria-label': 'Executive role' }, [['president', 'President'], ['secretary', 'Secretary'], ['treasurer', 'Treasurer']].map(function (o) {
+      return h('button', { type: 'button', class: 'rsvp-opt', 'aria-pressed': String(state.nomOffice === o[0]), onclick: function () { state.nomOffice = o[0]; redraw(); } }, o[1]);
+    })));
+    var nominee = state.nomMode === 'other' ? (x.nominees || []).filter(function (c) { return c.membership_id === state.nomTarget; })[0] : null;
+    var ready = !!state.nomOffice && (state.nomMode === 'self' || !!nominee);
+    if (ready) box.appendChild(h('p', { class: 'confirm-line', 'data-testid': 'nomination-confirm' },
+      state.nomMode === 'self' ? 'You are nominating yourself for ' + OFFICE[state.nomOffice] + ' at the ' + agmName() + '.'
+        : 'You are nominating ' + nominee.name + ' for ' + OFFICE[state.nomOffice] + ' at the ' + agmName() + '. ' + nominee.name + ' must accept before becoming a candidate.'));
+    var go1 = h('button', { type: 'button', class: 'btn-rdr', 'data-testid': 'nomination-submit', disabled: !ready }, 'Confirm Nomination');
+    go1.addEventListener('click', function () {
+      busy(go1, true); err.textContent = '';
+      var self = state.nomMode === 'self', label = OFFICE[state.nomOffice], nm = nominee && nominee.name;
+      sb.rpc('nominate_for_club_office', { p_meeting: state.agm.meeting.id, p_office: state.nomOffice, p_nominee: self ? null : state.nomTarget }).then(function (r) {
+        busy(go1, false);
+        if (r.error) { err.textContent = words(r.error); return; }
+        state.nomNotice = self ? 'Done: you are a candidate for ' + label + '.' : 'Nomination sent. ' + nm + ' must accept the nomination for ' + label + ' before becoming a candidate.';
+        state.nomMode = null; state.nomOffice = null; state.nomTarget = '';
+        loadAgmx(false).then(redraw);
+      });
+    });
+    box.appendChild(err); box.appendChild(go1);
+    return box;
+  }
+
   // ================================================================ executive: members and dues (from the previous release)
-  function fetchRoster() { return sb.rpc('club_member_roster', { p_team: state.team.id, p_year: state.year }); }
+  function fetchRoster() {
+    return Promise.all([
+      sb.rpc('club_member_roster', { p_team: state.team.id, p_year: state.year }),
+      sb.rpc('club_member_profile_links', { p_team: state.team.id, p_year: state.year })
+    ]).then(function (rs) {
+      if (rs[0].error) return rs[0];
+      var links = {};
+      (rs[1].data || []).forEach(function (x) { if (x.fighter_id) links[x.membership_id] = x.fighter_id; });
+      (rs[0].data || []).forEach(function (x) { x.fighter_id = links[x.membership_id] || null; });
+      return rs[0];
+    });
+  }
+  function buhurtosProfileLink(r) {
+    if (!r || !r.fighter_id) return h('b', {}, r.full_name);
+    return h('a', {
+      href: CFG.appUrl + '/fighters/' + encodeURIComponent(r.fighter_id),
+      target: '_blank',
+      rel: 'noopener noreferrer',
+      title: 'Open ' + r.full_name + ' on BuhurtOS'
+    }, h('b', {}, r.full_name));
+  }
   function waived() { var y = currentYear(); return !!(y && y.fee_waived); }
   function satisfied(s) { return waived() || s !== 'unpaid'; }
   var FILTERS = [['all', 'All'], ['eligible', 'Can vote'], ['not_eligible', 'Cannot vote'], ['paid', 'Fee paid / waived'], ['unpaid', 'Fee unpaid'], ['pending', 'Pending'], ['active', 'Active']];
@@ -529,7 +964,7 @@
     else if (!shown.length) v.appendChild(h('p', {}, 'Nobody matches.'));
     shown.forEach(function (r) {
       list.appendChild(h('div', { class: 'mrow' + (r.status === 'pending' ? ' pending' : ''), role: 'row', 'data-testid': 'member-row' },
-        h('span', { class: 'who', role: 'cell' }, h('b', {}, r.full_name), r.offices && r.offices.length ? h('small', {}, r.offices.join(', ')) : null),
+        h('span', { class: 'who', role: 'cell' }, buhurtosProfileLink(r), r.offices && r.offices.length ? h('small', {}, r.offices.join(', ')) : null),
         h('span', { class: 'st', role: 'cell' }, chip(r.status, MEMBERSHIP[r.status])),
         h('span', { class: 'du', role: 'cell' }, feeChip(r.dues_status, waived())),
         h('span', { class: 'vt', role: 'cell' }, chip(r.eligible ? 'can' : 'cannot', r.eligible ? 'Can vote' : 'Cannot vote'), !r.eligible && r.reasons.length ? h('small', {}, r.reasons.join(' · ')) : null),
@@ -626,6 +1061,9 @@
     var count = function (f) { return rows.filter(f).length; };
     var set = function (f) { return function () { state.agmFilter = f; drawAgmAdmin(v); }; };
     v.appendChild(agmHeader(a));
+    v.appendChild(agmSwitch(v));
+    if (state.agmSection === 'concerns') { drawConcernsAdmin(v.appendChild(h('div', {}))); return; }
+    if (state.agmSection === 'nominations') { drawNominationsAdmin(v.appendChild(h('div', {}))); return; }
     v.appendChild(h('div', { class: 'tiles seven', 'data-testid': 'agm-summary' },
       tile(rows.length, 'Total members', '', set('all')), tile(count(function (r) { return r.eligible; }), 'Voting eligible', 'yes', set('eligible')),
       tile(count(function (r) { return r.response === 'in_person'; }), 'In person', '', set('in_person')), tile(count(function (r) { return r.response === 'video'; }), 'Video call', '', set('video')),
@@ -655,6 +1093,64 @@
       v.appendChild(row);
     });
     if (manage) v.appendChild(videoForm());
+  }
+  // ---------------------------------------------------------------- executive: AGM concerns and nominations (inside AGM admin)
+  function agmSwitch(v) {
+    return h('div', { class: 'filters', role: 'group', 'aria-label': 'AGM admin section' }, [['people', 'People and check-in'], ['concerns', 'Concerns'], ['nominations', 'Nominations']].map(function (t) {
+      return h('button', { type: 'button', 'aria-pressed': String(state.agmSection === t[0]), onclick: function () { state.agmSection = t[0]; drawAgmAdmin(v); } }, t[1]);
+    }));
+  }
+  function drawConcernsAdmin(body) {
+    body.appendChild(h('p', { class: 'small' }, 'Loading…'));
+    sb.rpc('club_agm_topics_admin', { p_meeting: state.agm.meeting.id }).then(function (r) {
+      body.textContent = '';
+      if (r.error) { body.appendChild(h('p', { class: 'err' }, words(r.error))); return; }
+      var rows = r.data || [], manage = !!state.agm.can_manage;
+      var f = state.topicFilter, cnt = function (st) { return rows.filter(function (t) { return st === 'all' || t.status === st; }).length; };
+      var redraw = function () { body.textContent = ''; drawConcernsAdmin(body); };
+      body.appendChild(h('div', { class: 'filters', role: 'group', 'aria-label': 'Show topics' }, [['all', 'All'], ['submitted', 'Submitted'], ['on_agenda', 'Added to Agenda'], ['addressed', 'Addressed'], ['withdrawn', 'Withdrawn']].map(function (t) {
+        return h('button', { type: 'button', 'aria-pressed': String(f === t[0]), onclick: function () { state.topicFilter = t[0]; redraw(); } }, t[1] + ' (' + cnt(t[0]) + ')');
+      })));
+      var shown = rows.filter(function (t) { return f === 'all' || t.status === f; });
+      if (!shown.length) body.appendChild(h('p', { 'data-testid': 'topics-empty' }, rows.length ? 'No topics match.' : 'No topics submitted yet.'));
+      shown.forEach(function (t) {
+        var row = h('div', { class: 'arow', 'data-testid': 'topic-row' },
+          h('div', { class: 'who' }, h('b', {}, t.subject)),
+          h('div', { class: 'chips' }, chip(TOPIC_CHIP[t.status], TOPIC[t.status]), h('span', { class: 'small' }, t.member_name + ' · ' + timeText(t.created_at) + (t.edited ? ' · edited ' + timeText(t.updated_at) : ''))),
+          h('div', { class: 'topic-details' }, t.details));
+        if (manage && t.status !== 'withdrawn') row.appendChild(h('div', { class: 'checkin', role: 'group', 'aria-label': 'Status of ' + t.subject },
+          [['submitted', 'Submitted'], ['on_agenda', 'Add to agenda'], ['addressed', 'Addressed']].map(function (s) {
+            return h('button', { type: 'button', class: 'small-btn ' + (t.status === s[0] ? 'btn-rdr' : 'btn-line'), 'aria-pressed': String(t.status === s[0]), onclick: function () {
+              sb.rpc('set_club_agm_topic_status', { p_topic: t.topic_id, p_status: s[0] }).then(function (x) { if (x.error) return status(words(x.error), true); status('"' + t.subject + '": ' + TOPIC[s[0]] + '.'); redraw(); });
+            } }, s[1]);
+          })));
+        if (t.status === 'withdrawn') row.appendChild(h('div', { class: 'small' }, 'The member withdrew this topic.'));
+        body.appendChild(row);
+      });
+    });
+  }
+  function drawNominationsAdmin(body) {
+    body.appendChild(h('p', { class: 'small' }, 'Loading…'));
+    sb.rpc('club_agm_nominations_admin', { p_meeting: state.agm.meeting.id }).then(function (r) {
+      body.textContent = '';
+      if (r.error) { body.appendChild(h('p', { class: 'err' }, words(r.error))); return; }
+      body.appendChild(h('p', { class: 'small' }, 'Nominations prepare the candidate list. They never change who holds an office: that is decided by the vote at the AGM.'));
+      (r.data.offices || []).forEach(function (o) {
+        var n = function (st) { return o.nominations.filter(function (x) { return x.status === st; }).length; };
+        var card = h('section', { class: 'card-panel office-card', 'data-testid': 'admin-office-' + o.office },
+          h('h3', {}, o.label), h('div', {}, 'Current Officer: ', h('b', {}, officerName(o.office, o.current_officer))),
+          h('div', { class: 'small', 'data-testid': 'office-counts' }, 'Accepted ' + n('accepted') + ' · Awaiting acceptance ' + n('awaiting_acceptance') + ' · Declined ' + n('declined') + ' · Withdrawn ' + n('withdrawn')));
+        if (!o.nominations.length) card.appendChild(h('p', { class: 'small' }, 'No nominations yet.'));
+        o.nominations.forEach(function (x) {
+          card.appendChild(h('div', { class: 'arow', 'data-testid': 'nomination-row' },
+            h('div', { class: 'who' }, h('b', {}, x.nominee)),
+            h('div', { class: 'chips' }, chip(NOM_CHIP[x.status], NOM[x.status]), chip('rsvp', x.self_nominated ? 'Self nomination' : 'Member nomination')),
+            x.nominated_by.length ? h('div', { class: 'small' }, 'Nominated by ' + x.nominated_by.join(', ')) : null,
+            h('div', { class: 'small' }, timeText(x.created_at) + (x.responded_at && x.status !== 'awaiting_acceptance' ? ' · answered ' + timeText(x.responded_at) : ''))));
+        });
+        body.appendChild(card);
+      });
+    });
   }
   function checkIn(r, st, v) {
     sb.rpc('set_club_meeting_attendance', { p_meeting: state.agm.meeting.id, p_membership: r.membership_id, p_status: st }).then(function (x) {
@@ -757,5 +1253,5 @@
       h('h3', {}, 'No response'), list(live.filter(function (m) { return !m.response; }).sort(byName), function (m) { return h('li', {}, m.full_name); }));
   }
 
-  document.addEventListener('DOMContentLoaded', function () { if (window.M) window.M.Sidenav.init(document.querySelectorAll('.sidenav')); });
+  
 })();

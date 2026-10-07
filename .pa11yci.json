@@ -1,0 +1,29 @@
+{
+  "defaults": {
+    "standard": "WCAG2AA",
+    "timeout": 30000,
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "chromeLaunchConfig": {
+      "args": [
+        "--no-sandbox",
+        "--disable-setuid-sandbox"
+      ]
+    }
+  },
+  "urls": [
+    "http://127.0.0.1:4173/index.html",
+    "http://127.0.0.1:4173/team.html",
+    "http://127.0.0.1:4173/fighter.html",
+    "http://127.0.0.1:4173/training.html",
+    "http://127.0.0.1:4173/events.html",
+    "http://127.0.0.1:4173/community.html",
+    "http://127.0.0.1:4173/media.html",
+    "http://127.0.0.1:4173/social.html",
+    "http://127.0.0.1:4173/about.html",
+    "http://127.0.0.1:4173/members.html",
+    "http://127.0.0.1:4173/agm.html"
+  ]
+}
