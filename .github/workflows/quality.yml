@@ -36,7 +36,7 @@ jobs:
       - name: Build production site
         run: npm run build
         env:
-          SITE_URL: https://dothecoolwip1.github.io/Reavers-Site/
+          SITE_URL: https://dothecoolwip1.github.io/Red-deer-reavers/
 
       - name: Static integrity
         run: npm run check

@@ -790,3 +790,22 @@ a.post-card:hover .post-media img,a.strip-card:hover .post-media img{transform:s
 .event-past{color:var(--bone);text-decoration:none;transition:transform .25s var(--ease),border-color .25s}
 .event-past:hover{color:var(--bone);transform:translateY(-3px);border-color:rgba(214,168,76,.5)}
 .event-past .seal{filter:grayscale(.55) brightness(.85)}
+
+/* ---- About page: roadmap and plates ---- */
+.roadmap{list-style:none;margin:0;padding:0;display:grid;gap:18px;counter-reset:phase}
+.roadmap li{position:relative;padding:18px 18px 18px 110px;border:1px solid var(--plate-line);background:linear-gradient(180deg,var(--iron-800),var(--iron-850));min-width:0}
+.roadmap .when{position:absolute;left:18px;top:20px;font-family:var(--font-caps);font-weight:700;color:var(--gilt);letter-spacing:.06em;font-size:.95rem}
+.roadmap h3{margin:0 0 6px;font-family:var(--font-caps);color:var(--bone);font-size:1.15rem}
+.roadmap p{margin:0;color:var(--bone-dim)}
+@media (max-width:600px){.roadmap li{padding:48px 16px 16px}.roadmap .when{top:16px;left:16px}}
+.cards-3{display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.sheet-plate{padding:20px;background:rgba(255,250,236,.55);border:1px solid rgba(74,61,46,.25);display:grid;gap:10px;align-content:start;min-width:0}
+.sheet-plate h3{margin:0;font-family:var(--font-caps);color:var(--ink)}
+.sheet-plate p{margin:0;color:var(--ink-soft)}
+.sheet-plate .btn{justify-self:start}
+
+/* ---- Members and AGM pages (members.css styles the inside of the sheet) ---- */
+.members-hero{padding-top:calc(var(--header-h) + 40px)}
+.members-hero .members-title{font-family:var(--font-display);font-size:clamp(3rem,10vw,5.5rem);line-height:.9;color:var(--bone);margin:0 0 12px}
+.members-hero .lede a{color:var(--gilt-hi)}
+.members-sheet{padding:40px 0 64px}

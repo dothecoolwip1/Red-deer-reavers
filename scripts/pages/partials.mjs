@@ -56,7 +56,8 @@ const NAV = [
   ["events", "events.html", "Events"],
   ["community", "community.html", "Community"],
   ["media", "media.html", "Media", "nav-wide"],
-  ["social", "social.html", "Social"]
+  ["social", "social.html", "Social"],
+  ["members", "members.html", "Members"]
 ];
 
 export const header = (active, { solid = false, cta = ["training.html#start", "Join"] } = {}) => `
@@ -107,6 +108,7 @@ export const footer = () => `
           <a href="team.html#add-profile">Add your profile</a>
           <a href="training.html">Training</a>
           <a href="training.html#start">Join a practice</a>
+          <a href="about.html">About the guild</a>
         </div>
         <div>
           <h2 class="footer-h">The Field</h2>
@@ -114,6 +116,8 @@ export const footer = () => `
           <a href="events.html#results">Results</a>
           <a href="community.html">Book the Reavers</a>
           <a href="media.html">Media</a>
+          <a href="members.html">Members area</a>
+          <a href="agm.html">AGM</a>
         </div>
         <div>
           <h2 class="footer-h">Follow</h2>

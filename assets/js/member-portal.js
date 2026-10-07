@@ -12,7 +12,7 @@
  */
 (function () {
   'use strict';
-  var CFG = window.BUHURTOS;
+  var CFG = window.REAVERS_MEMBERS; // (not window.BUHURTOS, which belongs to the public site's buhurtos.js)
   var sb = window.supabase.createClient(CFG.supabaseUrl, CFG.publishableKey, {
     auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, flowType: 'pkce' }
   });
@@ -300,7 +300,7 @@
     return getPermission.then(function (p) {
       if (p !== 'granted') return false;
       return Promise.all([
-        navigator.serviceWorker.register('/Red-deer-reavers/reavers-sw.js', { scope: '/Red-deer-reavers/' }),
+        navigator.serviceWorker.register('sw.js?v=25', { updateViaCache: 'none' }),
         sb.rpc('push_public_key')
       ]).then(function (rs) {
         var reg = rs[0], keyRes = rs[1];
@@ -1253,5 +1253,5 @@
       h('h3', {}, 'No response'), list(live.filter(function (m) { return !m.response; }).sort(byName), function (m) { return h('li', {}, m.full_name); }));
   }
 
-  document.addEventListener('DOMContentLoaded', function () { if (window.M) window.M.Sidenav.init(document.querySelectorAll('.sidenav')); });
+  
 })();

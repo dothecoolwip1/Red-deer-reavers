@@ -1,5 +1,7 @@
 # Red Deer Reavers website
 
+This repository is the one Reavers website, served at https://dothecoolwip1.github.io/Red-deer-reavers/. It combines the public "Forged" site (formerly the separate `Reavers-Site` repository) with the members area and AGM tools (`members.html`, `agm.html`, see `MEMBERS_AREA.md`). The two frontend-only prototypes in `operations-prototype/` and `reavers-os-concept/` are concept work, not part of the site build.
+
 Public team website and lightweight team administration for the Red Deer Reavers in Central Alberta.
 
 ## Architecture
@@ -28,6 +30,10 @@ Fighters do not need to be added on this site. A fighter signs in to BuhurtOS, a
 ## Design
 
 The "Forged" theme lives in `styles.css`: dark iron, gilt corner guards, parchment sections, heraldic shield avatars, and the crest's purple and ember. Fonts (Grenze Gotisch, Cinzel, Alegreya Sans, all OFL) are self-hosted from `vendor/fonts`. Moving decoration (forge embers, the discipline banner) respects reduced-motion settings and has a pause button.
+
+## Members area and AGM
+
+`members.html` and `agm.html` are generated like every other page (`scripts/pages/members.page.mjs`, `agm.page.mjs`) so they share the header, footer and dock. Their logic is `assets/js/member-portal.js` (unchanged) with its own stylesheet `assets/members.css`; its config global is `window.REAVERS_MEMBERS` (the public site uses `window.BUHURTOS`). The push-notification handlers live in `sw.js`; `reavers-sw.js` only forwards to it for browsers that still have the old worker registered. Old addresses (`programs`, `involved`, `steps`, `contact`, `resources`) redirect to their replacements.
 
 ## Editing pages
 
