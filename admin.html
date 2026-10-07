@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0b0710">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Team Admin | Red Deer Reavers</title>
+  <link rel="icon" href="assets/crest-96.webp" type="image/webp">
+  <link rel="stylesheet" href="admin.css?v=25">
+</head>
+<body>
+  <main class="admin-shell">
+    <section class="login-panel" data-login-panel>
+      <div class="login-card">
+        <img class="admin-logo" src="assets/crest-256.webp" alt="Red Deer Reavers logo">
+        <p class="kicker">RED DEER REAVERS</p>
+        <h1>Team Admin</h1>
+        <p class="login-copy">One shared team password. No usernames or account setup.</p>
+        <form data-login-form class="login-form">
+          <label>Password
+            <input type="password" name="password" autocomplete="current-password" required autofocus>
+          </label>
+          <button type="submit">Open admin</button>
+          <p class="form-message" data-login-message aria-live="polite"></p>
+        </form>
+        <a class="back-link" href="index.html">← Back to the site</a>
+      </div>
+    </section>
+
+    <section class="dashboard" data-dashboard hidden>
+      <header class="admin-header">
+        <div class="admin-brand">
+          <img src="assets/crest-96.webp" alt="">
+          <div><strong>REAVERS ADMIN</strong><span>Team website controls</span></div>
+        </div>
+        <div class="header-actions">
+          <a href="index.html" target="_blank" rel="noreferrer">View site</a>
+          <button type="button" class="ghost-button" data-logout>Log out</button>
+        </div>
+      </header>
+
+      <div class="dashboard-inner">
+        <div class="admin-intro">
+          <div><p class="kicker">TEAM CONTROL</p><h1>Keep the public site current.</h1></div>
+          <p>Update practices, add events, and manage the roster here. Changes appear on the public site automatically.</p>
+        </div>
+
+        <nav class="tab-bar" aria-label="Admin sections">
+          <button type="button" class="active" data-tab-button="calendar">Calendar</button>
+          <button type="button" data-tab-button="roster">Roster</button>
+          <button type="button" data-tab-button="practices">Practices</button>
+          <button type="button" data-tab-button="community">Community</button>
+          <button type="button" data-tab-button="promo">Promo</button>
+          <button type="button" data-tab-button="settings">Settings</button>
+        </nav>
+
+        <section class="tab-panel active" data-tab-panel="calendar">
+          <div class="panel-heading">
+            <div><p class="kicker">EVENTS</p><h2>Calendar</h2></div>
+            <button type="button" class="primary-button" data-add-event>+ Add event</button>
+          </div>
+          <div class="calendar-toolbar">
+            <button type="button" aria-label="Previous month" data-calendar-prev>‹</button>
+            <strong data-calendar-title></strong>
+            <button type="button" aria-label="Next month" data-calendar-next>›</button>
+          </div>
+          <div class="calendar-weekdays" aria-hidden="true"><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span></div>
+          <div class="calendar-grid" data-calendar-grid></div>
+          <section class="bos-panel" aria-labelledby="bos-events-title">
+            <p class="kicker">LIVE FROM BUHURTOS</p>
+            <h3 id="bos-events-title">Events on BuhurtOS</h3>
+            <p>Every event on BuhurtOS, past and future, shows up on the public Events page on its own, and the ones the Reavers host or enter are labelled. Upcoming ones also feed the home page. Nothing to add here.</p>
+            <ul class="bos-list" data-bos-events><li><span>Loading events from BuhurtOS…</span></li></ul>
+          </section>
+          <div class="list-section">
+            <div class="subheading"><h3>Upcoming events</h3><span data-event-count></span></div>
+            <div class="manage-list" data-event-manage-list></div>
+          </div>
+        </section>
+
+        <section class="tab-panel" data-tab-panel="roster" hidden>
+          <div class="panel-heading">
+            <div><p class="kicker">TEAM</p><h2>Roster</h2></div>
+            <button type="button" class="primary-button" data-add-roster>+ Add person</button>
+          </div>
+          <section class="bos-panel" aria-labelledby="bos-title">
+            <p class="kicker">LIVE FROM BUHURTOS</p>
+            <h3 id="bos-title">Fighter profiles</h3>
+            <p>Fighters build their own profile on BuhurtOS and ask to join the Red Deer Reavers. Once the captain approves them there, they appear on the public Team page with their photo, disciplines and record. No need to add fighters here. If someone steps away for a while, press <b>Hide</b> to take them off the website without touching their BuhurtOS record, then <b>Show</b> to bring them back.</p>
+            <ul class="bos-list" data-bos-roster><li><span>Loading fighters from BuhurtOS…</span></li></ul>
+            <div class="bos-actions">
+              <a class="primary" href="https://dothecoolwip1.github.io/BuhurtOS/team-manager" target="_blank" rel="noopener">Approve join requests</a>
+              <a href="https://dothecoolwip1.github.io/BuhurtOS/teams/red-deer-reavers" target="_blank" rel="noopener">Team on BuhurtOS</a>
+              <a href="team.html#add-profile" target="_blank" rel="noopener">Share the sign-up steps</a>
+            </div>
+          </section>
+          <p class="panel-note">Use the list below for crew, leadership, coaches and media. Anyone whose name matches a BuhurtOS fighter is merged into that fighter’s card. Use Show on website so the public Team page only includes people who want a profile.</p>
+          <div class="manage-list roster-manage-list" data-roster-manage-list></div>
+        </section>
+
+        <section class="tab-panel" data-tab-panel="practices" hidden>
+          <div class="panel-heading">
+            <div><p class="kicker">TRAINING</p><h2>Recurring practices</h2></div>
+            <button type="button" class="primary-button" data-add-practice>+ Add practice</button>
+          </div>
+          <p class="panel-note">Change a weekday, time, venue, fee, or temporarily hide a practice without touching the website code.</p>
+          <div class="manage-list" data-practice-manage-list></div>
+        </section>
+
+        <section class="tab-panel" data-tab-panel="community" hidden>
+          <div class="panel-heading">
+            <div><p class="kicker">COMMUNITY</p><h2>Inquiries</h2></div>
+            <span class="inquiry-count" data-community-count></span>
+          </div>
+          <p class="panel-note">Schools, events, birthdays, community groups, and partnership requests submitted from the public Community page appear here.</p>
+          <div class="manage-list inquiry-list" data-community-inquiries></div>
+        </section>
+
+        <section class="tab-panel" data-tab-panel="promo" hidden>
+          <div class="panel-heading">
+            <div><p class="kicker">PROMO TOOLS</p><h2>QR codes</h2></div>
+            <button type="button" class="ghost-button" data-print-promo>Print sheet</button>
+          </div>
+          <p class="panel-note">These QR codes are generated automatically during every site build, so they always point at the live Reavers pages.</p>
+          <div class="promo-qr-grid" data-promo-sheet>
+            <article class="promo-qr-card"><img src="assets/generated/qr/home.svg" alt="QR code for the Red Deer Reavers home page"><div><strong>Reavers website</strong><span>Main team website</span><a href="assets/generated/qr/home.svg" download="reavers-website-qr.svg">Download SVG</a></div></article>
+            <article class="promo-qr-card"><img src="assets/generated/qr/join.svg" alt="QR code for joining the Red Deer Reavers"><div><strong>Join the team</strong><span>Training and newcomer page</span><a href="assets/generated/qr/join.svg" download="reavers-join-qr.svg">Download SVG</a></div></article>
+            <article class="promo-qr-card"><img src="assets/generated/qr/community.svg" alt="QR code for booking the Red Deer Reavers"><div><strong>Book the Reavers</strong><span>Community inquiry form</span><a href="assets/generated/qr/community.svg" download="reavers-community-qr.svg">Download SVG</a></div></article>
+            <article class="promo-qr-card"><img src="assets/generated/qr/events.svg" alt="QR code for Red Deer Reavers events"><div><strong>Events</strong><span>Upcoming public schedule</span><a href="assets/generated/qr/events.svg" download="reavers-events-qr.svg">Download SVG</a></div></article>
+          </div>
+        </section>
+
+        <section class="tab-panel" data-tab-panel="settings" hidden>
+          <div class="panel-heading"><div><p class="kicker">SITE</p><h2>Basic settings</h2></div></div>
+          <form class="settings-form" data-settings-form>
+            <label>Season<input name="season" maxlength="20" required></label>
+            <label>Team name<input name="organization" maxlength="120" required></label>
+            <label>Location<input name="location" maxlength="120" required></label>
+            <label>Contact email<input name="contact_email" type="email" maxlength="240" required></label>
+            <button type="submit" class="primary-button">Save settings</button>
+          </form>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <dialog class="editor-dialog" data-editor-dialog>
+    <form method="dialog" class="dialog-shell" data-editor-form>
+      <div class="dialog-head"><div><p class="kicker" data-dialog-kicker>EDIT</p><h2 data-dialog-title></h2></div><button type="button" class="dialog-close" data-dialog-close aria-label="Close">×</button></div>
+      <div data-dialog-fields></div>
+      <div class="dialog-actions">
+        <button type="button" class="danger-button" data-dialog-delete hidden>Delete</button>
+        <div class="dialog-actions-right"><button type="button" class="ghost-button" data-dialog-cancel>Cancel</button><button type="submit" class="primary-button">Save</button></div>
+      </div>
+      <p class="form-message" data-dialog-message aria-live="polite"></p>
+    </form>
+  </dialog>
+
+  <div class="toast" data-toast role="status" aria-live="polite"></div>
+  <script src="team-data.js?v=25"></script>
+  <script src="buhurtos.js?v=25"></script>
+  <script src="vendor/sortable/Sortable.min.js?v=13" defer></script>
+  <script src="admin.js?v=25" defer></script>
+</body>
+</html>
