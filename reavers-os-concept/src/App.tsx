@@ -13,7 +13,7 @@ export default function App() {
   return (<div className="app">
     <aside className="rail"><div className="logo"><img src="./logo.jpg" alt="" /><b>Red Deer Reavers<br /><span className="faint" style={{ fontFamily: 'var(--body)', fontWeight: 400 }}>concept · mock data</span></b></div>
       {items.map(([to, ic, l]) => <NavLink key={to} to={to} end={to === '/' || to === '/money'} className={({ isActive }) => 'nav' + (isActive ? ' on' : '')}><span className="ic">{ic}</span>{l}{to === '/inbox' && n > 0 && <span className="n">{n}</span>}</NavLink>)}
-      <div style={{ marginTop: 'auto' }} className="faint"><a href="../index.html">↩ live site</a> · <button className="btn ghost s" onClick={reset}>reset data</button></div></aside>
+      <div style={{ marginTop: 'auto' }} className="faint"><button className="btn ghost s" onClick={reset}>reset data</button></div></aside>
     <main className="page">
       <div className="persona"><span className="tag">Viewing as</span><select value={me.id} onChange={e => setPersona(e.target.value as PersonaId)} aria-label="Persona">{personas.map(p => <option key={p.id} value={p.id}>{p.name} · {p.role}</option>)}</select><span className="muted" style={{ fontSize: '.9rem' }}>{me.blurb}</span></div>
       {hide[me.id].some(h => loc.pathname === h || loc.pathname.startsWith(h + '/')) ? <div className="panel" style={{ textAlign: 'center', padding: '2rem' }}><h2>Not for {me.name.split(' ')[0]}</h2><p className="muted">A {me.role.toLowerCase()} wouldn't see this. Switch who you're viewing as, above.</p></div> :

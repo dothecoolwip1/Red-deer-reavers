@@ -27,7 +27,7 @@ export default function Layout({ children }: { children: ReactNode }) {
             return <div key={g.title} className="nav-group"><div className="nav-title">{g.title}</div>
               {items.map(i => <NavLink key={i.id} to={i.to} end={i.to === '/' || i.to === '/social'} className={({ isActive }) => 'nav-link' + (isActive ? ' on' : '')}><span>{i.icon}</span> {i.label}</NavLink>)}</div>
           })}
-          <div className="nav-group"><div className="nav-title">Outside prototype</div><a className="nav-link" href="../index.html">↩ Live Reavers website</a></div>
+          
         </nav>
         <main className="main">
           {allowed ? children : <div className="card restricted"><h2>🔒 Restricted for {role}</h2><p>In the real system this section would be hidden or read-only for this role. Switch role (top right) to see it.</p><Link className="btn primary" to="/">Back to dashboard</Link></div>}
