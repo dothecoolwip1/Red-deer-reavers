@@ -1,0 +1,27 @@
+// Every record opens as the same workbench: a header, then what hangs off it. One shape for a practice, an event, a grant, a sponsor…
+import { useState, type ReactNode } from 'react'
+import { Link } from 'react-router-dom'
+import { Panel, Pill, Ref, Tabs, Kpi, Empty, Ask } from '../ui'
+import { attached, money, fmt, nameOf, postReach } from '../model'
+import { useStore, add, uid, toast, patch } from '../store'
+import type { RecordRef } from '../types'
+
+const T = ['Overview', 'People', 'Money', 'Files', 'Posts', 'Gear', 'To-do'] as const
+export function Workbench({ r, title, sub, pills, overview, right }: { r: RecordRef; title: string; sub?: ReactNode; pills?: ReactNode; overview: ReactNode; right?: ReactNode }) {
+  const st = useStore(); const a = attached(r); const [tab, setTab] = useState<typeof T[number]>('Overview')
+  const counts = { People: a.people.length, Money: a.tx.length + a.expenses.length, Files: a.docs.length, Posts: a.posts.length, Gear: a.gear.length, 'To-do': a.tasks.filter(t => t.status !== 'Done').length }
+  return (<>
+    <div className="head"><div><div className="row" style={{ marginBottom: '.3rem' }}>{pills}</div><h1>{title}</h1>{sub && <p>{sub}</p>}</div><div className="row">{right}</div></div>
+    <div className="grid g4" style={{ marginBottom: '1rem' }}><Kpi v={a.people.length} l="people involved" /><Kpi v={money(a.earned - a.spent)} l={`net (${money(a.earned)} in, ${money(a.spent)} out)`} t={a.earned - a.spent < 0 ? 'ember' : 'ok'} /><Kpi v={a.hours} l="volunteer hours" /><Kpi v={a.posts.filter(p => p.status === 'Published').reduce((s, p) => s + postReach(p), 0).toLocaleString()} l="people reached online" /></div>
+    <Tabs tabs={T} v={tab} on={setTab} counts={counts} />
+    {tab === 'Overview' && overview}
+    {tab === 'People' && <Panel title="Who's involved"><div className="chips">{a.people.map(id => <Ref key={id} r={{ type: 'member', id }} />)}</div>{!a.people.length && <Empty>No one attached yet.</Empty>}{a.logs.length > 0 && <><h3 style={{ marginTop: '1rem' }}>Volunteer hours</h3><ul className="list">{a.logs.map(l => <li key={l.id}><div className="main"><b>{st.volunteers.find(v => v.id === l.volunteerId)?.name}</b><span>{l.note}</span></div><span className="mono">{l.hours}h</span></li>)}</ul></>}</Panel>}
+    {tab === 'Money' && <Panel title="Every dollar touching this" right={<Ask label="+ expense" placeholder="Vendor, amount (e.g. Staples 42)" onSubmit={v => { const m = v.match(/(.+?)\s+(\d+(?:\.\d+)?)$/); add('expenses', { id: uid('x'), vendor: m ? m[1] : v, amount: m ? Number(m[2]) : 0, category: 'Events', date: '2026-10-07', submitterId: 'm1', related: r, status: 'Submitted', notes: '' }); toast('Expense submitted to the money inbox') }} />}>
+      <ul className="list">{a.tx.map(t => <li key={t.id}><div className="main"><b>{t.description}</b><span>{fmt(t.date)} · {t.category}{t.receiptDocId ? ' · receipt attached' : ''}</span></div><span className="mono" style={{ color: t.amount < 0 ? 'var(--bad)' : 'var(--ok)' }}>{money(t.amount)}</span></li>)}
+        {a.expenses.filter(e => e.status !== 'Paid').map(e => <li key={e.id}><div className="main"><b>{e.vendor}</b><span>reimbursement by {nameOf(e.submitterId)}</span></div><Pill>{e.status}</Pill><span className="mono">{money(-e.amount)}</span></li>)}</ul>{!a.tx.length && !a.expenses.length && <Empty>No money attached.</Empty>}</Panel>}
+    {tab === 'Files' && <Panel title="Files" right={<Ask label="+ attach file" placeholder="File title" onSubmit={v => { add('docs', { id: uid('d'), title: v, category: 'Events', tags: [], uploader: 'You', date: '2026-10-07', starred: false, sizeKb: 100, fileType: 'PDF', related: r, summary: 'Mock upload' }); toast('Attached (mock)') }} />}><ul className="list">{a.docs.map(d => <li key={d.id}><div className="main"><b>📄 {d.title}</b><span>{d.category} · {d.fileType} · {d.uploader}</span></div></li>)}</ul>{!a.docs.length && <Empty>Nothing attached. Files live on records here, not in folders.</Empty>}</Panel>}
+    {tab === 'Posts' && <Panel title="How it was told online" right={<Link className="btn s e" to={`/stories/new?${r.type}=${r.id}`}>Tell it</Link>}><ul className="list">{a.posts.map(p => <li key={p.id}><div className="main"><b><Link to={`/stories/post-${p.id}`}>{p.title}</Link></b><span>{p.platforms.map(x => x.platform).join(', ')} · {p.publishedAt ?? p.scheduledFor ?? 'not yet'}</span></div><Pill>{p.status}</Pill>{p.status === 'Published' && <span className="mono">{postReach(p).toLocaleString()} reached</span>}</li>)}</ul>{!a.posts.length && <Empty>Not told yet.</Empty>}</Panel>}
+    {tab === 'Gear' && <Panel title="Gear"><div className="chips">{a.gear.map(id => <Ref key={id} r={{ type: 'equipment', id }} />)}</div>{!a.gear.length && <Empty>No gear booked.</Empty>}</Panel>}
+    {tab === 'To-do' && <Panel title="To-do" right={<Ask label="+ to-do" onSubmit={v => { add('tasks', { id: uid('t'), title: v, assigneeId: 'm1', due: '2026-10-21', priority: 'Medium', status: 'Open', category: 'General', notes: '', related: r }); toast('Added') }} />}><ul className="list">{a.tasks.map(t => <li key={t.id}><input type="checkbox" checked={t.status === 'Done'} onChange={() => patch('tasks', t.id, { status: t.status === 'Done' ? 'Open' : 'Done' })} /><div className="main"><b style={{ textDecoration: t.status === 'Done' ? 'line-through' : 'none' }}>{t.title}</b><span>{nameOf(t.assigneeId)} · {fmt(t.due)}</span></div></li>)}</ul>{!a.tasks.length && <Empty>Nothing to do.</Empty>}</Panel>}
+  </>)
+}
