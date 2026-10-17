@@ -349,4 +349,6 @@
     if(!token()){showLogin();return}
     try{showDashboard();await loadData()}catch{showLogin("Enter the team password to continue.")}
   })();
+  // Team Admin › Roster › Club members (admin-members.js) shows a member on the public site through the same roster records as Add person
+  window.REAVERS_ADMIN={api,loadData,roster:()=>state.data?.roster||[]};
 })();

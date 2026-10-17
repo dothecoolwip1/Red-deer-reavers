@@ -1,0 +1,55 @@
+{
+  "redirects": [
+    {
+      "source": "/BuhurtOS",
+      "destination": "https://buhurt-os.vercel.app/",
+      "permanent": false
+    },
+    {
+      "source": "/BuhurtOS/",
+      "destination": "https://buhurt-os.vercel.app/",
+      "permanent": false
+    },
+    {
+      "source": "/BuhurtOS/:path+",
+      "destination": "https://buhurt-os.vercel.app/:path+",
+      "permanent": false
+    },
+    {
+      "source": "/Red-deer-reavers",
+      "destination": "/",
+      "permanent": false
+    },
+    {
+      "source": "/Red-deer-reavers/",
+      "destination": "/",
+      "permanent": false
+    },
+    {
+      "source": "/Red-deer-reavers/:path+",
+      "destination": "/:path+",
+      "permanent": false
+    }
+  ],
+  "headers": [
+    {
+      "source": "/reavers-sw.js",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache"
+        }
+      ]
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/members",
+      "destination": "/members.html"
+    },
+    {
+      "source": "/agm",
+      "destination": "/agm.html"
+    }
+  ]
+}

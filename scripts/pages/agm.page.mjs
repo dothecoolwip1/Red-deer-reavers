@@ -13,7 +13,7 @@ export default () => `${head({
     <div class="shell">
       <p class="eyebrow solo">Red Deer Reavers Guild</p>
       <h1 class="members-title">2026 Annual General Meeting</h1>
-      <p class="lede">Questions, concerns, ideas and agenda topics are welcome before the meeting. RSVP, proxies and nominations are in the <a href="members.html">members area</a>.</p>
+      <p class="lede">Questions, concerns, ideas and agenda topics are welcome before the meeting. <strong>Voting, RSVP, proxies and nominations are in the <a href="members.html?view=agm">members area</a></strong>: sign in and open the AGM tab. Ballots are secret: nobody sees how you voted.</p>
     </div>
   </section>
   <section class="section parchment members-sheet">
@@ -45,8 +45,8 @@ export default () => `${head({
         <form id="agm-form" method="POST">
           <input type="hidden" name="_subject" value="Red Deer Reavers AGM Submission">
           <input type="hidden" name="_template" value="table">
-          <input type="hidden" name="_url" value="https://dothecoolwip1.github.io/Red-deer-reavers/agm.html">
-          <input type="hidden" name="_next" value="https://dothecoolwip1.github.io/Red-deer-reavers/agm.html?submitted=1">
+          <input type="hidden" name="_url" value="https://red-deer-reavers.vercel.app/agm.html">
+          <input type="hidden" name="_next" value="https://red-deer-reavers.vercel.app/agm.html?submitted=1">
           <input type="text" name="_honey" style="display:none" tabindex="-1" autocomplete="off" aria-hidden="true" aria-label="Leave this field empty">
           <input type="hidden" id="submitted-as" name="Submitted As" value="Named or name left blank">
           <label class="fld">Your name (optional)<input id="member-name" name="Name" type="text" maxlength="100"></label>

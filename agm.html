@@ -18,7 +18,7 @@
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
   <link rel="preload" href="vendor/fonts/grenze-gotisch-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="vendor/fonts/cinzel-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="styles.css?v=25">
+  <link rel="stylesheet" href="styles.css?v=27">
   <link rel="stylesheet" href="assets/members.css?v=26">
 </head>
 <body data-page="agm">
@@ -40,7 +40,7 @@
     <div class="shell">
       <p class="eyebrow solo">Red Deer Reavers Guild</p>
       <h1 class="members-title">2026 Annual General Meeting</h1>
-      <p class="lede">Questions, concerns, ideas and agenda topics are welcome before the meeting. RSVP, proxies and nominations are in the <a href="members.html">members area</a>.</p>
+      <p class="lede">Questions, concerns, ideas and agenda topics are welcome before the meeting. <strong>Voting, RSVP, proxies and nominations are in the <a href="members.html?view=agm">members area</a></strong>: sign in and open the AGM tab. Ballots are secret: nobody sees how you voted.</p>
     </div>
   </section>
   <section class="section parchment members-sheet">
@@ -72,8 +72,8 @@
         <form id="agm-form" method="POST">
           <input type="hidden" name="_subject" value="Red Deer Reavers AGM Submission">
           <input type="hidden" name="_template" value="table">
-          <input type="hidden" name="_url" value="https://dothecoolwip1.github.io/Red-deer-reavers/agm.html">
-          <input type="hidden" name="_next" value="https://dothecoolwip1.github.io/Red-deer-reavers/agm.html?submitted=1">
+          <input type="hidden" name="_url" value="https://red-deer-reavers.vercel.app/agm.html">
+          <input type="hidden" name="_next" value="https://red-deer-reavers.vercel.app/agm.html?submitted=1">
           <input type="text" name="_honey" style="display:none" tabindex="-1" autocomplete="off" aria-hidden="true" aria-label="Leave this field empty">
           <input type="hidden" id="submitted-as" name="Submitted As" value="Named or name left blank">
           <label class="fld">Your name (optional)<input id="member-name" name="Name" type="text" maxlength="100"></label>
@@ -112,7 +112,7 @@
           <a href="team.html#add-profile">Add your profile</a>
           <a href="training.html">Training</a>
           <a href="training.html#start">Join a practice</a>
-          <a href="about.html">About the guild</a>
+          <a href="members.html">Members area</a>
         </div>
         <div>
           <h2 class="footer-h">The Field</h2>
@@ -120,8 +120,6 @@
           <a href="events.html#results">Results</a>
           <a href="community.html">Book the Reavers</a>
           <a href="media.html">Media</a>
-          <a href="members.html">Members area</a>
-          <a href="agm.html">AGM</a>
         </div>
         <div>
           <h2 class="footer-h">Follow</h2>
@@ -134,7 +132,7 @@
     </div>
     <div class="footer-base">
       <span>© <span data-year>2026</span> Red Deer Reavers Guild</span>
-      <span class="powered">Fighter records kept on <a href="https://dothecoolwip1.github.io/BuhurtOS/" target="_blank" rel="noopener">BuhurtOS</a></span>
+      <span class="powered">Fighter records kept on <a href="https://buhurt-os.vercel.app/" target="_blank" rel="noopener">BuhurtOS</a></span>
     </div>
   </div>
 </footer>
@@ -147,9 +145,9 @@
   <a href="community.html"><svg class="icon" aria-hidden="true"><use href="assets/icons.svg#horn"></use></svg><span>Book</span></a>
 </nav>
 
-<script src="team-data.js?v=25"></script>
-<script src="buhurtos.js?v=25"></script>
-<script src="app.js?v=25" defer></script>
+<script src="team-data.js?v=27"></script>
+<script src="buhurtos.js?v=27"></script>
+<script src="app.js?v=27" defer></script>
 <script>
 (function () {
   var form = document.getElementById('agm-form');

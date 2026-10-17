@@ -12,15 +12,18 @@
  */
 (function () {
   'use strict';
-  var CFG = window.REAVERS_MEMBERS; // (not window.BUHURTOS, which belongs to the public site's buhurtos.js)
+  var CFG = window.BUHURTOS;
   var sb = window.supabase.createClient(CFG.supabaseUrl, CFG.publishableKey, {
     auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, flowType: 'pkce' }
   });
   var HERE = window.location.origin + window.location.pathname;
   var $ = function (id) { return document.getElementById(id); };
+  var T = document.body.classList.contains('portal-t');   // members-t.html: the portal is the whole page (app bar, pill tabs, toast status, vote-now bar)
+  var statusTimer = null;
   var state = { session: null, profile: null, team: null, overview: null, agm: null, view: null, year: null, roster: null, filter: 'all', search: '',
     duesFor: null, agmRows: null, agmFilter: 'all', agmSearch: '', proxyPick: false, recovery: false, loading: false,
-    agmx: null, agmxError: '', topicForm: null, topicNotice: '', nomMode: null, nomOffice: null, nomTarget: '', nomNotice: '', agmSection: 'people', topicFilter: 'all' };
+    agmx: null, agmxError: '', topicForm: null, topicNotice: '', nomMode: null, nomOffice: null, nomTarget: '', nomNotice: '', agmSection: 'people', topicFilter: 'all',
+    votes: null, votesError: '', voteTimer: null, voteForm: null, ballotsFor: null, ballots: null };
 
   var MEMBERSHIP = { pending: 'Pending', active: 'Active', inactive: 'Inactive', removed: 'Removed' };
   var DUES = { unpaid: 'Unpaid', paid: 'Paid', waived: 'Waived', gear_contribution: 'Gear contribution' };
@@ -55,7 +58,10 @@
     return el;
   }
   function chip(cls, text) { return h('span', { class: 'chip-s ' + cls }, text); }
-  function status(msg, isErr) { var s = $('status'); s.textContent = msg || ''; s.className = isErr ? 'err' : ''; }
+  function status(msg, isErr) {
+    var s = $('status'); s.textContent = msg || ''; s.className = isErr ? 'err' : '';
+    if (T) { clearTimeout(statusTimer); if (msg && !isErr && !/…$/.test(msg)) statusTimer = setTimeout(function () { if (s.textContent === msg) s.textContent = ''; }, 6000); }
+  }
   function feeChip(duesStatus, feeWaived) { return feeWaived && duesStatus === 'unpaid' ? chip('waived', 'Fee waived') : chip(duesStatus, DUES[duesStatus]); }
 
   /** Words a person can act on. Never says whether an email address has an account. */
@@ -195,6 +201,10 @@
     });
   });
   $('sign-out').addEventListener('click', function () { sb.auth.signOut(); });
+  (function () {
+    var rb = $('refresh'); if (!rb) return;
+    rb.addEventListener('click', function () { rb.classList.add('spin'); status('Refreshing…'); reload(); setTimeout(function () { rb.classList.remove('spin'); }, 1500); });
+  })();
 
   // Arriving from an email link: a reset link lands with ?reset=1; a link opened in another browser cannot finish (PKCE) but the email is
   // already confirmed by then, so say so instead of failing silently.
@@ -224,7 +234,9 @@
     $('new-password').hidden = !(signedIn && state.recovery);
     $('signed-in').hidden = !signedIn || state.recovery;
     $('lede').hidden = signedIn;
-    if (!signedIn) { $('view').textContent = ''; state.overview = null; state.agm = null; state.agmx = null; state.profile = null; state.team = null; }
+    document.querySelectorAll('[data-when=in]').forEach(function (el) { el.hidden = !signedIn; });
+    if (T && !signedIn) updateVoteNow();
+    if (!signedIn) { $('view').textContent = ''; state.overview = null; state.agm = null; state.agmx = null; state.profile = null; state.team = null; state.votes = null; stopVotePolling(); }
   }
 
   // ================================================================ load the signed-in person
@@ -255,7 +267,7 @@
           if (!state.view) state.view = params.get('view') || (myMembership() ? 'mine' : 'join');
           if (params.get('view') === 'agm-admin' && !rs[0].data.can_view_roster) status('Admin sign in: this account is not a current executive, so there are no admin tools. Your member page is shown instead.');
           render();
-          loadAgmx();
+          loadAgmx(); loadVotes();
           fighterNudge();
           if (myMembership()) ensureReaversPush(false);
         });
@@ -300,7 +312,7 @@
     return getPermission.then(function (p) {
       if (p !== 'granted') return false;
       return Promise.all([
-        navigator.serviceWorker.register('sw.js?v=25', { updateViaCache: 'none' }),
+        navigator.serviceWorker.register('reavers-sw.js', { scope: './members' }),   // relative: works at the site root (Vercel) and under /Red-deer-reavers/ (GitHub Pages)
         sb.rpc('push_public_key')
       ]).then(function (rs) {
         var reg = rs[0], keyRes = rs[1];
@@ -441,18 +453,54 @@
     var tabs = [];
     if (!mine) tabs.push(['join', 'Join the Reavers']); else tabs.push(['mine', 'My membership']);
     tabs.push(['agm', '2026 AGM']);
-    if (o.can_view_roster) tabs.push(['members', 'Members'], ['agm-admin', 'AGM admin'], ['proxies', 'Proxies'], ['print', 'AGM voting list'], ['history', 'Dues history']);
+    if (o.can_view_roster) tabs.push(['members', 'Members', 'exec'], ['agm-admin', 'AGM admin', 'exec'], ['proxies', 'Proxies', 'exec'], ['print', 'AGM voting list', 'exec'], ['history', 'Dues history', 'exec']);
     if (!tabs.some(function (t) { return t[0] === state.view; })) state.view = tabs[0][0];
     var nav = $('tabs'); nav.textContent = ''; nav.hidden = false;
     tabs.forEach(function (t) {
+      if (T && t[2] === 'exec' && !nav.querySelector('.tab-sep')) nav.appendChild(h('span', { class: 'tab-sep', 'aria-hidden': 'true' }, 'Executive'));
       nav.appendChild(h('button', { type: 'button', 'aria-selected': String(state.view === t[0]), onclick: function () { state.view = t[0]; state.proxyPick = false; render(); } }, t[1]));
     });
     var v = $('view'); v.textContent = '';
     if (!o.enabled) { v.appendChild(h('p', {}, 'Membership is not set up yet.')); return; }
     if (state.view !== 'agm' && state.agmx && (state.agmx.to_respond || []).length) v.appendChild(nominatedBanner());
+    if (mine && state.view !== 'join') v.appendChild(glanceCard());
     ({ join: renderJoin, mine: renderMine, agm: renderAgm, members: renderMembers, 'agm-admin': renderAgmAdmin, proxies: renderProxies, print: renderPrint, history: renderHistory })[state.view](v);
+    if (T) updateVoteNow();
   }
   function go(view) { state.view = view; state.proxyPick = false; render(); window.scrollTo(0, 0); }
+
+  // ---------------------------------------------------------------- at a glance: where I stand and the one thing to do next
+  function glanceCard() {
+    var m = myMembership(), a = state.agm, vt = state.votes, row = h('div', { class: 'glance-row' });
+    var openQ = vt ? (vt.questions || []).filter(function (q) { return q.status === 'open'; }).length : 0;
+    row.appendChild(h('span', {}, 'Membership ', chip(m.status, MEMBERSHIP[m.status])));
+    row.appendChild(h('span', {}, m.year + ' fee ', m.fee_waived ? chip('waived', 'Waived') : chip(m.dues_status, DUES[m.dues_status])));
+    row.appendChild(h('span', {}, 'Voting ', chip(m.eligible ? 'can' : 'cannot', m.eligible ? 'Can vote' : 'Cannot vote')));
+    if (a && a.meeting) {
+      var resp = a.rsvp && a.rsvp.response;
+      row.appendChild(h('span', {}, 'AGM ', resp ? chip('rsvp', RSVP[resp] + (resp === 'proxy' && a.proxy ? ': ' + a.proxy.holder_name : '')) : chip('pending', 'No answer yet')));
+    }
+    var next = null;
+    if (openQ) next = h('button', { type: 'button', class: 'btn-rdr', onclick: function () { go('agm'); var el = $('vote-panel'); if (el) el.scrollIntoView({ behavior: 'smooth' }); } }, openQ === 1 ? 'A vote is open: vote now' : openQ + ' votes are open: vote now');
+    else if (a && a.meeting && !(a.rsvp && a.rsvp.response) && state.view !== 'agm' && m.status !== 'removed') next = h('button', { type: 'button', class: 'btn-rdr', onclick: function () { go('agm'); } }, 'Say how you will attend the AGM');
+    else if (m.status === 'active' && !m.fee_waived && m.dues_status === 'unpaid') next = h('span', { class: 'small' }, 'Pay your dues to the Treasurer to vote.');
+    var head = null, quick = null;
+    if (T) {
+      var offices = (state.overview.offices || []).map(function (x) { return x.label; });
+      head = h('div', { class: 'glance-name' }, m.full_name, h('small', {}, (offices.length ? offices.join(', ') + ' · ' : '') + m.year + ' member'));
+      quick = h('div', { class: 'glance-quick' },
+        state.view !== 'agm' && a && a.meeting ? h('button', { type: 'button', class: 'btn-line', onclick: function () { go('agm'); } }, 'The AGM') : null,
+        h('button', { type: 'button', class: 'btn-line', onclick: inviteMember }, 'Invite a member'));
+    }
+    return h('section', { class: 'glance', 'data-testid': 'glance', 'aria-label': 'At a glance' }, head, row, next, quick);
+  }
+  // share the public members page (the sign-in / join page), never this signed-in view
+  function inviteMember() {
+    var url = HERE.replace(/members-t\.html$/, 'members.html'), text = 'Join the Red Deer Reavers or sign in to the members area: ' + url;
+    if (navigator.share) { navigator.share({ title: 'Red Deer Reavers members', text: 'Join the Red Deer Reavers or sign in to the members area', url: url }).catch(function () {}); return; }
+    if (navigator.clipboard) navigator.clipboard.writeText(text).then(function () { status('Link copied: ' + url); }, function () { status('Members page: ' + url); });
+    else status('Members page: ' + url);
+  }
 
   function voteBanner(eligible, reasons) {
     return h('div', { class: 'vote ' + (eligible ? 'yes' : 'no'), 'data-testid': 'vote-banner' },
@@ -529,15 +577,38 @@
     return h('div', { class: 'agm-head', 'data-testid': 'agm-head' },
       h('div', { class: 'agm-kicker' }, 'RED DEER REAVERS ' + mt.year + ' AGM'),
       h('div', { class: 'agm-when' }, mt.local_date), h('div', { class: 'agm-when' }, mt.local_time + ' (' + (mt.timezone === 'America/Edmonton' ? 'Mountain time, Red Deer' : mt.timezone) + ')'),
-      mt.location ? h('div', { class: 'small' }, 'Location: ' + mt.location) : null);
+      mt.location ? h('div', { class: 'small' }, 'Location: ' + mt.location) : null,
+      T ? countdown(mt) : null, T ? agmTools(mt) : null);
+  }
+  function countdown(mt) {
+    var ms = new Date(mt.starts_at).getTime() - Date.now();
+    if (mt.started || ms <= 0) return ms > -6 * 3600e3 ? h('div', { class: 'agm-countdown' }, 'Underway now') : null;
+    var d = Math.floor(ms / 864e5), hr = Math.floor((ms % 864e5) / 36e5), mn = Math.floor((ms % 36e5) / 6e4);
+    return h('div', { class: 'agm-countdown', 'data-testid': 'agm-countdown' }, d >= 1 ? 'In ' + d + ' day' + (d === 1 ? '' : 's') + (hr ? ' ' + hr + ' h' : '') : hr >= 1 ? 'In ' + hr + ' h ' + mn + ' min' : 'In ' + mn + ' min');
+  }
+  function icsText(s) { return String(s || '').replace(/\\/g, '\\\\').replace(/\n/g, '\\n').replace(/[,;]/g, function (c) { return '\\' + c; }); }
+  function agmTools(mt) {
+    var start = new Date(mt.starts_at), end = new Date(start.getTime() + 2 * 3600e3);
+    var stamp = function (d) { return d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, ''); };
+    var title = mt.title || ('Red Deer Reavers ' + mt.year + ' AGM'), page = HERE.replace(/members-t\.html$/, 'members.html');
+    var ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Red Deer Reavers//Members//EN', 'BEGIN:VEVENT', 'UID:agm-' + mt.id + '@red-deer-reavers', 'DTSTAMP:' + stamp(new Date()),
+      'DTSTART:' + stamp(start), 'DTEND:' + stamp(end), 'SUMMARY:' + icsText(title), mt.location ? 'LOCATION:' + icsText(mt.location) : null, 'DESCRIPTION:' + icsText('RSVP and vote on the members page: ' + page), 'END:VEVENT', 'END:VCALENDAR'].filter(Boolean).join('\r\n');
+    var g = 'https://calendar.google.com/calendar/render?action=TEMPLATE&text=' + encodeURIComponent(title) + '&dates=' + stamp(start) + '/' + stamp(end) + (mt.location ? '&location=' + encodeURIComponent(mt.location) : '') + '&details=' + encodeURIComponent('RSVP and vote on the members page: ' + page);
+    var lnk = function (attrs, text) { attrs.class = 'btn-line'; attrs.style = 'display:inline-flex;align-items:center;text-decoration:none'; return h('a', attrs, text); };
+    return h('div', { class: 'agm-tools', 'data-testid': 'agm-tools' },
+      lnk({ href: 'data:text/calendar;charset=utf-8,' + encodeURIComponent(ics), download: 'reavers-agm-' + mt.year + '.ics' }, 'Add to calendar'),
+      lnk({ href: g, target: '_blank', rel: 'noopener noreferrer' }, 'Google Calendar'),
+      mt.location ? lnk({ href: 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(mt.location), target: '_blank', rel: 'noopener noreferrer' }, 'Map') : null);
   }
   function renderAgm(v) {
     var a = state.agm;
     if (!a || !a.meeting) { v.appendChild(h('p', {}, 'No AGM is scheduled yet.')); return; }
+    if (!state.voteTimer) pollVotes();
     var card = h('section', { class: 'card-panel', 'data-testid': 'agm-member' }, agmHeader(a));
     v.appendChild(card);
     // the help is only an explanation: if it ever failed to build, the RSVP and everything else below must still work
     try { v.appendChild(agmHelp()); } catch (e) { if (window.console) console.warn('help not shown', e); }
+    v.appendChild(votingPanel());
     v.appendChild(agmExtras());
     if (!a.membership) {
       card.appendChild(h('p', {}, 'Only Red Deer Reavers members can register. Join first: it takes a minute.'));
@@ -621,7 +692,7 @@
     });
   }
   function refreshAgm() {
-    sb.rpc('club_meeting_member_view', { p_team: state.team.id }).then(function (r) { if (!r.error) state.agm = r.data; render(); });
+    sb.rpc('club_meeting_member_view', { p_team: state.team.id }).then(function (r) { if (!r.error) state.agm = r.data; loadVotes(false).then(render); });
   }
 
   // ================================================================ the AGM: concerns and executive nominations (member)
@@ -957,6 +1028,10 @@
       return h('button', { type: 'button', 'aria-pressed': String(state.filter === f[0]), onclick: set(f[0]) }, f[1]);
     })));
     v.appendChild(searchBox(state.search, function (x) { state.search = x; }, function () { drawMembers(v); return v; }));
+    if (T) v.appendChild(h('p', { class: 'row-btns', style: 'margin:8px 0 12px' }, h('button', { type: 'button', class: 'btn-line small-btn', 'data-testid': 'members-csv', onclick: function () {
+      downloadCsv('reavers-members-' + state.year + '.csv', ['Member', 'Membership', state.year + ' fee', 'Can vote', 'Why not', 'Executive role'],
+        live.slice().sort(function (x, y) { return x.full_name.localeCompare(y.full_name); }).map(function (r) { return [r.full_name, MEMBERSHIP[r.status], waived() && r.dues_status === 'unpaid' ? 'Fee waived' : DUES[r.dues_status], r.eligible ? 'yes' : 'no', (r.reasons || []).join('; '), (r.offices || []).join(', ')]; }));
+    } }, 'Download CSV (' + live.length + ' members)')));
     var list = h('div', { role: 'table', 'aria-label': state.year + ' members' },
       h('div', { class: 'mrow head', role: 'row' }, h('span', {}, 'Member'), h('span', {}, 'Membership'), h('span', {}, state.year + ' fee'), h('span', {}, 'Voting'), h('span', {}, 'Actions')));
     var shown = rows.filter(keep);
@@ -1064,6 +1139,7 @@
     v.appendChild(agmSwitch(v));
     if (state.agmSection === 'concerns') { drawConcernsAdmin(v.appendChild(h('div', {}))); return; }
     if (state.agmSection === 'nominations') { drawNominationsAdmin(v.appendChild(h('div', {}))); return; }
+    if (state.agmSection === 'voting') { drawVotingAdmin(v.appendChild(h('div', {}))); return; }
     v.appendChild(h('div', { class: 'tiles seven', 'data-testid': 'agm-summary' },
       tile(rows.length, 'Total members', '', set('all')), tile(count(function (r) { return r.eligible; }), 'Voting eligible', 'yes', set('eligible')),
       tile(count(function (r) { return r.response === 'in_person'; }), 'In person', '', set('in_person')), tile(count(function (r) { return r.response === 'video'; }), 'Video call', '', set('video')),
@@ -1096,7 +1172,7 @@
   }
   // ---------------------------------------------------------------- executive: AGM concerns and nominations (inside AGM admin)
   function agmSwitch(v) {
-    return h('div', { class: 'filters', role: 'group', 'aria-label': 'AGM admin section' }, [['people', 'People and check-in'], ['concerns', 'Concerns'], ['nominations', 'Nominations']].map(function (t) {
+    return h('div', { class: 'filters', role: 'group', 'aria-label': 'AGM admin section' }, [['people', 'People and check-in'], ['concerns', 'Concerns'], ['nominations', 'Nominations'], ['voting', 'Voting']].map(function (t) {
       return h('button', { type: 'button', 'aria-pressed': String(state.agmSection === t[0]), onclick: function () { state.agmSection = t[0]; drawAgmAdmin(v); } }, t[1]);
     }));
   }
@@ -1177,6 +1253,217 @@
     return box;
   }
 
+  // ================================================================ the AGM vote: questions, ballots, results (member and executive)
+  // Members see opened questions and vote (their own ballot, plus one for each member whose proxy they hold); results show once a question is
+  // closed. The executive opens and closes questions in AGM admin › Voting. Ballots are secret: the executive sees who has voted, never how anyone voted.
+  var KIND = { election: 'Election', motion: 'Motion' };
+  function stopVotePolling() { if (state.voteTimer) { clearInterval(state.voteTimer); state.voteTimer = null; } }
+  function loadVotes(redraw) {
+    if (!state.agm || !state.agm.meeting) { state.votes = null; return Promise.resolve(); }
+    return sb.rpc('club_question_list', { p_meeting: state.agm.meeting.id }).then(function (r) {
+      var before = state.votes ? (state.votes.questions || []).filter(function (q) { return q.status === 'open'; }).map(function (q) { return q.id; }) : null;
+      if (r.error) { state.votesError = (r.error.code === '42501') ? '' : words(r.error); state.votes = null; }
+      else { state.votes = r.data; state.votesError = ''; }
+      if (redraw !== false) { swap('vote-panel', votingPanel); var adm = $('vote-admin'); if (adm) drawVotingAdmin(adm.parentNode, true); }
+      if (T) { if (before) noticeOpened(before); updateVoteNow(); }
+    });
+  }
+  function pollVotes() {
+    stopVotePolling();
+    state.voteTimer = setInterval(function () {
+      if ((document.hidden && !(T && buzzOn())) || !state.session || !state.agm || !state.agm.meeting) return;
+      if (!$('vote-panel') && !$('vote-admin')) { stopVotePolling(); return; }
+      loadVotes();
+    }, 8000);
+  }
+  function optionLabel(q, key) { var o = (q.options || []).filter(function (x) { return x.key === key; })[0]; return o ? o.label : key; }
+  function resultBars(q) {
+    var t = q.tally; if (!t) return null;
+    var total = Number(t.total) || 0, best = 0;
+    (t.options || []).forEach(function (o) { if (o.key !== 'abstain') best = Math.max(best, Number(o.votes) || 0); });
+    var box = h('div', { class: 'vote-results', 'data-testid': 'vote-results' });
+    (t.options || []).forEach(function (o) {
+      var n = Number(o.votes) || 0, pct = total ? Math.round(n * 100 / total) : 0, lead = q.status === 'closed' && n > 0 && n === best && o.key !== 'abstain';
+      box.appendChild(h('div', { class: 'vote-row' + (lead ? ' lead' : '') },
+        h('div', { class: 'vote-row-head' }, h('b', {}, o.label), h('span', {}, n + (n === 1 ? ' vote' : ' votes') + (total ? ' · ' + pct + '%' : ''))),
+        h('div', { class: 'vote-bar' }, h('div', { class: 'vote-fill', style: 'width:' + pct + '%' }))));
+    });
+    box.appendChild(h('p', { class: 'small' }, total + ' of ' + (t.eligible != null ? t.eligible : q.eligible_count) + ' eligible ballots' + (q.status === 'closed' ? ' · closed ' + timeText(q.closed_at) : ' so far')));
+    return box;
+  }
+  function ballotChoice(q, membershipId) { var b = (q.my_ballots || []).filter(function (x) { return x.membership_id === membershipId; })[0]; return b ? b.choice : null; }
+  function castBallot(q, voter, key, btnBox) {
+    Array.prototype.forEach.call(btnBox.querySelectorAll('button'), function (b) { b.disabled = true; });
+    sb.rpc('cast_club_ballot', { p_question: q.id, p_choice: key, p_for_membership: voter.self ? null : voter.membership_id }).then(function (r) {
+      if (r.error) { status(words(r.error), true); Array.prototype.forEach.call(btnBox.querySelectorAll('button'), function (b) { b.disabled = false; }); return; }
+      status((voter.self ? 'Your vote' : 'Vote for ' + voter.name) + ' on "' + q.title + '": ' + optionLabel(q, key) + '.');
+      loadVotes();
+    });
+  }
+  // ---------------------------------------------------------------- test layout: buzz when a vote opens, the vote-now bar, CSV downloads
+  var BUZZ_KEY = 'rdr-vote-buzz';
+  function buzzOn() { try { return localStorage.getItem(BUZZ_KEY) === '1'; } catch (e) { return false; } }
+  function setBuzz(on) {
+    try { localStorage.setItem(BUZZ_KEY, on ? '1' : '0'); } catch (e) { /* ignore */ }
+    if (on) {
+      if (navigator.vibrate) navigator.vibrate(80);
+      if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission().then(function () { swap('vote-panel', votingPanel); });
+      status('You will be buzzed when a vote opens while this page is open on your phone.');
+    } else status('Buzz is off.');
+  }
+  function buzzRow() {
+    var on = buzzOn(), perm = ('Notification' in window) ? Notification.permission : 'unsupported';
+    return h('div', { class: 'buzz', 'data-testid': 'buzz' },
+      h('button', { type: 'button', class: 'btn-line', 'aria-pressed': String(on), onclick: function () { setBuzz(!on); swap('vote-panel', votingPanel); } }, on ? 'Buzz when a vote opens: on' : 'Buzz me when a vote opens'),
+      h('span', { class: 'small' }, on ? (perm === 'granted' ? 'Vibrates and shows a notification, even with the screen off the page.' : perm === 'denied' ? 'Notifications are blocked in your browser: you still get the vibration while this page is open.' : 'Vibrates while this page is open.') : 'Keep this page open on the night: it checks for a new question every few seconds.'));
+  }
+  function noticeOpened(beforeIds) {
+    if (!buzzOn() || !state.votes) return;
+    var fresh = (state.votes.questions || []).filter(function (q) { return q.status === 'open' && beforeIds.indexOf(q.id) < 0; });
+    if (!fresh.length) return;
+    if (navigator.vibrate) navigator.vibrate([220, 120, 220]);
+    if ('Notification' in window && Notification.permission === 'granted') {
+      fresh.forEach(function (q) {
+        try { var n = new Notification('Vote open: ' + q.title, { body: 'Red Deer Reavers AGM: cast your ballot now.', tag: 'rdr-vote-' + q.id, icon: 'assets/crest-96.webp' }); n.onclick = function () { window.focus(); go('agm'); }; } catch (e) { /* ignore */ }
+      });
+    }
+  }
+  function pendingOpen() {
+    var vt = state.votes; if (!vt) return [];
+    return (vt.questions || []).filter(function (q) { return q.status === 'open' && (vt.voters || []).some(function (v) { return v.can && !ballotChoice(q, v.membership_id); }); });
+  }
+  function updateVoteNow() {
+    var bar = $('vote-now'); if (!bar) return;
+    var qs = state.session ? pendingOpen() : [], panel = $('vote-panel'), seen = false;
+    if (panel && state.view === 'agm') { var rc = panel.getBoundingClientRect(); seen = rc.top < window.innerHeight - 120 && rc.bottom > 140; }
+    if (!qs.length || seen) { bar.hidden = true; document.body.classList.remove('has-vote-now'); return; }
+    bar.textContent = '';
+    bar.appendChild(h('button', { type: 'button', 'data-testid': 'vote-now', onclick: function () {
+      if (state.view !== 'agm') go('agm');
+      setTimeout(function () { var p = $('vote-panel'); if (p) p.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 60);
+    } }, h('span', {}, qs.length === 1 ? qs[0].title : qs.length + ' votes are open', h('br'), h('small', {}, 'Your ballot is not in yet')), h('span', { class: 'go' }, 'Vote now')));
+    bar.hidden = false; document.body.classList.add('has-vote-now');
+  }
+  if (T) { var voteNowTick = false; window.addEventListener('scroll', function () { if (voteNowTick) return; voteNowTick = true; requestAnimationFrame(function () { voteNowTick = false; updateVoteNow(); }); }, { passive: true }); }
+  function downloadCsv(name, header, rows) {
+    var esc = function (x) { x = x == null ? '' : String(x); return /[",\n]/.test(x) ? '"' + x.replace(/"/g, '""') + '"' : x; };
+    var text = [header].concat(rows).map(function (r) { return r.map(esc).join(','); }).join('\r\n');
+    var a = h('a', { href: 'data:text/csv;charset=utf-8,\ufeff' + encodeURIComponent(text), download: name });
+    document.body.appendChild(a); a.click(); a.remove();
+  }
+  function questionCard(q, vt) {
+    var open = q.status === 'open';
+    var card = h('section', { class: 'card-panel vote-q ' + q.status, 'data-testid': 'vote-question' },
+      h('div', { class: 'chips' }, chip(open ? 'active' : '', open ? 'Open for voting' : 'Closed'), chip('rsvp', q.kind === 'election' ? 'Election: ' + OFFICE[q.office] : 'Motion')),
+      h('h3', {}, q.title), q.details ? h('p', { class: 'vote-details' }, q.details) : null);
+    if (open) {
+      (vt.voters || []).forEach(function (voter) {
+        var mine = ballotChoice(q, voter.membership_id);
+        var block = h('div', { class: 'vote-block', 'data-testid': 'vote-block' },
+          h('div', { class: 'vote-who' }, h('b', {}, voter.self ? 'Your vote' : 'Vote for ' + voter.name + ' (proxy)'), mine ? chip('active', 'Voted: ' + optionLabel(q, mine)) : chip('pending', 'Not voted yet')));
+        if (!voter.can) { block.appendChild(h('p', { class: 'small err' }, voter.why ? voter.why.charAt(0).toUpperCase() + voter.why.slice(1) + '.' : 'Cannot vote.')); card.appendChild(block); return; }
+        var btns = h('div', { class: 'rsvp-opts', role: 'group', 'aria-label': (voter.self ? 'Your vote' : 'Vote for ' + voter.name) + ' on ' + q.title });
+        (q.options || []).forEach(function (o) {
+          btns.appendChild(h('button', { type: 'button', class: 'rsvp-opt', 'aria-pressed': String(mine === o.key), onclick: function () { castBallot(q, voter, o.key, btns); } }, o.label));
+        });
+        block.appendChild(btns);
+        if (mine) block.appendChild(h('p', { class: 'small' }, 'You can change this until the question closes.'));
+        card.appendChild(block);
+      });
+      card.appendChild(h('p', { class: 'small', 'data-testid': 'ballots-in' }, q.ballots_in + ' of ' + q.eligible_count + ' eligible ballots in.'));
+      if (q.tally) card.appendChild(resultBars(q));
+    } else {
+      var rb = resultBars(q); if (rb) card.appendChild(rb);
+    }
+    return card;
+  }
+  function votingPanel() {
+    var a = state.agm, vt = state.votes;
+    var box = h('section', { id: 'vote-panel', class: 'card-panel', 'data-testid': 'vote-panel' }, h('h2', {}, 'Voting'));
+    if (!a || !a.meeting) return h('div', { id: 'vote-panel' });
+    if (state.votesError) { box.appendChild(h('p', { class: 'err' }, state.votesError)); return box; }
+    if (!vt) { box.appendChild(h('p', { class: 'small' }, 'Checking for open questions…')); return box; }
+    var qs = (vt.questions || []).filter(function (q) { return q.status !== 'draft'; });
+    var open = qs.filter(function (q) { return q.status === 'open'; }), closed = qs.filter(function (q) { return q.status === 'closed'; });
+    if (T && vt.is_member) box.appendChild(buzzRow());
+    if (!qs.length) { box.appendChild(h('p', {}, 'No question is open yet. When the executive opens a vote during the AGM, it appears here: keep this page open on the night.')); if (!vt.is_member) box.appendChild(h('p', { class: 'small' }, 'Only members vote.')); return box; }
+    if (vt.is_member && !vt.eligible && !vt.gave_proxy) box.appendChild(h('p', { class: 'small err' }, 'You are not currently eligible to vote: see your voting status above.'));
+    if (vt.gave_proxy) box.appendChild(h('p', { class: 'small' }, 'You gave your proxy for this AGM, so your proxy holder votes for you. Cancel the proxy above to vote yourself.'));
+    open.forEach(function (q) { box.appendChild(questionCard(q, vt)); });
+    if (closed.length) { box.appendChild(h('h3', {}, 'Results')); closed.forEach(function (q) { box.appendChild(questionCard(q, vt)); }); }
+    return box;
+  }
+  // ---------------------------------------------------------------- executive: write, open and close questions; the executive: who has voted (never how)
+  function drawVotingAdmin(body, keep) {
+    var a = state.agm, vt = state.votes;
+    body.textContent = '';
+    var wrap = h('div', { id: 'vote-admin', 'data-testid': 'vote-admin' });
+    body.appendChild(wrap);
+    if (!vt) { wrap.appendChild(h('p', { class: 'small' }, 'Loading…')); loadVotes(false).then(function () { drawVotingAdmin(body, true); }); if (!keep) pollVotes(); return; }
+    var manage = !!vt.can_manage;
+    wrap.appendChild(h('p', { class: 'small' }, 'Open a question when the meeting reaches it; members vote on their phones (their own ballot, plus one for each proxy they hold). Close it to freeze the result. Members see counts only once a question is closed. Ballots are secret: you can see who has voted, never how anyone voted.'));
+    if (manage) wrap.appendChild(questionForm());
+    var qs = vt.questions || [];
+    if (!qs.length) wrap.appendChild(h('p', { 'data-testid': 'vote-admin-empty' }, 'No questions yet.'));
+    qs.forEach(function (q) {
+      var row = h('section', { class: 'card-panel vote-q ' + q.status, 'data-testid': 'vote-admin-q' },
+        h('div', { class: 'chips' }, chip(q.status === 'open' ? 'active' : q.status === 'draft' ? 'pending' : '', q.status === 'open' ? 'Open' : q.status === 'draft' ? 'Draft (members do not see it)' : 'Closed'), chip('rsvp', q.kind === 'election' ? 'Election: ' + OFFICE[q.office] : 'Motion')),
+        h('h3', {}, q.title), q.details ? h('p', { class: 'vote-details' }, q.details) : null,
+        h('p', { class: 'small' }, 'Choices: ' + (q.options || []).map(function (o) { return o.label; }).join(' · ')));
+      if (q.status !== 'draft') { var rb = resultBars(q); if (rb) row.appendChild(rb); }
+      var acts = h('div', { class: 'row-btns' });
+      if (manage && q.status === 'draft') {
+        acts.appendChild(h('button', { type: 'button', class: 'btn-rdr', onclick: function () { if (!window.confirm('Open "' + q.title + '" for voting now?')) return; runQ('open_club_question', q, 'Open for voting.'); } }, 'Open for voting'));
+        acts.appendChild(h('button', { type: 'button', class: 'btn-line', onclick: function () { state.voteForm = { id: q.id, kind: q.kind, office: q.office, title: q.title, details: q.details || '' }; drawVotingAdmin(body, true); } }, 'Edit'));
+        acts.appendChild(h('button', { type: 'button', class: 'btn-line', onclick: function () { if (!window.confirm('Remove the draft "' + q.title + '"?')) return; runQ('delete_club_question', q, 'Removed.'); } }, 'Remove'));
+      }
+      if (manage && q.status === 'open') acts.appendChild(h('button', { type: 'button', class: 'btn-rdr', onclick: function () { if (!window.confirm('Close "' + q.title + '"? No more ballots after this; the result is final.')) return; runQ('close_club_question', q, 'Closed: the result is final.'); } }, 'Close and count'));
+      if ((manage || vt.can_see_ballots) && q.status !== 'draft') acts.appendChild(h('button', { type: 'button', class: 'btn-line', 'data-testid': 'see-ballots', onclick: function () {
+        if (state.ballotsFor === q.id) { state.ballotsFor = null; state.ballots = null; drawVotingAdmin(body, true); return; }
+        sb.rpc('club_question_ballots', { p_question: q.id }).then(function (r) { if (r.error) return status(words(r.error), true); state.ballotsFor = q.id; state.ballots = r.data; drawVotingAdmin(body, true); });
+      } }, state.ballotsFor === q.id ? 'Hide turnout' : 'Who has voted'));
+      row.appendChild(acts);
+      if (state.ballotsFor === q.id && state.ballots) {
+        var bl = state.ballots, list = h('div', { class: 'ballot-list', 'data-testid': 'ballot-list' }, h('p', { class: 'small' }, 'Turnout only: who has a ballot in. How anyone voted is never shown to anyone. Every look is recorded in the audit log.'));
+        (bl.ballots || []).forEach(function (b) {
+          list.appendChild(h('div', { class: 'arow' }, h('div', { class: 'who' }, h('b', {}, b.voter), b.cast_by ? h('small', {}, ' · cast by ' + b.cast_by + ' (proxy)') : null),
+            h('div', { class: 'chips' }, chip('active', 'Ballot in'), h('span', { class: 'small' }, timeText(b.changed_at) + (b.changes > 0 ? ' · changed ' + b.changes + (b.changes === 1 ? ' time' : ' times') : '')))));
+        });
+        if ((bl.not_voted || []).length) list.appendChild(h('p', { class: 'small' }, 'Not voted: ' + bl.not_voted.join(', ')));
+        if (!(bl.ballots || []).length) list.appendChild(h('p', { class: 'small' }, 'No ballots yet.'));
+        row.appendChild(list);
+      }
+      wrap.appendChild(row);
+    });
+    if (!keep) pollVotes();
+  }
+  function runQ(fn, q, done) {
+    sb.rpc(fn, { p_question: q.id }).then(function (r) { if (r.error) return status(words(r.error), true); status('"' + q.title + '": ' + done); loadVotes(); });
+  }
+  function questionForm() {
+    var f = state.voteForm || { kind: 'motion', office: 'president', title: '', details: '' };
+    var kind = h('select', { class: 'browser-default', id: 'q-kind' }, h('option', { value: 'motion', selected: f.kind === 'motion' }, 'Motion (Yes / No / Abstain)'), h('option', { value: 'election', selected: f.kind === 'election' }, 'Election (from the accepted nominations)'));
+    var office = h('select', { class: 'browser-default', id: 'q-office' }, ['president', 'secretary', 'treasurer'].map(function (o) { return h('option', { value: o, selected: f.office === o }, OFFICE[o]); }));
+    var title = h('input', { class: 'browser-default', id: 'q-title', maxlength: '160', placeholder: 'e.g. Approve the 2026 budget', value: f.title || '' });
+    var details = h('textarea', { class: 'browser-default', id: 'q-details', maxlength: '2000', rows: '3', placeholder: 'What members are voting on (optional)' }, f.details || '');
+    var officeLbl = h('label', { class: 'fld' }, 'Office', office);
+    var titleLbl = h('label', { class: 'fld' }, 'Title', title);
+    var sync = function () { var el = kind.value === 'election'; officeLbl.hidden = !el; if (el && !title.value) title.placeholder = 'Election: ' + OFFICE[office.value] + ' (default)'; };
+    kind.addEventListener('change', sync); office.addEventListener('change', sync); if (f.id) kind.disabled = true; sync();
+    var err = h('p', { class: 'err', role: 'alert' });
+    var save = h('button', { type: 'button', class: 'btn-rdr', 'data-testid': 'q-save' }, f.id ? 'Save changes' : 'Add question');
+    save.addEventListener('click', function () {
+      err.textContent = '';
+      var call = f.id ? sb.rpc('update_club_question', { p_question: f.id, p_title: title.value.trim(), p_details: details.value.trim() || null })
+        : sb.rpc('create_club_question', { p_meeting: state.agm.meeting.id, p_kind: kind.value, p_title: title.value.trim(), p_details: details.value.trim() || null, p_office: kind.value === 'election' ? office.value : null });
+      call.then(function (r) { if (r.error) { err.textContent = words(r.error); return; } state.voteForm = null; status(f.id ? 'Question updated.' : 'Question added as a draft. Open it when the meeting reaches it.'); loadVotes(); });
+    });
+    var box = h('section', { class: 'card-panel', 'data-testid': 'q-form' }, h('h3', {}, f.id ? 'Edit the question' : 'Add a question'),
+      h('label', { class: 'fld' }, 'Kind', kind), officeLbl, titleLbl, h('label', { class: 'fld' }, 'Details', details), err,
+      h('div', { class: 'row-btns' }, save, f.id ? h('button', { type: 'button', class: 'btn-line', onclick: function () { state.voteForm = null; var adm = $('vote-admin'); if (adm) drawVotingAdmin(adm.parentNode, true); } }, 'Cancel') : null));
+    return box;
+  }
+
   function renderProxies(v) {
     if (!state.agm || !state.agm.meeting) { v.appendChild(h('p', {}, 'No AGM is scheduled.')); return; }
     v.appendChild(h('p', { class: 'small' }, 'Loading…'));
@@ -1211,6 +1498,15 @@
     var out = h('div', { 'data-testid': 'agm-print' }, h('p', { class: 'small' }, 'Loading…'));
     v.appendChild(out);
     bar.appendChild(h('button', { type: 'button', class: 'btn-line', onclick: function () { window.print(); } }, 'Print'));
+    if (T) bar.appendChild(h('button', { type: 'button', class: 'btn-line', 'data-testid': 'agm-csv', onclick: function () {
+      loadAgmRows().then(function (r) {
+        if (r.error) return status(words(r.error), true);
+        downloadCsv('reavers-agm-' + a.meeting.year + '.csv', ['Member', 'Membership', 'Fee', 'Can vote', 'Why not', 'Response', 'Proxy holder', 'Checked in', 'Valid proxies held'],
+          (r.data || []).filter(function (m) { return m.membership_status !== 'removed'; }).sort(function (x, y) { return x.full_name.localeCompare(y.full_name); }).map(function (m) {
+            return [m.full_name, MEMBERSHIP[m.membership_status] || m.membership_status, m.dues_status ? (DUES[m.dues_status] || m.dues_status) : '', m.eligible ? 'yes' : 'no', (m.reasons || []).join('; '), m.response ? RSVP[m.response] : '', m.proxy_holder_name || '', m.attendance ? ATTEND[m.attendance] : '', m.valid_proxies_held || 0];
+          }));
+      });
+    } }, 'Download CSV'));
     if (a.can_manage) bar.appendChild(h('button', { type: 'button', class: 'btn-rdr', onclick: function () {
       if (!window.confirm('Save the official AGM record now? It keeps a frozen copy of this list that later changes cannot alter.')) return;
       sb.rpc('record_club_meeting_snapshot', { p_meeting: a.meeting.id }).then(function (r) { if (r.error) return status(words(r.error), true); status('Official AGM record saved.'); go('print'); });
@@ -1253,5 +1549,5 @@
       h('h3', {}, 'No response'), list(live.filter(function (m) { return !m.response; }).sort(byName), function (m) { return h('li', {}, m.full_name); }));
   }
 
-  
+  document.addEventListener('DOMContentLoaded', function () { if (window.M) window.M.Sidenav.init(document.querySelectorAll('.sidenav')); });
 })();

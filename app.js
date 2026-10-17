@@ -24,7 +24,7 @@
 
   // ---------- installable app / offline shell ----------
   if ("serviceWorker" in navigator) {
-    const register = () => navigator.serviceWorker.register("sw.js?v=25", { updateViaCache: "none" }).then(registration => registration.update()).catch(() => {});
+    const register = () => navigator.serviceWorker.register("sw.js?v=26", { updateViaCache: "none" }).then(registration => registration.update()).catch(() => {});
     if (document.readyState === "complete") register(); else window.addEventListener("load", register);
   }
 
