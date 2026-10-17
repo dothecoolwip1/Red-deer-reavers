@@ -1,4 +1,4 @@
-const CACHE="reavers-forged-v25";
+const CACHE="reavers-forged-v28";
 const STATIC=[
   "./",
   "./index.html",
@@ -9,12 +9,19 @@ const STATIC=[
   "./community.html",
   "./media.html",
   "./social.html",
-  "./styles.css?v=25",
-  "./app.js?v=25",
-  "./team-data.js?v=25",
-  "./buhurtos.js?v=25",
-  "./fighter.js?v=25",
-  "./gallery.js?v=25",
+  "./styles.css?v=27",
+  "./app.js?v=27",
+  "./team-data.js?v=27",
+  "./buhurtos.js?v=27",
+  "./members-t.html",
+  "./members.webmanifest",
+  "./assets/members-scoped.css?v=2",
+  "./assets/members-t.css?v=6",
+  "./assets/js/buhurtos-config.js",
+  "./assets/js/member-hub.js",
+  "./assets/js/vendor/supabase-js-2.117.2.umd.js",
+  "./fighter.js?v=27",
+  "./gallery.js?v=27",
   "./assets/icons.svg",
   "./assets/crest-96.webp",
   "./assets/crest-256.webp",
@@ -23,7 +30,7 @@ const STATIC=[
   "./vendor/fonts/cinzel-latin-wght-normal.woff2",
   "./vendor/fonts/alegreya-sans-latin-400-normal.woff2",
   "./vendor/fonts/alegreya-sans-latin-700-normal.woff2",
-  "./vendor/photoswipe/photoswipe.css?v=25",
+  "./vendor/photoswipe/photoswipe.css?v=27",
   "./vendor/photoswipe/photoswipe-lightbox.esm.js",
   "./vendor/photoswipe/photoswipe.esm.js"
 ];
@@ -72,21 +79,4 @@ self.addEventListener("fetch",event=>{
       return response;
     }))
   );
-});
-
-/* Push notifications for the members area (merged from the old reavers-sw.js). The route in the payload is relative to this site. */
-self.addEventListener("push", event => {
-  let data = {};
-  try { data = event.data ? event.data.json() : {}; } catch (e) {}
-  const base = new URL("./", self.registration.scope).href;
-  const url = data.route ? new URL(data.route, base).href : new URL("members.html", base).href;
-  event.waitUntil(self.registration.showNotification(data.title || "Red Deer Reavers", { body: data.body || "", tag: data.tag || "red-deer-reavers", icon: "assets/icon-192.png", data: { url } }));
-});
-self.addEventListener("notificationclick", event => {
-  event.notification.close();
-  const url = (event.notification.data && event.notification.data.url) || new URL("members.html", self.registration.scope).href;
-  event.waitUntil(clients.matchAll({ type: "window", includeUncontrolled: true }).then(wins => {
-    for (const w of wins) { if (w.url.startsWith(self.registration.scope) && "focus" in w) { w.navigate(url); return w.focus(); } }
-    return clients.openWindow ? clients.openWindow(url) : null;
-  }));
 });

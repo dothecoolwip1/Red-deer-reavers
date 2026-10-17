@@ -9,7 +9,7 @@ const publicFiles = [
   "404.html","admin.css","admin.html","admin.js","app.js","buhurtos.js","community.html",
   "events.html","fighter.html","fighter.js","gallery.js","index.html","manifest.webmanifest",
   "media.html","social.html","styles.css","sw.js","team-data.js","team.html","training.html",
-  "members.html","agm.html","about.html","reavers-sw.js","programs.html","involved.html","steps.html","contact.html","resources.html"
+  "members.html","agm.html","about.html","reavers-sw.js","members-t.html","members.webmanifest","admin-members.js","programs.html","involved.html","steps.html","contact.html","resources.html"
 ];
 
 await fs.rm(out, { recursive: true, force: true });

@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
+  <meta name="theme-color" content="#09070a">
+  <meta name="color-scheme" content="dark">
+  <meta name="robots" content="noindex">
+  <meta name="description" content="Red Deer Reavers members: training, events, the club, your membership and AGM voting.">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Members">
+  <title>Members | Red Deer Reavers</title>
+  <link rel="manifest" href="members.webmanifest">
+  <link rel="preconnect" href="https://mvbxlebznlgroptwwdsm.supabase.co" crossorigin>
+  <link rel="icon" href="assets/crest-96.webp" type="image/webp">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+  <link rel="preload" href="vendor/fonts/grenze-gotisch-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="vendor/fonts/cinzel-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="styles.css?v=27">
+  <link rel="stylesheet" href="assets/members-scoped.css?v=2">
+  <link rel="stylesheet" href="assets/members-t.css?v=6">
+</head>
+<body data-page="members" class="portal-t">
+<a class="skip-link" href="#content">Skip to content</a>
+
+<header class="pt-bar" id="pt-bar">
+  <a class="pt-back" href="index.html" aria-label="Back to the Reavers site"><svg class="icon" aria-hidden="true" viewBox="0 0 24 24" width="22" height="22"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Site</span></a>
+  <a class="pt-brand" href="members-t.html"><img src="assets/crest-96.webp" alt="" width="36" height="36"><span><strong>Members</strong><small>Red Deer Reavers</small></span></a>
+  <div class="pt-acts">
+    <button class="pt-icon" id="refresh" type="button" aria-label="Refresh" title="Refresh" data-when="in" hidden><svg aria-hidden="true" viewBox="0 0 24 24" width="22" height="22"><path d="M20 12a8 8 0 1 1-2.6-5.9M20 4v5h-5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    <button class="pt-icon pt-exec" id="exec-btn" type="button" aria-label="Executive tools" title="Executive tools" aria-pressed="false" hidden><svg aria-hidden="true" viewBox="0 0 24 24" width="22" height="22"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg><span>Exec</span></button>
+    <button class="btn-line small-btn pt-out" id="sign-out" type="button" data-when="in" hidden>Sign out</button>
+  </div>
+</header>
+
+<div class="ptr" id="ptr" aria-hidden="true"><span class="ptr-ring"></span></div>
+<main id="content" class="pt-main">
+  <div class="members-page">
+<div class="members">
+        <h1 class="members-title">Members</h1>
+        <p class="lede no-print" id="lede">Members area. Sign in with your BuhurtOS account.</p>
+        <p class="pt-who no-print" data-when="in" hidden>Signed in as <b id="who"></b></p>
+        <div id="status" role="status" aria-live="polite"></div>
+
+        <!-- Signed out -->
+        <section id="signed-out" class="card-panel" hidden>
+            <nav class="tabs-rdr" aria-label="Account">
+                <button type="button" data-auth-tab="signin" aria-selected="true">Sign in</button>
+                <button type="button" data-auth-tab="signup" aria-selected="false">Create account</button>
+                <button type="button" data-auth-tab="forgot" aria-selected="false">Forgot password</button>
+            </nav>
+
+            <div data-auth-panel="signin">
+                <h2>Member sign in</h2>
+                <p class="small" id="admin-note" hidden><b>Admin sign in:</b> use your normal Reavers / BuhurtOS account. There is no separate admin login. The executive tools appear automatically if you currently hold an executive role.</p>
+                <p class="small">Already on BuhurtOS? Use the same email and password (or Google) here. Do not create a second account.</p>
+                <form id="password-form" autocomplete="on" novalidate>
+                    <label class="fld">Email<input class="browser-default" id="email" type="email" autocomplete="email" required></label>
+                    <label class="fld">Password<input class="browser-default" id="password" type="password" autocomplete="current-password"></label>
+                    <button class="btn-rdr" type="submit" id="password-btn">Sign in</button>
+                </form>
+                <div class="or"><span>or</span></div>
+                <button class="btn-line wide" type="button" id="google-btn">Continue with Google</button>
+                <form id="code-form" novalidate>
+                    <p class="small">No password? Get a 6-digit sign-in code by email (uses the email address above).</p>
+                    <button class="btn-line" type="submit" id="code-send-btn">Email me a sign-in code</button>
+                    <div id="code-step" hidden>
+                        <label class="fld">6-digit code<input class="browser-default" id="code" inputmode="numeric" autocomplete="one-time-code" maxlength="10"></label>
+                        <button class="btn-rdr" type="button" id="code-verify-btn">Sign in with code</button>
+                    </div>
+                </form>
+            </div>
+
+            <div data-auth-panel="signup" hidden>
+                <h2>Create your account</h2>
+                <p class="small">This creates your BuhurtOS account: the one account for the Reavers website and BuhurtOS. Next you can join the Red Deer Reavers.</p>
+                <p class="small">Thinking of joining? Read the <a href="https://drive.google.com/file/d/1R9EDu7BpUZ1KM790BDNN0iIaXZYtUtCE/view?usp=drivesdk" target="_blank" rel="noopener noreferrer" data-testid="bylaws-link-signup">Red Deer Reavers bylaws (PDF, opens in a new tab)</a> first. Creating an account does not make you a member.</p>
+                <form id="signup-form" autocomplete="on" novalidate>
+                    <label class="fld">Your name<input class="browser-default" id="su-name" type="text" maxlength="80"></label>
+                    <label class="fld">Email<input class="browser-default" id="su-email" type="email" autocomplete="email"></label>
+                    <label class="fld">Password (at least 8 characters)<input class="browser-default" id="su-password" type="password" autocomplete="new-password"></label>
+                    <label class="fld">Password again<input class="browser-default" id="su-password2" type="password" autocomplete="new-password"></label>
+                    <button class="btn-rdr" type="submit" id="signup-btn">Create account</button>
+                </form>
+                <div id="signup-check" hidden>
+                    <p id="signup-check-text"></p>
+                    <label class="fld">Code from the email (if it shows one)<input class="browser-default" id="su-code" inputmode="numeric" autocomplete="one-time-code" maxlength="10"></label>
+                    <div class="row-btns">
+                        <button class="btn-rdr" type="button" id="su-code-btn">Confirm with code</button>
+                        <button class="btn-line" type="button" id="su-resend-btn">Send the email again</button>
+                    </div>
+                    <p class="small">Already have an account with this email? <a href="#" data-goto="signin">Sign in</a> or <a href="#" data-goto="forgot">reset your password</a>.</p>
+                </div>
+            </div>
+
+            <div data-auth-panel="forgot" hidden>
+                <h2>Reset your password</h2>
+                <p class="small">Works for every BuhurtOS account. If you only ever used Google, this sets a password you can also use.</p>
+                <form id="forgot-form" novalidate>
+                    <label class="fld">Email<input class="browser-default" id="fp-email" type="email" autocomplete="email"></label>
+                    <button class="btn-rdr" type="submit" id="forgot-btn">Email me a reset link</button>
+                </form>
+                <div id="forgot-check" hidden>
+                    <p>If that address has an account, a reset email is on its way. Open its link on this device, or enter the code if the email shows one.</p>
+                    <label class="fld">Code from the email<input class="browser-default" id="fp-code" inputmode="numeric" autocomplete="one-time-code" maxlength="10"></label>
+                    <button class="btn-rdr" type="button" id="fp-code-btn">Continue</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- New password (after a reset link or code) -->
+        <section id="new-password" class="card-panel" hidden>
+            <h2>Choose a new password</h2>
+            <form id="newpw-form" novalidate>
+                <label class="fld">New password (at least 8 characters)<input class="browser-default" id="np-password" type="password" autocomplete="new-password"></label>
+                <label class="fld">New password again<input class="browser-default" id="np-password2" type="password" autocomplete="new-password"></label>
+                <button class="btn-rdr" type="submit" id="newpw-btn">Save new password</button>
+            </form>
+        </section>
+
+        <!-- Signed in -->
+        <section id="signed-in" hidden>
+            <div id="fighter-nudge" class="no-print" hidden></div>
+            <nav class="tabs-rdr no-print" id="tabs" hidden aria-label="Members area"></nav>
+            <div id="view"></div>
+            <p class="small no-print" id="buhurtos-link"></p>
+        </section>
+    </div>
+<dialog id="dues-dialog" aria-labelledby="dues-title">
+        <form method="dialog" id="dues-form">
+            <h3 id="dues-title">Dues</h3>
+            <p class="small" id="dues-now"></p>
+            <div class="dues-pick" role="radiogroup" aria-label="Dues status">
+                <label><input type="radio" name="dues" value="paid"><span>Paid</span></label>
+                <label><input type="radio" name="dues" value="unpaid"><span>Unpaid</span></label>
+                <label><input type="radio" name="dues" value="waived"><span>Waived</span></label>
+                <label><input type="radio" name="dues" value="gear_contribution"><span>Gear contribution</span></label>
+            </div>
+            <label class="fld" id="dues-amount-wrap">Amount (empty = normal dues)<input class="browser-default" id="dues-amount" inputmode="decimal"></label>
+            <label class="fld">Note (optional)<input class="browser-default" id="dues-note" maxlength="300"></label>
+            <p class="small">Recorded in the dues history with your name and office.</p>
+            <p class="err" id="dues-err" role="alert"></p>
+            <div class="row-btns">
+                <button class="btn-rdr" id="dues-save" value="save" type="submit">Save dues</button>
+                <button class="btn-line" value="cancel" type="button" id="dues-cancel">Cancel</button>
+            </div>
+        </form>
+    </dialog>
+</div>
+  </div>
+</main>
+
+<div class="vote-now" id="vote-now" hidden role="region" aria-label="A vote is open"></div>
+
+<dialog id="exec-sheet" class="sheet" aria-labelledby="exec-sheet-title">
+  <div class="sheet-grip" aria-hidden="true"></div>
+  <h2 id="exec-sheet-title">Executive tools</h2>
+  <div class="sheet-list"></div>
+  <button type="button" class="btn-line wide" data-close>Close</button>
+</dialog>
+
+<footer class="pt-foot">
+  <span>© <span data-year>2026</span> Red Deer Reavers Guild</span>
+  <span>Records kept on <a href="https://buhurt-os.vercel.app/" target="_blank" rel="noopener">BuhurtOS</a></span>
+</footer>
+
+<script src="assets/js/vendor/supabase-js-2.117.2.umd.js"></script>
+<script src="assets/js/buhurtos-config.js"></script>
+<script>window.BUHURTOS_CFG = window.BUHURTOS;</script>
+<script src="team-data.js?v=27"></script>
+<script src="buhurtos.js?v=27"></script>
+<script src="assets/js/member-hub.js"></script>
+<script>
+  document.querySelectorAll('[data-year]').forEach(function (el) { el.textContent = String(new Date().getFullYear()); });
+  if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js?v=27', { updateViaCache: 'none' }).then(function (r) { r.update(); }).catch(function () {}); }
+</script>
+</body>
+</html>

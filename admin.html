@@ -7,7 +7,7 @@
   <meta name="robots" content="noindex,nofollow">
   <title>Team Admin | Red Deer Reavers</title>
   <link rel="icon" href="assets/crest-96.webp" type="image/webp">
-  <link rel="stylesheet" href="admin.css?v=25">
+  <link rel="stylesheet" href="admin.css?v=27">
 </head>
 <body>
   <main class="admin-shell">
@@ -82,7 +82,6 @@
         <section class="tab-panel" data-tab-panel="roster" hidden>
           <div class="panel-heading">
             <div><p class="kicker">TEAM</p><h2>Roster</h2></div>
-            <button type="button" class="primary-button" data-add-roster>+ Add person</button>
           </div>
           <section class="bos-panel" aria-labelledby="bos-title">
             <p class="kicker">LIVE FROM BUHURTOS</p>
@@ -90,12 +89,26 @@
             <p>Fighters build their own profile on BuhurtOS and ask to join the Red Deer Reavers. Once the captain approves them there, they appear on the public Team page with their photo, disciplines and record. No need to add fighters here. If someone steps away for a while, press <b>Hide</b> to take them off the website without touching their BuhurtOS record, then <b>Show</b> to bring them back.</p>
             <ul class="bos-list" data-bos-roster><li><span>Loading fighters from BuhurtOS…</span></li></ul>
             <div class="bos-actions">
-              <a class="primary" href="https://dothecoolwip1.github.io/BuhurtOS/team-manager" target="_blank" rel="noopener">Approve join requests</a>
-              <a href="https://dothecoolwip1.github.io/BuhurtOS/teams/red-deer-reavers" target="_blank" rel="noopener">Team on BuhurtOS</a>
+              <a class="primary" href="https://buhurt-os.vercel.app/team-manager" target="_blank" rel="noopener">Approve join requests</a>
+              <a href="https://buhurt-os.vercel.app/teams/red-deer-reavers" target="_blank" rel="noopener">Team on BuhurtOS</a>
               <a href="team.html#add-profile" target="_blank" rel="noopener">Share the sign-up steps</a>
             </div>
           </section>
-          <p class="panel-note">Use the list below for crew, leadership, coaches and media. Anyone whose name matches a BuhurtOS fighter is merged into that fighter’s card. Use Show on website so the public Team page only includes people who want a profile.</p>
+          <section class="bos-panel" aria-labelledby="club-members-title">
+            <p class="kicker">LIVE FROM BUHURTOS</p>
+            <h3 id="club-members-title">Club members <span class="bos-count" data-club-members-count></span></h3>
+            <p>The Red Deer Reavers membership (applications, active members, dues and AGM voting) is kept in BuhurtOS and managed on the Members page. This list is read only and shows when you are signed in there as an executive.</p>
+            <ul class="bos-list" data-club-members><li><span>Checking your Members sign-in…</span></li></ul>
+            <div class="bos-actions">
+              <a class="primary" href="members.html?view=members">Manage members</a>
+              <a href="members.html?view=agm-admin">AGM admin</a>
+            </div>
+          </section>
+          <div class="panel-heading panel-heading-sub">
+            <div><p class="kicker">ADDED HERE</p><h3>Crew, leadership, coaches and media</h3></div>
+            <button type="button" class="primary-button" data-add-roster>+ Add person</button>
+          </div>
+          <p class="panel-note">People without a BuhurtOS fighter profile. Anyone whose name matches a BuhurtOS fighter is merged into that fighter’s card. Use Show on website so the public Team page only includes people who want a profile.</p>
           <div class="manage-list roster-manage-list" data-roster-manage-list></div>
         </section>
 
@@ -158,9 +171,12 @@
   </dialog>
 
   <div class="toast" data-toast role="status" aria-live="polite"></div>
-  <script src="team-data.js?v=25"></script>
-  <script src="buhurtos.js?v=25"></script>
+  <script src="team-data.js?v=27"></script>
+  <script src="buhurtos.js?v=27"></script>
   <script src="vendor/sortable/Sortable.min.js?v=13" defer></script>
-  <script src="admin.js?v=25" defer></script>
+  <script src="admin.js?v=27" defer></script>
+<script src="assets/js/vendor/supabase-js-2.117.2.umd.js"></script>
+<script>window.BUHURTOS_CFG = window.BUHURTOS && window.BUHURTOS.config ? { supabaseUrl: window.BUHURTOS.config.url, publishableKey: window.BUHURTOS.config.key, appUrl: window.BUHURTOS.config.site, teamSlug: window.BUHURTOS.config.teamSlug } : null;</script>
+<script src="admin-members.js?v=2"></script>
 </body>
 </html>

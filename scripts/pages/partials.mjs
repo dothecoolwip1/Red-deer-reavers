@@ -1,8 +1,8 @@
 // Shared page chrome for the Reavers site. `npm run pages` writes the root HTML files from scripts/pages/*.page.mjs.
-export const V = "25";
+export const V = "27";
 
 /** BuhurtOS is served from GitHub Pages. (buhurtos.ca is NOT a working address.) */
-export const BOS_SITE = "https://dothecoolwip1.github.io/BuhurtOS";
+export const BOS_SITE = "https://buhurt-os.vercel.app";
 
 export const SOCIAL = {
   instagram: "https://www.instagram.com/red_deer_reavers/",
@@ -108,7 +108,7 @@ export const footer = () => `
           <a href="team.html#add-profile">Add your profile</a>
           <a href="training.html">Training</a>
           <a href="training.html#start">Join a practice</a>
-          <a href="about.html">About the guild</a>
+          <a href="members.html">Members area</a>
         </div>
         <div>
           <h2 class="footer-h">The Field</h2>
@@ -116,8 +116,6 @@ export const footer = () => `
           <a href="events.html#results">Results</a>
           <a href="community.html">Book the Reavers</a>
           <a href="media.html">Media</a>
-          <a href="members.html">Members area</a>
-          <a href="agm.html">AGM</a>
         </div>
         <div>
           <h2 class="footer-h">Follow</h2>
