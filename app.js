@@ -206,7 +206,7 @@
     const added = bosUpcoming.filter(e => !have.has(`${norm(e.name)}|${e.startsOn}`)).map(e => ({
       id: `bos-${e.id}`, title: e.name, type: e.type, rawDate: e.startsOn, rawEndDate: e.endsOn && e.endsOn !== e.startsOn ? e.endsOn : "",
       rawStartTime: "", rawEndTime: "", date: rangeText(e.startsOn, e.endsOn), startTime: "", endTime: "", location: e.where,
-      details: e.reavers === "entered" && e.competitions.length ? `Reavers entered: ${e.competitions.join(", ")}` : e.details, href: e.url, source: "buhurtos", reavers: e.reavers, competitions: e.competitions
+      details: e.reavers === "entered" && e.competitions.length ? `Reavers entered: ${e.competitions.join(", ")}` : e.details, href: e.url, biUrl: e.biUrl || "", source: "buhurtos", reavers: e.reavers, competitions: e.competitions
     }));
     const merged = [...(TEAM.events || []), ...added].sort((a, b) => `${a.rawDate} ${a.rawStartTime || ""}`.localeCompare(`${b.rawDate} ${b.rawStartTime || ""}`));
     TEAM.events = merged;
@@ -250,7 +250,7 @@
           <h3>${escapeHtml(event.title)}</h3>
           <p class="event-meta"><span>${icon("clock")}${escapeHtml(event.date)}${event.startTime ? ` · ${escapeHtml(event.startTime)}${event.endTime ? ` to ${escapeHtml(event.endTime)}` : ""}` : ""}</span>${event.location ? `<span>${icon("pin")}${escapeHtml(event.location)}</span>` : ""}</p>
           ${event.details ? `<p class="details">${escapeHtml(event.details)}</p>` : ""}
-          ${event.source === "buhurtos" ? `<p class="details"><a class="text-link" href="${escapeHtml(safeHref(event.href))}" target="_blank" rel="noopener">Details on BuhurtOS ${icon("external")}</a></p>` : ""}
+          ${event.source === "buhurtos" ? `<p class="details"><a class="text-link" href="${escapeHtml(safeHref(event.href))}" target="_blank" rel="noopener">Details on BuhurtOS ${icon("external")}</a>${event.biUrl ? ` · <a class="text-link" href="${escapeHtml(safeHref(event.biUrl))}" target="_blank" rel="noopener">On Buhurt International ${icon("external")}</a>` : ""}</p>` : ""}
           ${calendar}
         </div>
       </article>`;

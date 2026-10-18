@@ -180,10 +180,14 @@
   async function allEvents() {
     const t = await team();
     const today = new Date().toISOString().slice(0, 10);
-    const columns = "id,name,slug,event_type,status,starts_on,ends_on,city,region,venue,description,host_team_id";
+    const baseColumns = "id,name,slug,event_type,status,starts_on,ends_on,city,region,venue,description,host_team_id";
+    // bi_tournament_url (the tournament's page on Buhurt International) is newer than the rest; a BuhurtOS without it is asked again without the column.
+    const columns = `${baseColumns},bi_tournament_url`;
+    const events = (filter, order, limit) => rest(`events?select=${columns}&${filter}&order=${order}&limit=${limit}`)
+      .catch(() => rest(`events?select=${baseColumns}&${filter}&order=${order}&limit=${limit}`));
     const [upcoming, past, entered] = await Promise.all([
-      rest(`events?select=${columns}&status=eq.published&ends_on=gte.${today}&order=starts_on.asc&limit=300`),
-      rest(`events?select=${columns}&status=eq.published&ends_on=lt.${today}&order=starts_on.desc&limit=600`).catch(() => []),
+      events(`status=eq.published&ends_on=gte.${today}`, "starts_on.asc", 300),
+      events(`status=eq.published&ends_on=lt.${today}`, "starts_on.desc", 600).catch(() => []),
       t ? rest(`entries?select=status,competitions!entries_competition_id_fkey(name,events(id))&team_id=eq.${t.id}`).catch(() => []) : []
     ]);
     const enteredIn = new Map();
@@ -200,6 +204,8 @@
       id: ev.id, name: ev.name, slug: ev.slug, type: ev.event_type || "tournament", startsOn: ev.starts_on, endsOn: ev.ends_on,
       where: [ev.venue, place(ev.city, ev.region)].filter(Boolean).join(", "),
       details: String(ev.description || "").replace(/\s+/g, " ").trim().slice(0, 220), url: links.event(ev.slug),
+      // The tournament's page on Buhurt International, when the organizer set one.
+      biUrl: /^https:\/\/([a-z0-9-]+\.)*buhurtinternational\.com(\/|$)/i.test(String(ev.bi_tournament_url || "")) ? String(ev.bi_tournament_url) : "",
       competitions: enteredIn.get(ev.id) || [],
       reavers: t && ev.host_team_id === t.id ? "hosting" : enteredIn.has(ev.id) ? "entered" : "",
       past: (ev.ends_on || ev.starts_on) < today
