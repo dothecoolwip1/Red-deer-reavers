@@ -30,6 +30,11 @@ The **Exec** button in the top bar opens one sheet:
   People and check-in (RSVP counts, filters, check-in, video or notes link), Topics (Submitted / Added to Agenda / Addressed), Nominations
   (AGM), Voting (write, open and close questions; turnout only, never a choice), Records (printable voting list, CSV, the saved official
   record, proxies) and Details (change, invite list, cancel or restore).
+- **Deadlines:** under Details, "New nominations close" (AGM) and "Topic submissions close" (Red Deer time, both optional). Empty means
+  they close when the meeting starts. The Topics and Nominations sections show the current deadline with a **Close … now** button
+  (`set_club_meeting_deadlines`). After the nominations deadline nobody can nominate, but a nominee can still accept, decline or withdraw
+  until the meeting starts; after the topics deadline nobody can submit or edit a topic, but a member can still withdraw their own until
+  the meeting starts. Members see the real time ("New nominations close Sunday, October 18 at 5:30 PM") on the meeting page and in the help.
 - **Members and dues**, **Notices** (members see them on Home, pinned first) and **Dues history**.
 
 Older links keep working: `?view=agm` opens the current AGM, `?view=leadership` the leadership meeting, `?view=agm-admin` the AGM's
