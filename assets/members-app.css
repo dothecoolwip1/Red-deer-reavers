@@ -367,3 +367,14 @@ body.no-tabs .mb-main,body.no-tabs .mb-foot{padding-bottom:calc(24px + env(safe-
   .card-panel{border:0;padding:0;background:none;color:#000}
   .agm-count b,.agm-out span{color:#000}
 }
+
+/* executive: when submissions close (meeting head and the member page), topic groups */
+.deadlines{display:grid;gap:8px;margin-top:12px}
+.deadlines .notice-box,.agm-extra .notice-box{margin:0;display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
+.topic-group{margin-top:18px}
+.topic-group h4{margin:0 0 4px;font-size:1.05rem}
+.topic-group h4 .count{color:var(--mb-text-2);font-weight:500}
+.topic-group>p.small{margin:0 0 8px}
+.topic-group details>summary{cursor:pointer;color:var(--mb-accent-hi);font-weight:600;padding:8px 0;min-height:40px;display:flex;align-items:center}
+.arow.topic .topic-more summary{cursor:pointer;color:var(--mb-accent-hi);min-height:40px;display:flex;align-items:center}
+.mb-foot .build{color:var(--mb-text-2);font-size:.8em}
