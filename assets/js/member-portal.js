@@ -1583,7 +1583,7 @@
         h('div', { class: 'vote-row-head' }, h('b', {}, o.label), h('span', {}, n + (n === 1 ? ' vote' : ' votes') + (total ? ' · ' + pct + '%' : ''))),
         h('div', { class: 'vote-bar' }, h('div', { class: 'vote-fill', style: 'width:' + pct + '%' }))));
     });
-    box.appendChild(h('p', { class: 'small' }, total + ' of ' + (t.eligible != null ? t.eligible : q.eligible_count) + ' eligible ballots' + (q.status === 'closed' ? ' · closed ' + timeText(q.closed_at) : ' so far')));
+    box.appendChild(h('p', { class: 'small' }, total + ' of ' + (t.eligible != null ? t.eligible : q.eligible_count) + ' eligible ballots' + (q.status === 'closed' ? ' · closed ' + timeText(q.closed_at) + (q.auto_closed ? ' (24 hours after it opened)' : '') : ' so far')));
     return box;
   }
   function ballotChoice(q, membershipId) { var b = (q.my_ballots || []).filter(function (x) { return x.membership_id === membershipId; })[0]; return b ? b.choice : null; }
@@ -1676,6 +1676,7 @@
         card.appendChild(block);
       });
       card.appendChild(h('p', { class: 'small', 'data-testid': 'ballots-in' }, q.ballots_in + ' of ' + q.eligible_count + ' eligible ballots in.'));
+      if (q.closes_text) card.appendChild(h('p', { class: 'small', 'data-testid': 'closes-at' }, 'Voting closes ' + q.closes_text + ' (24 hours after it opened), or earlier if the executive closes it.'));
       if (q.tally) card.appendChild(resultBars(q));
     } else {
       var rb = resultBars(q); if (rb) card.appendChild(rb);
@@ -1720,7 +1721,7 @@
     body.appendChild(wrap);
     if (!vt) { wrap.appendChild(h('p', { class: 'small' }, 'Loading…')); loadVotes(false).then(function () { drawVotingAdmin(body, true); }); if (!keep) pollVotes(); return; }
     var manage = !!vt.can_manage;
-    wrap.appendChild(h('p', { class: 'small' }, 'Open a question when the meeting reaches it; members vote on their phones (their own ballot, plus one for each proxy they hold). Close it to freeze the result. Members see counts only once a question is closed. Ballots are secret: you can see who has voted, never how anyone voted.'));
+    wrap.appendChild(h('p', { class: 'small' }, 'Open a question when the meeting reaches it; members vote on their phones (their own ballot, plus one for each proxy they hold). Each question closes on its own 24 hours after it opens; close it earlier to freeze the result sooner. Members see counts only once a question is closed. Ballots are secret: you can see who has voted, never how anyone voted.'));
     if (manage) wrap.appendChild(questionForm());
     var qs = vt.questions || [];
     if (!qs.length) wrap.appendChild(h('p', { 'data-testid': 'vote-admin-empty' }, 'No questions yet.'));
@@ -1728,7 +1729,9 @@
       var row = h('section', { class: 'card-panel vote-q ' + q.status, 'data-testid': 'vote-admin-q' },
         h('div', { class: 'chips' }, chip(q.status === 'open' ? 'active' : q.status === 'draft' ? 'pending' : '', q.status === 'open' ? 'Open' : q.status === 'draft' ? 'Draft (members do not see it)' : 'Closed'), chip('rsvp', q.kind === 'election' ? 'Election: ' + OFFICE[q.office] : 'Motion')),
         h('h3', {}, q.title), q.details ? h('p', { class: 'vote-details' }, q.details) : null,
-        h('p', { class: 'small' }, 'Choices: ' + (q.options || []).map(function (o) { return o.label; }).join(' · ')));
+        h('p', { class: 'small' }, 'Choices: ' + (q.options || []).map(function (o) { return o.label; }).join(' · ')),
+        q.status === 'open' && q.closes_text ? h('p', { class: 'small notice-box', 'data-testid': 'admin-closes-at' }, h('b', {}, 'Closes on its own ' + q.closes_text + '.'), ' Close and count below to end it earlier.') : null,
+        q.status === 'closed' && q.auto_closed ? h('p', { class: 'small' }, 'Closed on its own ' + timeText(q.closed_at) + ', 24 hours after it opened.') : null);
       if (q.status !== 'draft') { var rb = resultBars(q); if (rb) row.appendChild(rb); }
       var acts = h('div', { class: 'row-btns' });
       if (manage && q.status === 'draft') {
@@ -1736,7 +1739,7 @@
         acts.appendChild(h('button', { type: 'button', class: 'btn-line', onclick: function () { state.voteForm = { id: q.id, kind: q.kind, office: q.office, title: q.title, details: q.details || '' }; drawVotingAdmin(body, true); } }, 'Edit'));
         acts.appendChild(h('button', { type: 'button', class: 'btn-line', onclick: function () { if (!window.confirm('Remove the draft "' + q.title + '"?')) return; runQ('delete_club_question', q, 'Removed.'); } }, 'Remove'));
       }
-      if (manage && q.status === 'open') acts.appendChild(h('button', { type: 'button', class: 'btn-rdr', onclick: function () { if (!window.confirm('Close "' + q.title + '"? No more ballots after this; the result is final.')) return; runQ('close_club_question', q, 'Closed: the result is final.'); } }, 'Close and count'));
+      if (manage && q.status === 'open') acts.appendChild(h('button', { type: 'button', class: 'btn-rdr', onclick: function () { if (!window.confirm('Close "' + q.title + '" now, before its 24 hours are up? No more ballots after this; the result is final.')) return; runQ('close_club_question', q, 'Closed: the result is final.'); } }, 'Close and count now'));
       if ((manage || vt.can_see_ballots) && q.status !== 'draft') acts.appendChild(h('button', { type: 'button', class: 'btn-line', 'data-testid': 'see-ballots', onclick: function () {
         if (state.ballotsFor === q.id) { state.ballotsFor = null; state.ballots = null; drawVotingAdmin(body, true); return; }
         sb.rpc('club_question_ballots', { p_question: q.id }).then(function (r) { if (r.error) return status(words(r.error), true); state.ballotsFor = q.id; state.ballots = r.data; drawVotingAdmin(body, true); });

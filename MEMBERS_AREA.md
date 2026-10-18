@@ -29,7 +29,7 @@ The **Exec** button in the top bar opens one sheet:
   (title, Red Deer start and optional end time, place, details, invited-only). Opening a meeting groups its tools in sections:
   People and check-in (RSVP counts, filters, check-in, video or notes link), Topics (grouped: On the agenda in order, Waiting for a
   decision, Addressed, Withdrawn; one-tap next step per topic; search once there are more than five), Nominations
-  (AGM), Voting (write, open and close questions; turnout only, never a choice), Records (printable voting list, CSV, the saved official
+  (AGM), Voting (write, open and close questions; a question closes on its own 24 hours after it opens, "Close and count now" ends it earlier; turnout only, never a choice), Records (printable voting list, CSV, the saved official
   record, proxies) and Details (change, invite list, cancel or restore).
 - **Deadlines** (every current executive): the meeting card at the top of the executive's meeting page, on every section, shows
   "New nominations close …" (AGM) and "Topic submissions close …" with a **Close … now** button (`set_club_meeting_deadlines`). An
