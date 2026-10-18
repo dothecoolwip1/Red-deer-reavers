@@ -3,7 +3,7 @@ module.exports = {
     collect: {
       staticDistDir: "./_site",
       maxAutodiscoverUrls: 10,
-      autodiscoverUrlBlocklist: ["/admin.html", "/404.html"],
+      autodiscoverUrlBlocklist: ["/admin.html", "/404.html", "/members-t.html"],   // members-t.html only forwards to members.html (noindex), so it has no SEO score to measure
       numberOfRuns: 1,
       settings: {
         chromeFlags: "--headless=new --no-sandbox"
