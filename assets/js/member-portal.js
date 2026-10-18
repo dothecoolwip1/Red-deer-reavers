@@ -466,14 +466,16 @@
     if (mine && state.view !== 'join') v.appendChild(glanceCard());
     if (mine && state.view !== 'leadership' && leaderMeeting()) v.appendChild(leaderCard());
     ({ join: renderJoin, mine: renderMine, agm: renderAgm, leadership: renderLeadership, members: renderMembers, 'agm-admin': renderAgmAdmin, proxies: renderProxies, print: renderPrint, history: renderHistory })[state.view](v);
+    var vm0 = voteMeeting(); if (vm0 && state.votesMeeting !== vm0.id && !state.votesLoading) loadVotes();
     if (T) updateVoteNow();
   }
-  function go(view) { state.view = view; state.proxyPick = false; render(); window.scrollTo(0, 0); }
+  function go(view) { if ((view === 'leadership') !== (state.view === 'leadership')) { state.votes = null; state.votesMeeting = null; } state.view = view; state.proxyPick = false; render(); window.scrollTo(0, 0); }
 
 
   // ================================================================ leadership meeting (invited members only)
   // club_leadership_meeting returns meeting: null unless this member is on the invite list, so nobody else sees that it exists.
   function leaderMeeting() { return state.leader && state.leader.meeting ? state.leader.meeting : null; }
+  function voteMeeting() { var lm = leaderMeeting(); return (state.view === 'leadership' && lm) ? lm : (state.agm && state.agm.meeting ? state.agm.meeting : null); }
   function loadLeader(redraw) {
     if (!state.team || !state.session) return Promise.resolve();
     return sb.rpc('club_leadership_meeting', { p_team: state.team.id }).then(function (r) {
@@ -525,6 +527,8 @@
     if (!(L.agenda || []).length) ag.appendChild(h('p', { class: 'small' }, 'No agenda items yet.'));
     (L.agenda || []).forEach(function (t) { ag.appendChild(h('div', { class: 'arow' }, h('div', { class: 'who' }, h('b', {}, t.subject)), h('div', { class: 'topic-details' }, t.details))); });
     v.appendChild(box); v.appendChild(att); v.appendChild(ag);
+    v.appendChild(votingPanel());
+    if (L.can_manage) { var adm = h('section', { class: 'card-panel', 'data-testid': 'leadership-vote-admin' }, h('h3', {}, 'Run a vote in this meeting'), h('p', { class: 'small' }, 'Questions here belong to the leadership meeting only: they never appear in the AGM.')); var admBody = h('div'); adm.appendChild(admBody); v.appendChild(adm); drawVotingAdmin(admBody, false); }
     v.appendChild(h('button', { type: 'button', class: 'btn-line', onclick: function () { go('mine'); } }, 'Back'));
   }
 
@@ -1318,8 +1322,13 @@
   var KIND = { election: 'Election', motion: 'Motion' };
   function stopVotePolling() { if (state.voteTimer) { clearInterval(state.voteTimer); state.voteTimer = null; } }
   function loadVotes(redraw) {
-    if (!state.agm || !state.agm.meeting) { state.votes = null; return Promise.resolve(); }
-    return sb.rpc('club_question_list', { p_meeting: state.agm.meeting.id }).then(function (r) {
+    var vm = voteMeeting();
+    if (!vm) { state.votes = null; state.votesMeeting = null; return Promise.resolve(); }
+    if (state.votesMeeting !== vm.id) { state.votes = null; state.votesMeeting = vm.id; }
+    state.votesLoading = true;
+    return sb.rpc('club_question_list', { p_meeting: vm.id }).then(function (r) {
+      state.votesLoading = false;
+      if (state.votesMeeting !== vm.id) return;   // the view moved to another meeting while this was in flight
       var before = state.votes ? (state.votes.questions || []).filter(function (q) { return q.status === 'open'; }).map(function (q) { return q.id; }) : null;
       if (r.error) { state.votesError = (r.error.code === '42501') ? '' : words(r.error); state.votes = null; }
       else { state.votes = r.data; state.votesError = ''; }
@@ -1330,7 +1339,7 @@
   function pollVotes() {
     stopVotePolling();
     state.voteTimer = setInterval(function () {
-      if ((document.hidden && !(T && buzzOn())) || !state.session || !state.agm || !state.agm.meeting) return;
+      if ((document.hidden && !(T && buzzOn())) || !state.session || !voteMeeting()) return;
       if (!$('vote-panel') && !$('vote-admin')) { stopVotePolling(); return; }
       loadVotes();
     }, 8000);
@@ -1394,11 +1403,12 @@
   function updateVoteNow() {
     var bar = $('vote-now'); if (!bar) return;
     var qs = state.session ? pendingOpen() : [], panel = $('vote-panel'), seen = false;
-    if (panel && state.view === 'agm') { var rc = panel.getBoundingClientRect(); seen = rc.top < window.innerHeight - 120 && rc.bottom > 140; }
+    if (panel && (state.view === 'agm' || state.view === 'leadership')) { var rc = panel.getBoundingClientRect(); seen = rc.top < window.innerHeight - 120 && rc.bottom > 140; }
     if (!qs.length || seen) { bar.hidden = true; document.body.classList.remove('has-vote-now'); return; }
     bar.textContent = '';
     bar.appendChild(h('button', { type: 'button', 'data-testid': 'vote-now', onclick: function () {
-      if (state.view !== 'agm') go('agm');
+      var lm = leaderMeeting(), target = lm && state.votesMeeting === lm.id ? 'leadership' : 'agm';
+      if (state.view !== target) go(target);
       setTimeout(function () { var p = $('vote-panel'); if (p) p.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 60);
     } }, h('span', {}, qs.length === 1 ? qs[0].title : qs.length + ' votes are open', h('br'), h('small', {}, 'Your ballot is not in yet')), h('span', { class: 'go' }, 'Vote now')));
     bar.hidden = false; document.body.classList.add('has-vote-now');
@@ -1437,9 +1447,9 @@
     return card;
   }
   function votingPanel() {
-    var a = state.agm, vt = state.votes;
+    var vm = voteMeeting(), vt = state.votes;
     var box = h('section', { id: 'vote-panel', class: 'card-panel', 'data-testid': 'vote-panel' }, h('h2', {}, 'Voting'));
-    if (!a || !a.meeting) return h('div', { id: 'vote-panel' });
+    if (!vm) return h('div', { id: 'vote-panel' });
     if (state.votesError) { box.appendChild(h('p', { class: 'err' }, state.votesError)); return box; }
     if (!vt) { box.appendChild(h('p', { class: 'small' }, 'Checking for open questions…')); return box; }
     var qs = (vt.questions || []).filter(function (q) { return q.status !== 'draft'; });
@@ -1514,7 +1524,7 @@
     save.addEventListener('click', function () {
       err.textContent = '';
       var call = f.id ? sb.rpc('update_club_question', { p_question: f.id, p_title: title.value.trim(), p_details: details.value.trim() || null })
-        : sb.rpc('create_club_question', { p_meeting: state.agm.meeting.id, p_kind: kind.value, p_title: title.value.trim(), p_details: details.value.trim() || null, p_office: kind.value === 'election' ? office.value : null });
+        : sb.rpc('create_club_question', { p_meeting: voteMeeting().id, p_kind: kind.value, p_title: title.value.trim(), p_details: details.value.trim() || null, p_office: kind.value === 'election' ? office.value : null });
       call.then(function (r) { if (r.error) { err.textContent = words(r.error); return; } state.voteForm = null; status(f.id ? 'Question updated.' : 'Question added as a draft. Open it when the meeting reaches it.'); loadVotes(); });
     });
     var box = h('section', { class: 'card-panel', 'data-testid': 'q-form' }, h('h3', {}, f.id ? 'Edit the question' : 'Add a question'),
