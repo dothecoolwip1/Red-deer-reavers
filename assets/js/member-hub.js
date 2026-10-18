@@ -1424,7 +1424,11 @@
       var before = state.votes ? (state.votes.questions || []).filter(function (q) { return q.status === 'open'; }).map(function (q) { return q.id; }) : null;
       if (r.error) { state.votesError = (r.error.code === '42501') ? '' : words(r.error); state.votes = null; }
       else { state.votes = r.data; state.votesError = ''; }
-      if (redraw !== false) { swap('vote-panel', votingPanel); var adm = $('vote-admin'); if (adm) drawVotingAdmin(adm.parentNode, true); }
+      if (redraw !== false) {
+        swap('vote-panel', votingPanel);
+        var adm = $('vote-admin'), ae = document.activeElement, typing = !!(adm && ae && adm.contains(ae) && /^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName));
+        if (adm && !typing) drawVotingAdmin(adm.parentNode, true);   // never rebuild the form under someone's fingers
+      }
       if (T) { if (before) noticeOpened(before); updateVoteNow(); }
     });
   }
@@ -1611,6 +1615,8 @@
     var titleLbl = h('label', { class: 'fld' }, 'Title', title);
     var sync = function () { var el = kind.value === 'election'; officeLbl.hidden = !el; if (el && !title.value) title.placeholder = 'Election: ' + OFFICE[office.value] + ' (default)'; };
     kind.addEventListener('change', sync); office.addEventListener('change', sync); if (f.id) kind.disabled = true; sync();
+    var remember = function () { state.voteForm = { id: f.id, kind: kind.value, office: office.value, title: title.value, details: details.value }; };
+    [kind, office, title, details].forEach(function (el) { el.addEventListener('input', remember); el.addEventListener('change', remember); });
     var err = h('p', { class: 'err', role: 'alert' });
     var save = h('button', { type: 'button', class: 'btn-rdr', 'data-testid': 'q-save' }, f.id ? 'Save changes' : 'Add question');
     save.addEventListener('click', function () {
