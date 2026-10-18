@@ -1019,7 +1019,7 @@
         ol(['Find ', q('Executive Nominations'), ' on this tab.'], ['Tap ', q('Nominate Another Member'), '.'], ['Choose the member (only members who can vote are listed).'],
           ['Choose President, Secretary or Treasurer.'], ['Tap ', q('Confirm Nomination'), '.']),
         h('p', {}, 'The person you nominate must accept before they are a confirmed candidate. They can also decline. You cannot accept for them. They will see ', q('You\'ve Been Nominated'), ' when they sign in, with ', q('Accept Nomination'), ' and ', q('Decline Nomination'), ' buttons.'),
-        h('p', { class: 'small' }, 'New nominations close ' + closeWhen('nominations') + '. A member who has been nominated can still accept or decline until the AGM starts.')),
+        h('p', { class: 'small' }, 'New nominations ' + (agmx() && agmx().nominations_not_yet ? 'open ' + agmx().nominations_opens_text + ' and ' : '') + 'close ' + closeWhen('nominations') + '. A member who has been nominated can still accept or decline until the AGM starts.')),
       item('topic', 'Submit an AGM topic',
         h('p', {}, 'Have something you want discussed at the AGM? You can submit it before the meeting. It could be:'),
         ul('an idea for the club', 'something you think should change', 'a question for the executive', 'an event or practice idea', 'anything you want the members to talk about'),
@@ -1403,9 +1403,20 @@
   // "Topics close Sunday, October 18 at 5:30 PM · Close now" / "Topics closed …". The time itself is set under Details.
   function deadlineLine(what, label, redraw, ctx) {
     var a = ctx || am(), mt = a.meeting, open = closeIsOpen(what, mt), when = closeWhen(what, mt);
-    var line = h('p', { class: 'small notice-box', 'data-testid': what + '-deadline' }, h('b', {}, label + (open ? ' close ' : ' closed ') + when + '.'), ' ');
+    var notYet = what === 'nominations' && !!mt.nominations_not_yet;
+    var line = h('p', { class: 'small notice-box', 'data-testid': what + '-deadline' }, h('b', {}, notYet ? label + ' open ' + mt.nominations_opens_text + ' and close ' + when + '.' : label + (open ? ' close ' : ' closed ') + when + '.'), ' ');
     if (state.legacy) return line;
     if (!a.can_view_admin) return line;
+    if (notYet) {
+      var ob = h('button', { type: 'button', class: 'btn-line small-btn', 'data-testid': 'nominations-open-now' }, 'Open nominations now');
+      ob.addEventListener('click', function () {
+        if (!window.confirm('Open nominations now? They close 24 hours from now unless you set a close time under Details.')) return;
+        busy(ob, true);
+        saveNominationsOpen(mt, new Date().toISOString()).then(function (ok) { busy(ob, false); if (ok) { status('Nominations are open.'); redraw(); } });
+      });
+      line.appendChild(ob);
+      return line;
+    }
     if (open) {
       var btn = h('button', { type: 'button', class: 'btn-line small-btn', 'data-testid': what + '-close-now' }, 'Close ' + what + ' now');
       btn.addEventListener('click', function () {
@@ -1420,6 +1431,7 @@
   }
   // the small form every executive gets under Details: when new nominations (AGM) and topic submissions close
   function deadlinesForm(mt) {
+    var nomOpen = h('input', { class: 'browser-default', id: 'dl-nom-open', type: 'datetime-local', value: mt.nominations_open_at ? isoToWall(mt.nominations_open_at, TZ) : '' });
     var nom = h('input', { class: 'browser-default', id: 'dl-nom-close', type: 'datetime-local', value: mt.nominations_close_set ? isoToWall(mt.nominations_close_at, TZ) : '' });
     var top = h('input', { class: 'browser-default', id: 'dl-top-close', type: 'datetime-local', value: mt.topics_close_set ? isoToWall(mt.topics_close_at, TZ) : '' });
     var err = h('p', { class: 'err', role: 'alert' }), save = h('button', { type: 'button', class: 'btn-rdr', 'data-testid': 'deadlines-save' }, 'Save');
@@ -1427,16 +1439,24 @@
       err.textContent = '';
       var nc = mt.kind === 'agm' && nom.value ? zonedToIso(nom.value, TZ) : null; if (mt.kind === 'agm' && nom.value && !nc) { err.textContent = 'Check when nominations close.'; return; }
       var tc = top.value ? zonedToIso(top.value, TZ) : null; if (top.value && !tc) { err.textContent = 'Check when topic submissions close.'; return; }
+      var no = mt.kind === 'agm' && nomOpen.value ? zonedToIso(nomOpen.value, TZ) : null; if (mt.kind === 'agm' && nomOpen.value && !no) { err.textContent = 'Check when nominations open.'; return; }
       busy(save, true);
-      saveDeadlines(mt, nc, tc).then(function (ok) { busy(save, false); if (ok) { status('Saved.'); refreshAdmin(); } });
+      saveDeadlines(mt, nc, tc).then(function (ok) { return ok && mt.kind === 'agm' ? saveNominationsOpen(mt, no) : ok; }).then(function (ok) { busy(save, false); if (ok) { status('Saved.'); refreshAdmin(); } });
     });
     return h('section', { class: 'card-panel', 'data-testid': 'deadlines-form' }, h('h3', {}, 'When submissions close'),
       h('p', { class: 'small' }, 'Red Deer time. Leave a field empty and it closes when the meeting starts.'),
-      mt.kind === 'agm' ? h('label', { class: 'fld' }, 'New nominations close', nom) : null,
+      mt.kind === 'agm' ? h('label', { class: 'fld' }, 'New nominations open', nomOpen) : null,
+      mt.kind === 'agm' ? h('label', { class: 'fld' }, 'New nominations close (otherwise 24 hours after they open)', nom) : null,
       h('label', { class: 'fld' }, 'Topic submissions close', top), err, h('div', { class: 'row-btns' }, save));
   }
   function execReload(mt) { return function () { loadAdm(mt.id, false).then(function () { return loadMeetings(false); }).then(render); }; }
   function memberReload(mt) { return function () { Promise.resolve(loadMeeting(mt.id, false)).then(function () { return loadAgmx(mt.id, false); }).then(function () { return loadMeetings(false); }).then(render); }; }
+  function saveNominationsOpen(mt, opensIso) {
+    return sb.rpc('set_club_nominations_open', { p_meeting: mt.id, p_opens_at: opensIso || null }).then(function (r) {
+      if (r.error) { status(missingFn(r.error) ? 'Setting when nominations open needs the database update (club_nominations_window).' : words(r.error), true); return false; }
+      return true;
+    });
+  }
   function saveDeadlines(mt, nomIso, topIso) {
     return sb.rpc('set_club_meeting_deadlines', { p_meeting: mt.id, p_nominations_close_at: nomIso || null, p_topics_close_at: topIso || null }).then(function (r) {
       if (r.error) { status(missingFn(r.error) ? 'Closing nominations or topics at a set time needs the database update (club_meeting_deadlines).' : words(r.error), true); return false; }
@@ -2074,16 +2094,18 @@
     var loc = h('input', { class: 'browser-default', id: 'mf-location', maxlength: '200', placeholder: 'Where (optional)', value: f.location != null ? f.location : (mt ? mt.location || '' : '') });
     var det = h('textarea', { class: 'browser-default', id: 'mf-details', maxlength: '4000', rows: '4', placeholder: 'What the meeting is about, the agenda, anything members should bring (optional)' }); det.value = f.details != null ? f.details : (mt ? mt.details || '' : '');
     var inv = h('input', { type: 'checkbox', id: 'mf-invite' }); inv.checked = f.invite_only != null ? f.invite_only : (mt ? !!mt.invite_only : (f.kind === 'leadership'));
+    var nomOpen = h('input', { class: 'browser-default', id: 'mf-nom-open', type: 'datetime-local', value: f.nomOpen != null ? f.nomOpen : (mt && mt.nominations_open_at ? isoToWall(mt.nominations_open_at, TZ) : '') });
     var nomClose = h('input', { class: 'browser-default', id: 'mf-nom-close', type: 'datetime-local', value: f.nomClose != null ? f.nomClose : (mt && mt.nominations_close_set ? isoToWall(mt.nominations_close_at, TZ) : '') });
     var topClose = h('input', { class: 'browser-default', id: 'mf-top-close', type: 'datetime-local', value: f.topClose != null ? f.topClose : (mt && mt.topics_close_set ? isoToWall(mt.topics_close_at, TZ) : '') });
-    var nomLbl = h('label', { class: 'fld' }, 'New nominations close (optional: otherwise when the meeting starts)', nomClose);
+    var nomOpenLbl = h('label', { class: 'fld' }, 'New nominations open (optional: otherwise as soon as the meeting exists)', nomOpen);
+    var nomLbl = h('label', { class: 'fld' }, 'New nominations close (optional: otherwise 24 hours after they open, or when the meeting starts)', nomClose);
     var topLbl = h('label', { class: 'fld' }, 'Topic submissions close (optional: otherwise when the meeting starts)', topClose);
-    var showDeadlines = function () { var k = isNew ? kind.value : mt.kind; nomLbl.hidden = k !== 'agm'; topLbl.hidden = k === 'vote'; };
+    var showDeadlines = function () { var k = isNew ? kind.value : mt.kind; nomLbl.hidden = k !== 'agm'; nomOpenLbl.hidden = k !== 'agm'; topLbl.hidden = k === 'vote'; };
     showDeadlines();
     var err = h('p', { class: 'err', role: 'alert' });
     var save = h('button', { type: 'button', class: 'btn-rdr', 'data-testid': 'meeting-save' }, isNew ? 'Schedule it' : 'Save changes');
-    var remember = function () { state.meetingForm = { id: mt ? mt.id : null, kind: kind.value, title: title.value, start: start.value, end: end.value, location: loc.value, details: det.value, invite_only: inv.checked, nomClose: nomClose.value, topClose: topClose.value }; };
-    [kind, title, start, end, loc, det, inv, nomClose, topClose].forEach(function (el) { el.addEventListener('input', remember); el.addEventListener('change', remember); });
+    var remember = function () { state.meetingForm = { id: mt ? mt.id : null, kind: kind.value, title: title.value, start: start.value, end: end.value, location: loc.value, details: det.value, invite_only: inv.checked, nomOpen: nomOpen.value, nomClose: nomClose.value, topClose: topClose.value }; };
+    [kind, title, start, end, loc, det, inv, nomOpen, nomClose, topClose].forEach(function (el) { el.addEventListener('input', remember); el.addEventListener('change', remember); });
     var endLbl = h('label', { class: 'fld' }, 'Ends (optional)', end);
     var sync = function () { endLbl.querySelector('span') && (endLbl.firstChild.textContent = kind.value === 'vote' ? 'Voting closes (optional)' : 'Ends (optional)'); if (isNew && kind.value === 'leadership' && !f.touchedInvite) inv.checked = true; if (isNew && kind.value !== 'leadership' && !f.touchedInvite) inv.checked = false; };
     kind.addEventListener('change', sync); kind.addEventListener('change', showDeadlines); inv.addEventListener('change', function () { f.touchedInvite = true; });
@@ -2095,8 +2117,12 @@
       if (e && e <= s) { err.textContent = 'The end must come after the start.'; return; }
       var nc = !nomLbl.hidden && nomClose.value ? zonedToIso(nomClose.value, TZ) : null; if (!nomLbl.hidden && nomClose.value && !nc) { err.textContent = 'Check when nominations close.'; return; }
       var tc = !topLbl.hidden && topClose.value ? zonedToIso(topClose.value, TZ) : null; if (!topLbl.hidden && topClose.value && !tc) { err.textContent = 'Check when topics close.'; return; }
-      var hadDeadlines = mt ? (!!mt.nominations_close_set || !!mt.topics_close_set) : false;
-      var deadlines = function (id) { return (nc || tc || hadDeadlines) ? saveDeadlines({ id: id }, nc, tc) : Promise.resolve(true); };
+      var no = !nomOpenLbl.hidden && nomOpen.value ? zonedToIso(nomOpen.value, TZ) : null; if (!nomOpenLbl.hidden && nomOpen.value && !no) { err.textContent = 'Check when nominations open.'; return; }
+      var hadDeadlines = mt ? (!!mt.nominations_close_set || !!mt.topics_close_set) : false, hadOpen = mt ? !!mt.nominations_open_at : false;
+      var deadlines = function (id) {
+        return ((nc || tc || hadDeadlines) ? saveDeadlines({ id: id }, nc, tc) : Promise.resolve(true))
+          .then(function (ok) { return ok && (no || hadOpen) ? saveNominationsOpen({ id: id }, no) : ok; });
+      };
       busy(save, true);
       var call = isNew
         ? sb.rpc('create_club_meeting', { p_team: state.team.id, p_kind: kind.value, p_title: title.value.trim(), p_starts_at: s, p_timezone: TZ, p_location: loc.value.trim() || null, p_details: det.value.trim() || null, p_invite_only: inv.checked, p_ends_at: e })
@@ -2115,7 +2141,7 @@
     return h('section', { class: 'card-panel', 'data-testid': 'meeting-form' }, h('h3', {}, isNew ? 'Schedule a meeting or a vote' : 'Change this meeting'),
       isNew ? h('label', { class: 'fld' }, 'Kind', kind) : h('p', { class: 'small' }, kindLabel(mt) + '. The kind cannot change.'),
       h('label', { class: 'fld' }, 'Title', title),
-      h('label', { class: 'fld' }, 'Starts (Red Deer time)', start), endLbl, nomLbl, topLbl,
+      h('label', { class: 'fld' }, 'Starts (Red Deer time)', start), endLbl, nomOpenLbl, nomLbl, topLbl,
       h('label', { class: 'fld' }, 'Location', loc),
       h('label', { class: 'fld' }, 'Details', det),
       h('label', { class: 'check' }, inv, h('span', {}, 'Invited members only (nobody else sees this meeting)')),

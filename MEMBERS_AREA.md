@@ -33,7 +33,9 @@ The **Exec** button in the top bar opens one sheet:
   record, proxies) and Details (change, invite list, cancel or restore).
 - **Deadlines** (every current executive): the meeting card at the top of the executive's meeting page, on every section, shows
   "New nominations close …" (AGM) and "Topic submissions close …" with a **Close … now** button (`set_club_meeting_deadlines`). An
-  executive looking at the member page of the meeting sees the same lines there. Under Details, "New nominations close" (AGM) and "Topic submissions close" (Red Deer time, both
+  executive looking at the member page of the meeting sees the same lines there. Nominations can also have an opening moment
+  ("New nominations open" under Details, `set_club_nominations_open`); until then the line reads "New nominations open … and close …"
+  with **Open nominations now**, and they close 24 hours after opening unless a close time is set. Under Details, "New nominations close" (AGM) and "Topic submissions close" (Red Deer time, both
   optional) sit in the meeting form for the President, Secretary or Treasurer and in a small "When submissions close" form for every other
   executive. Empty means they close when the meeting starts. After the nominations deadline nobody can nominate, but a nominee can still accept, decline or withdraw
   until the meeting starts; after the topics deadline nobody can submit or edit a topic, but a member can still withdraw their own until
