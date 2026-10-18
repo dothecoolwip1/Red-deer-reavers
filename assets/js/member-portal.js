@@ -1399,7 +1399,7 @@
     var a = am(), mt = a.meeting, open = closeIsOpen(what, mt), when = closeWhen(what, mt);
     var line = h('p', { class: 'small notice-box', 'data-testid': what + '-deadline' }, h('b', {}, label + (open ? ' close ' : ' closed ') + when + '.'), ' ');
     if (state.legacy) return line;
-    if (!a.can_manage) { line.appendChild(h('span', {}, open ? 'The President, Secretary or Treasurer can close them early under Details.' : '')); return line; }
+    if (!a.can_view_admin) return line;
     if (open) {
       var btn = h('button', { type: 'button', class: 'btn-line small-btn', 'data-testid': what + '-close-now' }, 'Close ' + what + ' now');
       btn.addEventListener('click', function () {
@@ -1411,6 +1411,23 @@
       line.appendChild(btn);
     } else line.appendChild(h('span', {}, 'To reopen, set a later time under Details.'));
     return line;
+  }
+  // the small form every executive gets under Details: when new nominations (AGM) and topic submissions close
+  function deadlinesForm(mt) {
+    var nom = h('input', { class: 'browser-default', id: 'dl-nom-close', type: 'datetime-local', value: mt.nominations_close_set ? isoToWall(mt.nominations_close_at, TZ) : '' });
+    var top = h('input', { class: 'browser-default', id: 'dl-top-close', type: 'datetime-local', value: mt.topics_close_set ? isoToWall(mt.topics_close_at, TZ) : '' });
+    var err = h('p', { class: 'err', role: 'alert' }), save = h('button', { type: 'button', class: 'btn-rdr', 'data-testid': 'deadlines-save' }, 'Save');
+    save.addEventListener('click', function () {
+      err.textContent = '';
+      var nc = mt.kind === 'agm' && nom.value ? zonedToIso(nom.value, TZ) : null; if (mt.kind === 'agm' && nom.value && !nc) { err.textContent = 'Check when nominations close.'; return; }
+      var tc = top.value ? zonedToIso(top.value, TZ) : null; if (top.value && !tc) { err.textContent = 'Check when topic submissions close.'; return; }
+      busy(save, true);
+      saveDeadlines(mt, nc, tc).then(function (ok) { busy(save, false); if (ok) { status('Saved.'); refreshAdmin(); } });
+    });
+    return h('section', { class: 'card-panel', 'data-testid': 'deadlines-form' }, h('h3', {}, 'When submissions close'),
+      h('p', { class: 'small' }, 'Red Deer time. Leave a field empty and it closes when the meeting starts.'),
+      mt.kind === 'agm' ? h('label', { class: 'fld' }, 'New nominations close', nom) : null,
+      h('label', { class: 'fld' }, 'Topic submissions close', top), err, h('div', { class: 'row-btns' }, save));
   }
   function saveDeadlines(mt, nomIso, topIso) {
     return sb.rpc('set_club_meeting_deadlines', { p_meeting: mt.id, p_nominations_close_at: nomIso || null, p_topics_close_at: topIso || null }).then(function (r) {
@@ -2114,7 +2131,11 @@
   function renderDetailsAdmin(body) {
     var a = am(), mt = a.meeting;
     if (state.legacy) { body.appendChild(h('p', { class: 'notice-box' }, 'Changing meeting details needs the database update (club_meetings_reusable).')); return; }
-    if (!a.can_manage) { body.appendChild(h('p', { class: 'small' }, 'Only the President, Secretary or Treasurer can change a meeting.')); return; }
+    if (!a.can_manage) {
+      if (mt.kind !== 'vote') body.appendChild(deadlinesForm(mt));
+      body.appendChild(h('p', { class: 'small' }, 'Only the President, Secretary or Treasurer can change the meeting itself (title, time, place, invite list, cancelling).'));
+      return;
+    }
     if (!state.meetingForm || state.meetingForm.id !== mt.id) state.meetingForm = { id: mt.id, kind: mt.kind };
     body.appendChild(meetingForm(a));
     if (mt.invite_only) body.appendChild(inviteePicker(mt));
