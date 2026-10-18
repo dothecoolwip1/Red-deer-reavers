@@ -3,6 +3,16 @@
   "outputDirectory": "_site",
   "redirects": [
     {
+      "source": "/members-t.html",
+      "destination": "/members.html",
+      "permanent": false
+    },
+    {
+      "source": "/members-t",
+      "destination": "/members.html",
+      "permanent": false
+    },
+    {
       "source": "/BuhurtOS",
       "destination": "https://buhurt-os.vercel.app/",
       "permanent": false

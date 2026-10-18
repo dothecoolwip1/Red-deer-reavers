@@ -1,56 +1,60 @@
 # Members area (members.html)
 
-One account for the Red Deer Reavers and BuhurtOS. People can create that account right here, without visiting BuhurtOS.
+One account for the Red Deer Reavers and BuhurtOS. People create it here, without visiting BuhurtOS, and use it for every club meeting and vote.
 
-- **Account:**
-  - Create account (Supabase Auth sign-up in the BuhurtOS project; the confirmation email links back here).
-  - Sign in: email + password, Google, or an email code.
-  - Forgot password (the email link comes back here and asks for a new password).
-  - A first-time profile step: BuhurtOS's own `complete_my_profile`, so BuhurtOS never asks again.
-- **Fighter profile notice:** a Reavers member (pending, active or inactive) whose account has no BuhurtOS fighter profile sees one small
-  "⚔️ Hold, brave Reaver!" notice (parchment card, red deer antlers over a Reavers shield) above the tabs. The check is BuhurtOS's own `my_fighter_id()` (the caller's own `fighter_accounts` link, nothing
-  else; the same link the executive's member roster uses). "Forge My Fighter Profile" opens BuhurtOS `/team-manager?join=red-deer-reavers`
-  (a fighter profile is created when the captain accepts the join request); "Already fought before? Claim your existing profile" opens BuhurtOS `/claim-profile`.
-  "Maybe Later" hides it for the browser session; signing out forgets that, and it never shows once the account has a fighter profile.
-- **Join the Red Deer Reavers:**
-  - The application, then Membership Application Pending, then Membership: Active.
-  - The 2026 membership fee shows as WAIVED.
-  - Voting status: ELIGIBLE TO VOTE, or NOT CURRENTLY ELIGIBLE TO VOTE with the reason.
-- **2026 AGM** (Sunday, October 18, 2026, 5:30 PM, Red Deer time):
-  - In Person, Video Call, Voting by Proxy or Not Attending.
-  - Change the answer, change the proxy, or cancel the proxy.
-  - The private video link appears once the executive adds it.
-  - **How the AGM Works**: six short, collapsed help sections under the AGM controls (who can vote, how to join, executive roles, how nominations
-    work, submitting a topic, RSVP and proxy voting). The date, place and fee come from the system; every button named in the help is a real button
-    (checked by the browser tests).
-  - **Something you want discussed?** Submit a concern or topic for the AGM; see, edit or withdraw your own until the meeting starts.
-  - **Executive Nominations** for President, Secretary and Treasurer: nominate yourself or another voting member; a nominated member accepts
-    or declines (You've Been Nominated); the page lists current officers and accepted candidates. Only members who can vote may nominate.
-    Nominations never change who holds an office: that is decided at the AGM.
-- **Executive** (current Reavers executive only; the database checks it):
-  - Members and dues.
-  - AGM admin: counts, filters, check-in, video link; Concerns (set Submitted / Added to Agenda / Addressed); Nominations (candidates per office).
-  - Proxies.
-  - Printable AGM voting list and the saved official AGM record.
-  - Dues history.
+## What a member sees
 
-This website and BuhurtOS are both served from `dothecoolwip1.github.io`, so the browser keeps one sign-in for both. No token is passed
-between them, and nothing here is a security boundary.
+- **Sign in:** Google first, then email and password. Email-code sign-in, password recovery and account creation are secondary links on the
+  same card. A first-time profile step (BuhurtOS's own `complete_my_profile`) runs once, so BuhurtOS never asks again.
+- **Home:** anything that needs you first (a nomination to answer, a vote waiting for your ballot), then the next meetings, a compact
+  membership summary (status, fee, voting) and the latest notices.
+- **Meetings:** upcoming and past meetings. Each meeting has its own link (`members.html?view=meeting&meeting=<id>`) and its own page:
+  open votes at the top, then how you take part (In Person, Video Call, Voting by Proxy, Not Attending; change or cancel a proxy), proxies
+  you hold, who is invited (invite-only meetings), the agenda, "Something you want discussed?", Executive Nominations (AGM only), help, and
+  results of closed questions at the bottom. A **vote-now bar** follows you on every screen while a ballot is waiting.
+- **Account** (person icon, top right): membership record and voting eligibility, approval alerts while pending, the BuhurtOS fighter
+  profile (create or claim), install on the home screen, help, sign out.
+- **Join:** the application for people with an account but no membership.
+- A small **Site** link returns to the public website; the public bottom dock is not shown in the members area.
+
+Meeting kinds: **AGM** (one per year), **General meeting**, **Leadership meeting** (usually invited members only) and **Vote** (a voting
+session with no gathering). RSVP, topics and nominations show only where they apply. Personal and proxy ballots stay separate; a ballot is
+confirmed only after the database acknowledges it. Ballots are secret: nobody can read how anyone voted.
+
+## What the executive sees (current President, Secretary, Treasurer, Vice President, Director; the database checks it)
+
+The **Exec** button in the top bar opens one sheet:
+
+- **Meetings:** every meeting including invite-only ones; **+ New** schedules an AGM, a general meeting, a leadership meeting or a vote
+  (title, Red Deer start and optional end time, place, details, invited-only). Opening a meeting groups its tools in sections:
+  People and check-in (RSVP counts, filters, check-in, video or notes link), Topics (Submitted / Added to Agenda / Addressed), Nominations
+  (AGM), Voting (write, open and close questions; turnout only, never a choice), Records (printable voting list, CSV, the saved official
+  record, proxies) and Details (change, invite list, cancel or restore).
+- **Members and dues**, **Notices** (members see them on Home, pinned first) and **Dues history**.
+
+Older links keep working: `?view=agm` opens the current AGM, `?view=leadership` the leadership meeting, `?view=agm-admin` the AGM's
+executive tools; `members-t.html` forwards here.
+
+## Files
 
 | File | What it is |
 | --- | --- |
-| `members.html` | The page |
+| `members.html` | The page (the only members page; `members-t.html` only forwards to it) |
 | `assets/js/member-portal.js` | The page logic |
-| `assets/js/buhurtos-config.js` | Project URL and publishable key (public by design) |
+| `assets/members-app.css` | The one members stylesheet, built on the site tokens in `styles.css` |
+| `assets/js/buhurtos-config.js` | Project URL and publishable key (public by design), team slug, bylaws link, Discord invite |
 | `assets/js/vendor/supabase-js-2.117.2.umd.js` | Pinned copy of supabase-js (MIT) |
-| `assets/members.css` | Styles |
+| `members.webmanifest` | Installable members app (start on `members.html`) |
+| `assets/members.css` | Styles of the public `agm.html` page only |
 
-Full design and setup are in the BuhurtOS repository: `docs/runbooks/CLUB_MEMBERSHIP.md`.
+## Database
 
-**Officer names.** Who holds an office comes from the officer records. Every place that shows an office holder goes through one display function,
-`officerName()` in `assets/js/member-portal.js`:
-- the database's label for an office whose holder has no account yet, "Kedrixx (no currently active account)", is shown as
-  "Kedrixx (account not currently linked)" (the data is not changed);
-- an office with no name at all shows the display-only name in `OFFICER_NO_ACCOUNT` (President: Kedrixx, Treasurer: Carmalee) followed by
-  " (account not currently linked)", otherwise "not assigned".
-It grants nothing and is ignored as soon as the office has a real holder. Delete the `OFFICER_NO_ACCOUNT` entry once that person's account is assigned.
+Everything is decided by the BuhurtOS database (`club_*` and `club_meeting_*` functions; design and setup in the BuhurtOS repository,
+`docs/runbooks/CLUB_MEMBERSHIP.md`). The page reads `club_meetings_list` and `club_meeting_view` (BuhurtOS migration
+`20261018040000_club_meetings_reusable.sql`); until that migration is applied it falls back to the AGM-only reads
+(`club_meeting_member_view`, `club_leadership_meeting`) and the executive cannot schedule new meetings from the page.
+
+**Officer names.** Every place that shows an office holder goes through one display function, `officerName()` in
+`assets/js/member-portal.js`: the database's "(no currently active account)" label is shown as "(account not currently linked)", and an
+office with no name at all shows the display-only name in `OFFICER_NO_ACCOUNT` followed by that suffix, otherwise "not assigned". It grants
+nothing and is ignored as soon as the office has a real holder. Delete the `OFFICER_NO_ACCOUNT` entry once that person's account is assigned.
