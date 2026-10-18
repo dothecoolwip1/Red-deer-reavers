@@ -27,11 +27,13 @@ The **Exec** button in the top bar opens one sheet:
 
 - **Meetings:** every meeting including invite-only ones; **+ New** schedules an AGM, a general meeting, a leadership meeting or a vote
   (title, Red Deer start and optional end time, place, details, invited-only). Opening a meeting groups its tools in sections:
-  People and check-in (RSVP counts, filters, check-in, video or notes link), Topics (Submitted / Added to Agenda / Addressed), Nominations
+  People and check-in (RSVP counts, filters, check-in, video or notes link), Topics (grouped: On the agenda in order, Waiting for a
+  decision, Addressed, Withdrawn; one-tap next step per topic; search once there are more than five), Nominations
   (AGM), Voting (write, open and close questions; turnout only, never a choice), Records (printable voting list, CSV, the saved official
   record, proxies) and Details (change, invite list, cancel or restore).
-- **Deadlines** (every current executive): the Topics and Nominations sections show the current deadline with a **Close … now** button
-  (`set_club_meeting_deadlines`). Under Details, "New nominations close" (AGM) and "Topic submissions close" (Red Deer time, both
+- **Deadlines** (every current executive): the meeting card at the top of the executive's meeting page, on every section, shows
+  "New nominations close …" (AGM) and "Topic submissions close …" with a **Close … now** button (`set_club_meeting_deadlines`). An
+  executive looking at the member page of the meeting sees the same lines there. Under Details, "New nominations close" (AGM) and "Topic submissions close" (Red Deer time, both
   optional) sit in the meeting form for the President, Secretary or Treasurer and in a small "When submissions close" form for every other
   executive. Empty means they close when the meeting starts. After the nominations deadline nobody can nominate, but a nominee can still accept, decline or withdraw
   until the meeting starts; after the topics deadline nobody can submit or edit a topic, but a member can still withdraw their own until

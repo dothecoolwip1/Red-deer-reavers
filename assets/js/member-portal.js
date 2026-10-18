@@ -28,7 +28,7 @@
     duesFor: null, agmRows: null, agmFilter: 'all', agmSearch: '', proxyPick: false, recovery: false, loading: false,
     // meetings: the list, the meeting being viewed (member page) and the meeting being run (executive page)
     meetings: null, meetingsError: '', legacy: false, meetingId: null, meeting: null, meetingError: '', meetingLoading: null,
-    admId: null, adm: null, admError: '', agmSection: 'people', topicFilter: 'all', meetingForm: null, inviteePick: null, meetingsFilter: 'upcoming',
+    admId: null, adm: null, admError: '', agmSection: 'people', meetingForm: null, inviteePick: null, meetingsFilter: 'upcoming',
     agmxBy: {}, agmxError: {}, topicForm: null, topicNotice: '', nomMode: null, nomOffice: null, nomTarget: '', nomNotice: '',
     votes: null, votesError: '', voteTimer: null, votesMeeting: null, votesLoading: false, voteForm: null, ballotsFor: null, ballots: null, listTimer: null,
     notices: null, noticeEdit: null, noticeArchive: false, fighterId: undefined };
@@ -1044,8 +1044,8 @@
     if (x.topics_open) {
       if (state.topicForm) box.appendChild(topicForm(state.topicForm));
       else box.appendChild(h('button', { type: 'button', class: 'btn-rdr', 'data-testid': 'topic-new', onclick: function () { state.topicNotice = ''; state.topicForm = {}; swap('agm-topics', topicsPanel); } }, 'Submit AGM Concern / Topic'));
-      box.appendChild(h('p', { class: 'small', 'data-testid': 'topics-close' }, 'Topic submissions close ' + closeWhen('topics') + '.'));
-    } else box.appendChild(h('p', { class: 'small', 'data-testid': 'topics-closed' }, 'Topic submissions closed ' + closeWhen('topics') + '. Speak to the executive.'));
+      if (!execLine(box, 'topics', 'Topic submissions')) box.appendChild(h('p', { class: 'small', 'data-testid': 'topics-close' }, 'Topic submissions close ' + closeWhen('topics') + '.'));
+    } else if (!execLine(box, 'topics', 'Topic submissions')) box.appendChild(h('p', { class: 'small', 'data-testid': 'topics-closed' }, 'Topic submissions closed ' + closeWhen('topics') + '. Speak to the executive.'));
     if (state.topicNotice) box.appendChild(h('p', { class: 'ok-text', role: 'status', 'data-testid': 'topic-received' }, state.topicNotice));
     var mine = x.my_topics || [];
     if (mine.length) {
@@ -1099,6 +1099,12 @@
     });
   }
 
+  // an executive looking at the member page gets the deadline line with its Close now button; returns false for everyone else
+  function execLine(box, what, label) {
+    var a = mv(); if (!a || !a.can_view_admin || state.legacy) return false;
+    box.appendChild(deadlineLine(what, label, memberReload(a.meeting), a));
+    return true;
+  }
   // ---- nominations
   function nominationsPanel() {
     var x = agmx(), box = h('section', { class: 'card-panel agm-extra', id: 'agm-nominations', 'data-testid': 'agm-nominations' }, h('h3', {}, 'Executive Nominations'));
@@ -1110,8 +1116,8 @@
       else if (c.status === 'declined' || c.status === 'withdrawn') box.appendChild(h('p', { class: 'small' }, 'Your nomination for ' + c.label + ': ' + NOM[c.status] + '.'));
     });
     if (state.nomNotice) box.appendChild(h('p', { class: 'ok-text', role: 'status', 'data-testid': 'nomination-notice' }, state.nomNotice));
-    if (x.can_nominate) { box.appendChild(nominateForm()); box.appendChild(h('p', { class: 'small', 'data-testid': 'nominations-close' }, 'New nominations close ' + closeWhen('nominations') + '.')); }
-    else if (x.nominate_blocked) box.appendChild(h('p', { class: 'small', 'data-testid': 'nominate-blocked' }, x.nominate_blocked));
+    if (x.can_nominate) { box.appendChild(nominateForm()); if (!execLine(box, 'nominations', 'New nominations')) box.appendChild(h('p', { class: 'small', 'data-testid': 'nominations-close' }, 'New nominations close ' + closeWhen('nominations') + '.')); }
+    else if (x.nominate_blocked) { box.appendChild(h('p', { class: 'small', 'data-testid': 'nominate-blocked' }, x.nominate_blocked)); execLine(box, 'nominations', 'New nominations'); }
     box.appendChild(h('h4', { 'data-testid': 'nominations-heading' }, mv().meeting.year + ' Executive Nominations'));
     box.appendChild(h('p', { class: 'small' }, 'Nominations only prepare the list of candidates. They do not change who holds an office: current officers stay in place unless members vote otherwise at the AGM. Only accepted nominations are confirmed candidates.'));
     (x.board || []).forEach(function (o) {
@@ -1395,8 +1401,8 @@
   }
   // ---------------------------------------------------------------- executive: AGM concerns and nominations (inside AGM admin)
   // "Topics close Sunday, October 18 at 5:30 PM · Close now" / "Topics closed …". The time itself is set under Details.
-  function deadlineLine(what, label, redraw) {
-    var a = am(), mt = a.meeting, open = closeIsOpen(what, mt), when = closeWhen(what, mt);
+  function deadlineLine(what, label, redraw, ctx) {
+    var a = ctx || am(), mt = a.meeting, open = closeIsOpen(what, mt), when = closeWhen(what, mt);
     var line = h('p', { class: 'small notice-box', 'data-testid': what + '-deadline' }, h('b', {}, label + (open ? ' close ' : ' closed ') + when + '.'), ' ');
     if (state.legacy) return line;
     if (!a.can_view_admin) return line;
@@ -1406,7 +1412,7 @@
         if (!window.confirm('Close ' + what + ' now? Members can no longer ' + (what === 'topics' ? 'submit or edit topics (they can still withdraw their own until the meeting starts)' : 'nominate anyone (a nominee can still accept or decline until the meeting starts)') + ' for "' + mt.title + '". You can reopen them under Details.')) return;
         busy(btn, true);
         saveDeadlines(mt, what === 'nominations' ? new Date().toISOString() : (mt.nominations_close_set ? mt.nominations_close_at : null),
-          what === 'topics' ? new Date().toISOString() : (mt.topics_close_set ? mt.topics_close_at : null)).then(function (ok) { busy(btn, false); if (ok) { status(label + ' closed.'); loadAdm(mt.id, false).then(redraw); } });
+          what === 'topics' ? new Date().toISOString() : (mt.topics_close_set ? mt.topics_close_at : null)).then(function (ok) { busy(btn, false); if (ok) { status(label + ' closed.'); redraw(); } });
       });
       line.appendChild(btn);
     } else line.appendChild(h('span', {}, 'To reopen, set a later time under Details.'));
@@ -1429,6 +1435,8 @@
       mt.kind === 'agm' ? h('label', { class: 'fld' }, 'New nominations close', nom) : null,
       h('label', { class: 'fld' }, 'Topic submissions close', top), err, h('div', { class: 'row-btns' }, save));
   }
+  function execReload(mt) { return function () { loadAdm(mt.id, false).then(function () { return loadMeetings(false); }).then(render); }; }
+  function memberReload(mt) { return function () { Promise.resolve(loadMeeting(mt.id, false)).then(function () { return loadAgmx(mt.id, false); }).then(function () { return loadMeetings(false); }).then(render); }; }
   function saveDeadlines(mt, nomIso, topIso) {
     return sb.rpc('set_club_meeting_deadlines', { p_meeting: mt.id, p_nominations_close_at: nomIso || null, p_topics_close_at: topIso || null }).then(function (r) {
       if (r.error) { status(missingFn(r.error) ? 'Closing nominations or topics at a set time needs the database update (club_meeting_deadlines).' : words(r.error), true); return false; }
@@ -1440,29 +1448,47 @@
     sb.rpc('club_agm_topics_admin', { p_meeting: am().meeting.id }).then(function (r) {
       body.textContent = '';
       if (r.error) { body.appendChild(h('p', { class: 'err' }, words(r.error))); return; }
-      var rows = r.data || [], manage = !!am().can_manage;
-      var f = state.topicFilter, cnt = function (st) { return rows.filter(function (t) { return st === 'all' || t.status === st; }).length; };
+      var rows = r.data || [], manage = !!am().can_manage, mt = am().meeting;
       var redraw = function () { body.textContent = ''; drawConcernsAdmin(body); };
-      body.appendChild(deadlineLine('topics', 'Topic submissions', redraw));
-      body.appendChild(h('div', { class: 'filters', role: 'group', 'aria-label': 'Show topics' }, [['all', 'All'], ['submitted', 'Submitted'], ['on_agenda', 'Added to Agenda'], ['addressed', 'Addressed'], ['withdrawn', 'Withdrawn']].map(function (t) {
-        return h('button', { type: 'button', 'aria-pressed': String(f === t[0]), onclick: function () { state.topicFilter = t[0]; redraw(); } }, t[1] + ' (' + cnt(t[0]) + ')');
-      })));
-      var shown = rows.filter(function (t) { return f === 'all' || t.status === f; });
-      if (!shown.length) body.appendChild(h('p', { 'data-testid': 'topics-empty' }, rows.length ? 'No topics match.' : 'No topics submitted yet.'));
-      shown.forEach(function (t) {
-        var row = h('div', { class: 'arow', 'data-testid': 'topic-row' },
-          h('div', { class: 'who' }, h('b', {}, t.subject)),
-          h('div', { class: 'chips' }, chip(TOPIC_CHIP[t.status], TOPIC[t.status]), h('span', { class: 'small' }, t.member_name + ' · ' + timeText(t.created_at) + (t.edited ? ' · edited ' + timeText(t.updated_at) : ''))),
-          h('div', { class: 'topic-details' }, t.details));
-        if (manage && t.status !== 'withdrawn') row.appendChild(h('div', { class: 'checkin', role: 'group', 'aria-label': 'Status of ' + t.subject },
-          [['submitted', 'Submitted'], ['on_agenda', 'Add to agenda'], ['addressed', 'Addressed']].map(function (s) {
-            return h('button', { type: 'button', class: 'small-btn ' + (t.status === s[0] ? 'btn-rdr' : 'btn-line'), 'aria-pressed': String(t.status === s[0]), onclick: function () {
-              sb.rpc('set_club_agm_topic_status', { p_topic: t.topic_id, p_status: s[0] }).then(function (x) { if (x.error) return status(words(x.error), true); status('"' + t.subject + '": ' + TOPIC[s[0]] + '.'); redraw(); });
-            } }, s[1]);
-          })));
-        if (t.status === 'withdrawn') row.appendChild(h('div', { class: 'small' }, 'The member withdrew this topic.'));
-        body.appendChild(row);
+      var setStatus = function (t, st) {
+        sb.rpc('set_club_agm_topic_status', { p_topic: t.topic_id, p_status: st }).then(function (x) { if (x.error) return status(words(x.error), true); status('"' + t.subject + '": ' + TOPIC[st] + '.'); redraw(); });
+      };
+      if (!rows.length) { body.appendChild(h('p', { 'data-testid': 'topics-empty' }, 'No topics submitted yet. Members submit them from the meeting page under "Something you want discussed?".')); return; }
+      var q = (state.topicSearch || '').trim().toLowerCase();
+      if (rows.length > 5) body.appendChild(searchBox(state.topicSearch || '', function (x) { state.topicSearch = x; }, function () { redraw(); return body; }));
+      var keep = function (t) { return !q || (t.subject + ' ' + t.details + ' ' + t.member_name).toLowerCase().indexOf(q) >= 0; };
+      var when = function (t) { return new Date(t.status_changed_at || t.updated_at || t.created_at).getTime(); };
+      var groups = [
+        ['on_agenda', 'On the agenda', 'In this order on the members’ agenda. Tap Addressed as each one is dealt with.', function (a, b) { return when(a) - when(b); }],
+        ['submitted', 'Waiting for a decision', 'New from members. Add to the agenda, or mark addressed if it was handled another way.', function (a, b) { return new Date(b.created_at) - new Date(a.created_at); }],
+        ['addressed', 'Addressed', null, function (a, b) { return when(b) - when(a); }],
+        ['withdrawn', 'Withdrawn by the member', null, function (a, b) { return when(b) - when(a); }]];
+      var any = false;
+      groups.forEach(function (g) {
+        var list = rows.filter(function (t) { return t.status === g[0]; }).filter(keep).sort(g[3]);
+        if (!list.length) return;
+        any = true;
+        var sec = h('section', { class: 'topic-group', 'data-testid': 'topic-group-' + g[0] }, h('h4', {}, g[1] + ' ', h('span', { class: 'count' }, '(' + list.length + ')')), g[2] ? h('p', { class: 'small' }, g[2]) : null);
+        var holder = sec;
+        if (g[0] === 'withdrawn' || g[0] === 'addressed') { holder = h('details', { open: g[0] === 'addressed' && list.length <= 3 ? '' : null }, h('summary', {}, 'Show or hide these ' + list.length)); sec.appendChild(holder); }
+        list.forEach(function (t, n) {
+          var long = (t.details || '').length > 280;
+          var row = h('div', { class: 'arow topic', 'data-testid': 'topic-row' },
+            h('div', { class: 'who' }, h('b', {}, (g[0] === 'on_agenda' ? (n + 1) + '. ' : '') + t.subject), h('small', {}, t.member_name + ' · ' + timeText(t.created_at) + (t.edited ? ' · edited ' + timeText(t.updated_at) : ''))),
+            long ? h('details', { class: 'topic-more' }, h('summary', {}, 'Read the details'), h('div', { class: 'topic-details' }, t.details)) : h('div', { class: 'topic-details' }, t.details));
+          if (manage) {
+            var acts = { submitted: [['on_agenda', 'Add to agenda', 'btn-rdr'], ['addressed', 'Addressed', 'btn-line']],
+              on_agenda: [['addressed', 'Addressed', 'btn-rdr'], ['submitted', 'Take off the agenda', 'btn-line']],
+              addressed: [['on_agenda', 'Back on the agenda', 'btn-line']], withdrawn: [] }[t.status] || [];
+            if (acts.length) row.appendChild(h('div', { class: 'row-btns' }, acts.map(function (a) { return h('button', { type: 'button', class: a[2] + ' small-btn', onclick: function () { setStatus(t, a[0]); } }, a[1]); })));
+          }
+          if (t.status === 'withdrawn') row.appendChild(h('div', { class: 'small' }, 'The member withdrew this topic.'));
+          holder.appendChild(row);
+        });
+        body.appendChild(sec);
       });
+      if (!any) body.appendChild(h('p', { 'data-testid': 'topics-empty' }, 'No topics match.'));
+      if (!manage) body.appendChild(h('p', { class: 'small' }, 'Only the President, Secretary or Treasurer change a topic’s status.'));
     });
   }
   function drawNominationsAdmin(body) {
@@ -1470,7 +1496,6 @@
     sb.rpc('club_agm_nominations_admin', { p_meeting: am().meeting.id }).then(function (r) {
       body.textContent = '';
       if (r.error) { body.appendChild(h('p', { class: 'err' }, words(r.error))); return; }
-      body.appendChild(deadlineLine('nominations', 'New nominations', function () { body.textContent = ''; drawNominationsAdmin(body); }));
       body.appendChild(h('p', { class: 'small' }, 'Nominations prepare the candidate list. They never change who holds an office: that is decided by the vote at the AGM.'));
       (r.data.offices || []).forEach(function (o) {
         var n = function (st) { return o.nominations.filter(function (x) { return x.status === st; }).length; };
@@ -2108,6 +2133,12 @@
     var head = h('section', { class: 'card-panel no-print', 'data-testid': 'exec-meeting-head' }, meetingHeader(a, true),
       h('div', { class: 'row-btns' }, h('button', { type: 'button', class: 'btn-line small-btn', onclick: function () { openMeeting(mt.id); } }, 'See it as a member'),
         h('button', { type: 'button', class: 'btn-line small-btn', onclick: function () { shareLink(meetingUrl(mt.id), mt.title); } }, 'Share the link')));
+    if (mt.kind !== 'vote' && !state.legacy) {
+      var dl = h('div', { class: 'deadlines', 'data-testid': 'deadlines' });
+      if (mt.kind === 'agm') dl.appendChild(deadlineLine('nominations', 'New nominations', execReload(mt)));
+      dl.appendChild(deadlineLine('topics', 'Topic submissions', execReload(mt)));
+      head.appendChild(dl);
+    }
     v.appendChild(head);
     v.appendChild(h('div', { class: 'filters no-print', role: 'group', 'aria-label': 'Section' }, sections.map(function (s) {
       return h('button', { type: 'button', 'aria-pressed': String(state.agmSection === s[0]), 'data-section': s[0], onclick: function () { state.agmSection = s[0]; render(); } }, s[1]);
