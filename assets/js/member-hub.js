@@ -23,7 +23,7 @@
   var statusTimer = null;
   var state = { session: null, profile: null, team: null, overview: null, agm: null, view: null, year: null, roster: null, filter: 'all', search: '',
     duesFor: null, agmRows: null, agmFilter: 'all', agmSearch: '', proxyPick: false, recovery: false, loading: false, training: null, trainingError: '', notices: null, noticesSeen: null, directory: null, clubEvents: null, clubEventsError: '', events: null, eventsError: '', results: null, myEvents: null, fighterId: undefined, site: null,
-    agmx: null, agmxError: '', topicForm: null, topicNotice: '', nomMode: null, nomOffice: null, nomTarget: '', nomNotice: '', agmSection: 'people', topicFilter: 'all',
+    leader: null, agmx: null, agmxError: '', topicForm: null, topicNotice: '', nomMode: null, nomOffice: null, nomTarget: '', nomNotice: '', agmSection: 'people', topicFilter: 'all',
     votes: null, votesError: '', voteTimer: null, voteForm: null, ballotsFor: null, ballots: null };
 
   var MEMBERSHIP = { pending: 'Pending', active: 'Active', inactive: 'Inactive', removed: 'Removed' };
@@ -269,7 +269,7 @@
           try { window.history.replaceState({ view: state.view }, '', window.location.pathname + '?view=' + encodeURIComponent(state.view)); } catch (e) { /* ignore */ }
           if (params.get('view') === 'agm-admin' && !rs[0].data.can_view_roster) status('Admin sign in: this account is not a current executive, so there are no admin tools. Your member page is shown instead.');
           render();
-          loadAgmx(); loadVotes(); loadFighter(); loadSite(); loadNotices();
+          loadLeader(false); loadAgmx(); loadVotes(); loadFighter(); loadSite(); loadNotices();
           if (myMembership()) ensureReaversPush(false);
         });
       });
@@ -458,7 +458,7 @@
     if (mine) tabs.push(['me', 'Me']);
     if (o.can_view_roster) tabs.push(['notices-admin', 'Notices', 'exec'], ['members', 'Members', 'exec'], ['agm-admin', 'AGM admin', 'exec'], ['proxies', 'Proxies', 'exec'], ['print', 'AGM voting list', 'exec'], ['history', 'Dues history', 'exec']);
     if (state.view === 'mine') state.view = mine ? 'me' : 'join';
-    var hiddenViews = ['agm'];   // reachable from cards even when not a tab
+    var hiddenViews = ['agm', 'leadership'];   // reachable from cards even when not a tab
     if (!tabs.some(function (t) { return t[0] === state.view; }) && hiddenViews.indexOf(state.view) < 0) state.view = tabs[0][0];
     var nav = $('tabs'); nav.textContent = ''; nav.hidden = false;
     var sheet = $('exec-sheet'), sheetList = sheet ? sheet.querySelector('.sheet-list') : null; if (sheetList) sheetList.textContent = '';
@@ -476,7 +476,7 @@
     if (!o.enabled) { v.appendChild(h('p', {}, 'Membership is not set up yet.')); return; }
     if (state.view !== 'agm' && state.agmx && (state.agmx.to_respond || []).length) v.appendChild(nominatedBanner());
     if (mine && state.view === 'home') v.appendChild(glanceCard());
-    ({ join: renderJoin, home: renderHome, me: renderMe, training: renderTraining, events: renderEvents, club: renderClub, 'notices-admin': renderNoticesAdmin, agm: renderAgm, members: renderMembers, 'agm-admin': renderAgmAdmin, proxies: renderProxies, print: renderPrint, history: renderHistory })[state.view](v);
+    ({ join: renderJoin, home: renderHome, me: renderMe, training: renderTraining, events: renderEvents, club: renderClub, 'notices-admin': renderNoticesAdmin, agm: renderAgm, leadership: renderLeadership, members: renderMembers, 'agm-admin': renderAgmAdmin, proxies: renderProxies, print: renderPrint, history: renderHistory })[state.view](v);
     if (T) updateVoteNow();
   }
   function go(view, opts) {
@@ -661,6 +661,64 @@
       m.status === 'pending' ? approvalAlertControl() : null,
       m.status === 'active' && !m.fee_waived && m.dues_status === 'unpaid' ? h('p', { class: 'small' }, 'Pay your ' + money(year ? year.dues_cents : null) + ' dues to the Treasurer; they record it here.') : null,
       agmSoon() ? h('button', { type: 'button', class: 'btn-rdr', onclick: function () { go('agm'); } }, 'Register for the ' + state.agm.meeting.year + ' AGM') : null));
+  }
+
+
+  // ================================================================ leadership meeting (invited members only)
+  // club_leadership_meeting returns meeting: null unless this member is on the invite list, so nobody else sees that it exists.
+  function leaderMeeting() { return state.leader && state.leader.meeting ? state.leader.meeting : null; }
+  function loadLeader(redraw) {
+    if (!state.team || !state.session) return Promise.resolve();
+    return sb.rpc('club_leadership_meeting', { p_team: state.team.id }).then(function (r) {
+      state.leader = r.error ? null : r.data;
+      if (redraw !== false) render();
+    });
+  }
+  function leaderMe() { var L = state.leader; return L ? (L.attendees || []).filter(function (x) { return x.membership_id === L.my_membership_id; })[0] : null; }
+  function leaderTile() {
+    var mt = leaderMeeting(); if (!mt) return null;
+    var me = leaderMe();
+    return h('button', { type: 'button', class: 'tile-b agm', 'data-testid': 'tile-leadership', onclick: function () { go('leadership'); } },
+      h('div', { class: 'tile-k' }, 'Leadership meeting'), h('div', { class: 'tile-big' }, mt.started ? 'Underway' : mt.local_time),
+      h('div', { class: 'small' }, mt.title + ' · ' + mt.local_date.replace(/^[A-Za-z]+, /, '')),
+      h('div', { class: 'tile-foot' }, me && me.attendance ? chip('active', ATTEND[me.attendance]) : chip('pending', 'Invited: open')));
+  }
+  function leaderCard() {
+    var mt = leaderMeeting(); if (!mt) return null;
+    return h('section', { class: 'card-panel', 'data-testid': 'leadership-card' },
+      h('h3', {}, mt.title), h('p', {}, (mt.started ? 'Underway now · ' : '') + mt.local_date + ' · ' + mt.local_time + ' · invited members only'),
+      h('button', { type: 'button', class: 'btn-rdr', onclick: function () { go('leadership'); } }, 'Open the leadership meeting'));
+  }
+  function renderLeadership(v) {
+    var L = state.leader, mt = leaderMeeting();
+    if (!mt) { v.appendChild(h('p', {}, 'No leadership meeting is open for you.')); return; }
+    var box = h('section', { class: 'card-panel', 'data-testid': 'leadership' },
+      h('div', { class: 'agm-head' }, h('div', { class: 'agm-kicker' }, 'RED DEER REAVERS LEADERSHIP'), h('h2', {}, mt.title)),
+      h('p', {}, mt.local_date + ' · ' + mt.local_time + (mt.location ? ' · ' + mt.location : '') + (mt.started ? ' · underway' : '')),
+      h('div', { class: 'held' }, h('b', {}, 'Invited only. '), 'This meeting is shown to the ' + (L.attendees || []).length + ' people invited to it and nobody else. Nothing decided here is binding: anything needing approval goes to a vote at the AGM.'),
+      mt.notes_link ? h('p', {}, h('a', { href: mt.notes_link, target: '_blank', rel: 'noopener' }, mt.notes_label || 'Shared notes for this meeting')) : null);
+    var att = h('section', { class: 'card-panel', 'data-testid': 'leadership-attendance' }, h('h3', {}, 'Who is here'),
+      L.can_manage ? h('p', { class: 'small' }, 'President, Secretary or Treasurer: mark each person as they join.') : null);
+    (L.attendees || []).forEach(function (x) {
+      var row = h('div', { class: 'arow' + (x.attendance && x.attendance !== 'absent' ? ' here' : ''), 'data-testid': 'leadership-row' },
+        h('div', { class: 'who' }, h('b', {}, x.name), x.offices && x.offices.length ? h('span', { class: 'small' }, ' · ' + x.offices.join(', ')) : null),
+        h('div', { class: 'chips' }, x.attendance ? chip(x.attendance === 'absent' ? '' : 'active', ATTEND[x.attendance]) : chip('pending', 'Not checked in')));
+      if (L.can_manage) row.appendChild(h('div', { class: 'checkin', role: 'group', 'aria-label': 'Attendance of ' + x.name },
+        [['present_in_person', 'Here'], ['present_video', 'Video'], ['absent', 'Absent']].map(function (s) {
+          return h('button', { type: 'button', class: 'small-btn ' + (x.attendance === s[0] ? 'btn-rdr' : 'btn-line'), 'aria-pressed': String(x.attendance === s[0]), onclick: function () {
+            sb.rpc('set_club_meeting_attendance', { p_meeting: mt.id, p_membership: x.membership_id, p_status: s[0] }).then(function (r) {
+              if (r.error) return status(words(r.error), true);
+              status(x.name + ': ' + ATTEND[s[0]] + '.'); loadLeader();
+            });
+          } }, s[1]);
+        })));
+      att.appendChild(row);
+    });
+    var ag = h('section', { class: 'card-panel', 'data-testid': 'leadership-agenda' }, h('h3', {}, 'Agenda'));
+    if (!(L.agenda || []).length) ag.appendChild(h('p', { class: 'small' }, 'No agenda items yet.'));
+    (L.agenda || []).forEach(function (t) { ag.appendChild(h('div', { class: 'arow' }, h('div', { class: 'who' }, h('b', {}, t.subject)), h('div', { class: 'topic-details' }, t.details))); });
+    v.appendChild(box); v.appendChild(att); v.appendChild(ag);
+    v.appendChild(h('button', { type: 'button', class: 'btn-line', onclick: function () { go('home'); } }, 'Back'));
   }
 
   // ================================================================ the AGM (member)
@@ -1744,6 +1802,7 @@
         h('div', { class: 'tile-k' }, a.meeting.year + ' AGM'), h('div', { class: 'tile-big' }, ms <= 0 ? 'Underway' : days <= 1 ? 'Tomorrow' : 'In ' + days + ' days'),
         h('div', { class: 'small' }, a.meeting.local_date.replace(/^[A-Za-z]+, /, '') + ' · ' + a.meeting.local_time), h('div', { class: 'tile-foot' }, resp ? chip('rsvp', RSVP_DONE[resp]) : chip('pending', 'RSVP needed'))));
     }
+    if (leaderMeeting()) { any = true; up.appendChild(leaderTile()); }
     var ev = (state.clubEvents && state.clubEvents.events || [])[0];
     if (ev) {
       any = true;
