@@ -1,12 +1,12 @@
 # Red Deer Reavers website
 
-This repository is the one Reavers website, served at https://dothecoolwip1.github.io/Red-deer-reavers/. It combines the public "Forged" site (formerly the separate `Reavers-Site` repository) with the members area and AGM tools (`members.html`, `agm.html`, see `MEMBERS_AREA.md`). The two frontend-only prototypes in `operations-prototype/` and `reavers-os-concept/` are concept work, not part of the site build.
+This repository is the one Reavers website, served at https://reddeerreavers.com/ (Vercel, from `main`). Old copies (GitHub Pages, `red-deer-reavers.vercel.app`, `www.`) forward to the same page there. It combines the public "Forged" site (formerly the separate `Reavers-Site` repository) with the members area and AGM tools (`members.html`, `agm.html`, see `MEMBERS_AREA.md`). The two frontend-only prototypes in `operations-prototype/` and `reavers-os-concept/` are concept work, not part of the site build.
 
 Public team website and lightweight team administration for the Red Deer Reavers in Central Alberta.
 
 ## Architecture
 
-- Static HTML, CSS, and JavaScript hosted on GitHub Pages
+- Static HTML, CSS, and JavaScript hosted on Vercel at reddeerreavers.com
 - Supabase PostgreSQL for practices, events, crew roster, site settings, and community inquiries
 - Supabase Edge Function `reavers-site-api` for public data and the password protected admin workflow
 - **BuhurtOS** (`buhurtos.js`) for fighter profiles: the Team page, home page fighter cards, `fighter.html` profiles, the company record, tournament results and events are read live from BuhurtOS's public API
