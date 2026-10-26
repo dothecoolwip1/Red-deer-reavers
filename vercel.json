@@ -3,6 +3,28 @@
   "outputDirectory": "_site",
   "redirects": [
     {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "www.reddeerreavers.com"
+        }
+      ],
+      "destination": "https://reddeerreavers.com/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "red-deer-reavers.vercel.app"
+        }
+      ],
+      "destination": "https://reddeerreavers.com/:path*",
+      "permanent": true
+    },
+    {
       "source": "/members-t.html",
       "destination": "/members.html",
       "permanent": false

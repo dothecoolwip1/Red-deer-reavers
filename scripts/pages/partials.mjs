@@ -29,6 +29,7 @@ export const head = ({ title, description, page, ogImage = 14, extra = "" }) => 
 <html lang="en">
 <head>
   <meta charset="utf-8">
+  <script>/* One address for the team site: old copies (GitHub Pages, *.vercel.app, www) go to the same page on reddeerreavers.com. */(function(l){var h=l.hostname;if(/(^|\\.)github\\.io$/.test(h)||h==="red-deer-reavers.vercel.app"||h==="reavers-site.vercel.app"||h==="www.reddeerreavers.com")l.replace("https://reddeerreavers.com"+l.pathname.replace(/^\\/(Red-deer-reavers|Reavers-Site)(?=\\/|$)/i,"")+l.search+l.hash)})(location)</script>
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#09070a">
   <meta name="color-scheme" content="dark">

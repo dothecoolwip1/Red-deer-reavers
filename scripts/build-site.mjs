@@ -72,7 +72,7 @@ await fs.writeFile(
   JSON.stringify(manifest, null, 2)
 );
 
-const siteUrl = (process.env.SITE_URL || "https://dothecoolwip1.github.io/Reavers-Site/").replace(/\/+$/, "") + "/";
+const siteUrl = (process.env.SITE_URL || "https://reddeerreavers.com/").replace(/\/+$/, "") + "/";
 const qrTargets = {
   home: siteUrl,
   join: new URL("training.html#start", siteUrl).href,

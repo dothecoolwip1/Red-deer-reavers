@@ -161,3 +161,8 @@ a.calendar-item{display:block;width:100%;margin:3px 0 0;padding:4px 5px;border-r
 .calendar-item.bos.past{opacity:.6}
 
 .panel-heading-sub{margin-top:22px}.panel-heading-sub h3{margin:0;font-family:"Grenze Gotisch",Georgia,serif;font-size:1.5rem}.bos-count{font-family:inherit;font-size:.9rem;font-weight:600;color:#c9bda6;margin-left:8px}
+
+/* Calendar days are tappable: a tap on a date adds an event that day */
+.calendar-day{cursor:pointer}
+button.calendar-date{width:100%;padding:0;border:0;background:none;font-family:inherit;text-align:left;cursor:pointer}
+button.calendar-item{cursor:pointer;font-family:inherit}

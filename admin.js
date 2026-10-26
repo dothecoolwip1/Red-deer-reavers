@@ -8,6 +8,8 @@
   const token=()=>sessionStorage.getItem(tokenKey)||"";
   const timeShort=value=>{if(!value)return"";const [h,m]=String(value).split(":").map(Number);if(Number.isNaN(h))return String(value);const suffix=h>=12?"PM":"AM";const hour=h%12||12;return `${hour}:${String(m||0).padStart(2,"0")} ${suffix}`};
   const dateLabel=value=>{if(!value)return"";const d=new Date(`${value}T12:00:00`);return new Intl.DateTimeFormat("en-CA",{weekday:"short",month:"short",day:"numeric",year:"numeric"}).format(d)};
+  // Today on the admin's own calendar (toISOString is UTC, which is already tomorrow on Alberta evenings)
+  const localToday=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`};
   const dayNames=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
   let toastTimer=null;
   // A roster record whose discipline is "hide-buhurtos:<fighter id>" keeps that BuhurtOS fighter off the public pages.
@@ -117,8 +119,8 @@
       const isToday=d.toDateString()===today.toDateString();
       const dayEvents=events.filter(e=>e.event_date===iso);
       const dayPractices=practices.filter(p=>Number(p.weekday)===d.getDay());
-      html+=`<div class="calendar-day${outside?" outside":""}${isToday?" today":""}" data-date="${iso}"><span class="calendar-date">${d.getDate()}</span>`;
-      for(const p of dayPractices)html+=`<span class="calendar-item practice" title="${esc(p.label)} practice">${esc(p.label)} practice</span>`;
+      html+=`<div class="calendar-day${outside?" outside":""}${isToday?" today":""}" data-date="${iso}"><button type="button" class="calendar-date" aria-label="Add an event on ${esc(dateLabel(iso))}">${d.getDate()}</button>`;
+      for(const p of dayPractices)html+=`<button type="button" class="calendar-item practice" data-edit-practice="${esc(p.id)}" title="${esc(p.label)} practice">${esc(p.label)} practice</button>`;
       for(const e of dayEvents)html+=`<button type="button" class="calendar-item ${esc(e.event_type||"other")}" data-edit-event="${esc(e.id)}" title="${esc(e.title)}">${esc(e.title)}</button>`;
       for(const e of bosEvents){
         if(iso<e.startsOn||iso>(e.endsOn||e.startsOn))continue;
@@ -217,7 +219,7 @@
 
     if(type==="event"){
       kicker.textContent="CALENDAR";title.textContent=item?"Edit event":"Add event";
-      const v=item||{event_type:"other",event_date:preset.event_date||new Date().toISOString().slice(0,10),is_public:true};
+      const v=item||{event_type:"other",event_date:preset.event_date||localToday(),is_public:true};
       fields.innerHTML=`
         <label>Event title<input name="title" maxlength="180" value="${esc(v.title||"")}" required></label>
         <div class="field-row"><label>Type<select name="event_type">${["tournament","demo","meeting","social","practice","other"].map(x=>`<option value="${x}"${v.event_type===x?" selected":""}>${x[0].toUpperCase()+x.slice(1)}</option>`).join("")}</select></label><label>Date<input type="date" name="event_date" value="${esc(v.event_date||"")}" required></label></div>
@@ -289,7 +291,8 @@
   $("[data-add-event]").addEventListener("click",()=>openEditor("event"));
   $("[data-add-roster]").addEventListener("click",()=>openEditor("roster"));
   $("[data-add-practice]").addEventListener("click",()=>openEditor("practice"));
-  $("[data-calendar-grid]").addEventListener("dblclick",event=>{const day=event.target.closest(".calendar-day");if(day&&!event.target.closest("[data-edit-event]"))openEditor("event",null,{event_date:day.dataset.date})});
+  // One tap on a date (or the empty part of its square) adds an event that day. Double-click never fires on phones.
+  $("[data-calendar-grid]").addEventListener("click",event=>{if(event.target.closest(".calendar-item"))return;const day=event.target.closest(".calendar-day");if(day)openEditor("event",null,{event_date:day.dataset.date})});
   document.addEventListener("click",event=>{
     const editEvent=event.target.closest("[data-edit-event]");if(editEvent){const item=state.data.events.find(x=>x.id===editEvent.dataset.editEvent);if(item)openEditor("event",item);return}
     const editRoster=event.target.closest("[data-edit-roster]");if(editRoster){const item=state.data.roster.find(x=>x.id===editRoster.dataset.editRoster);if(item)openEditor("roster",item);return}

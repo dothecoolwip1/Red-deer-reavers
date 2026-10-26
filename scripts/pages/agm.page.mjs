@@ -45,8 +45,8 @@ export default () => `${head({
         <form id="agm-form" method="POST">
           <input type="hidden" name="_subject" value="Red Deer Reavers AGM Submission">
           <input type="hidden" name="_template" value="table">
-          <input type="hidden" name="_url" value="https://red-deer-reavers.vercel.app/agm.html">
-          <input type="hidden" name="_next" value="https://red-deer-reavers.vercel.app/agm.html?submitted=1">
+          <input type="hidden" name="_url" value="https://reddeerreavers.com/agm.html">
+          <input type="hidden" name="_next" value="https://reddeerreavers.com/agm.html?submitted=1">
           <input type="text" name="_honey" style="display:none" tabindex="-1" autocomplete="off" aria-hidden="true" aria-label="Leave this field empty">
           <input type="hidden" id="submitted-as" name="Submitted As" value="Named or name left blank">
           <label class="fld">Your name (optional)<input id="member-name" name="Name" type="text" maxlength="100"></label>
