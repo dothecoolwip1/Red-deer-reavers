@@ -1,5 +1,5 @@
 // Shared page chrome for the Reavers site. `npm run pages` writes the root HTML files from scripts/pages/*.page.mjs.
-export const V = "27";
+export const V = "28";
 
 /** BuhurtOS is served from GitHub Pages. (buhurtos.ca is NOT a working address.) */
 export const BOS_SITE = "https://buhurt-os.vercel.app";
@@ -25,6 +25,12 @@ export const heroPicture = (portrait, landscape, { posPortrait = "50% 30%", posL
   return `<picture><source media="(orientation: portrait)" srcset="${set(portrait)}" sizes="100vw"><img src="assets/generated/gallery/image-${String(landscape).padStart(2, "0")}-1600.webp" srcset="${set(landscape)}" sizes="100vw" alt="" fetchpriority="high" decoding="async" style="--pos-portrait:${posPortrait};--pos-landscape:${posLandscape}"></picture>`;
 };
 
+/** The site's one public address. Canonical links, share cards and the sitemap use it. */
+export const SITE = "https://reddeerreavers.com";
+
+/** Public URL of a page. fighter.html is one page per fighter (?id=), so it has no single canonical address. */
+const pageUrl = page => page === "home" ? `${SITE}/` : page === "fighter" ? "" : `${SITE}/${page}.html`;
+
 export const head = ({ title, description, page, ogImage = 14, extra = "" }) => `<!doctype html>
 <html lang="en">
 <head>
@@ -37,14 +43,24 @@ export const head = ({ title, description, page, ogImage = 14, extra = "" }) => 
   <meta property="og:title" content="${title}">
   <meta property="og:description" content="${description}">
   <meta property="og:type" content="website">
-  <meta property="og:image" content="assets/generated/gallery/image-${String(ogImage).padStart(2, "0")}-1200.webp">
+  <meta property="og:site_name" content="Red Deer Reavers">
+  <meta property="og:locale" content="en_CA">${pageUrl(page) ? `
+  <meta property="og:url" content="${pageUrl(page)}">` : ""}
+  <meta property="og:image" content="${SITE}/assets/generated/og/image-${String(ogImage).padStart(2, "0")}.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
   <meta name="twitter:card" content="summary_large_image">
-  <title>${title}</title>
+  <meta name="twitter:title" content="${title}">
+  <meta name="twitter:description" content="${description}">
+  <meta name="twitter:image" content="${SITE}/assets/generated/og/image-${String(ogImage).padStart(2, "0")}.jpg">
+  <title>${title}</title>${pageUrl(page) ? `
+  <link rel="canonical" href="${pageUrl(page)}">` : ""}
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="assets/crest-96.webp" type="image/webp">
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
   <link rel="preload" href="vendor/fonts/grenze-gotisch-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="vendor/fonts/cinzel-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="vendor/fonts/alegreya-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="styles.css?v=${V}">${extra}
 </head>
 <body data-page="${page}">

@@ -152,9 +152,9 @@ body.no-tabs #status{bottom:calc(16px + env(safe-area-inset-bottom))}
 #tabs button{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:50px;padding:4px 2px;border:0;border-radius:12px;background:none;color:var(--mb-text-3);
   font:inherit;font-size:.74rem;font-weight:700;white-space:nowrap;cursor:pointer;transition:color var(--mb-t) var(--mb-ease)}
 #tabs button .nav-ico{width:24px;height:24px}
-#tabs button[aria-selected="true"]{color:var(--mb-text)}
-#tabs button[aria-selected="true"] .nav-ico{color:var(--mb-primary)}
-#tabs button[aria-selected="true"]::after{content:"";width:18px;height:3px;border-radius:3px;background:var(--mb-primary);margin-top:1px}
+#tabs button[aria-current="page"]{color:var(--mb-text)}
+#tabs button[aria-current="page"] .nav-ico{color:var(--mb-primary)}
+#tabs button[aria-current="page"]::after{content:"";width:18px;height:3px;border-radius:3px;background:var(--mb-primary);margin-top:1px}
 .nav-badge{position:absolute;top:4px;right:calc(50% - 24px);min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--mb-primary);color:var(--mb-on-primary);font-size:.68rem;font-weight:800;line-height:18px;text-align:center}
 body.kbd #tabs,body.kbd .vote-now{display:none}
 body.kbd .mb-main{padding-bottom:24px}
@@ -346,8 +346,8 @@ body.no-tabs .mb-main,body.no-tabs .mb-foot{padding-bottom:calc(24px + env(safe-
   .card-panel{padding:20px}
   #tabs{left:0;right:auto;top:calc(var(--mb-bar) + env(safe-area-inset-top));bottom:0;width:220px;grid-auto-flow:row;grid-auto-columns:auto;grid-auto-rows:max-content;align-content:start;gap:4px;padding:16px 12px;border-top:0;border-right:1px solid var(--mb-line);box-shadow:none;background:rgba(9,7,10,.6)}
   #tabs button{flex-direction:row;justify-content:flex-start;gap:12px;min-height:46px;padding:0 12px;font-size:.98rem}
-  #tabs button[aria-selected="true"]{background:rgba(214,168,76,.12)}
-  #tabs button[aria-selected="true"]::after{display:none}
+  #tabs button[aria-current="page"]{background:rgba(214,168,76,.12)}
+  #tabs button[aria-current="page"]::after{display:none}
   .nav-badge{position:static;margin-left:auto}
   #status{bottom:24px}
   .vote-now{bottom:0;left:220px}

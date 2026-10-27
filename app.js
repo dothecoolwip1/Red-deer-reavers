@@ -369,8 +369,10 @@
   if (crewSection && !crew.length) crewSection.hidden = true;
 
   const companyCount = fighters.length + crew.filter(m => !m.isExample).length;
-  document.querySelectorAll("[data-roster-count]").forEach(el => { el.textContent = companyCount ? String(companyCount) : "—"; });
-  document.querySelectorAll("[data-fighter-count]").forEach(el => { el.textContent = fighters.length ? String(fighters.length) : "—"; });
+  // Without BuhurtOS the fighters are missing, so any count would be too low: leave the number off instead.
+  const showCount = (el, n) => { el.textContent = !bosError && n ? String(n) : ""; el.hidden = !!bosError || !n; };
+  document.querySelectorAll("[data-roster-count]").forEach(el => showCount(el, companyCount));
+  document.querySelectorAll("[data-fighter-count]").forEach(el => showCount(el, fighters.length));
 
   // ---------- team record + results from BuhurtOS ----------
   const recordEl = document.querySelector("[data-team-record]");

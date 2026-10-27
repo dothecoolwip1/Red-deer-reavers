@@ -97,7 +97,7 @@
   function busy(btn, on) { btn.disabled = !!on; }
   // ================================================================ account: sign in, create account, forgot password
   function authTab(name) {
-    Array.prototype.forEach.call(document.querySelectorAll('[data-auth-tab]'), function (b) { b.setAttribute('aria-selected', String(b.getAttribute('data-auth-tab') === name)); });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-auth-tab]'), function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-auth-tab') === name)); });
     Array.prototype.forEach.call(document.querySelectorAll('[data-auth-panel]'), function (p) { p.hidden = p.getAttribute('data-auth-panel') !== name; });
     status('');
   }
@@ -444,7 +444,7 @@
     var selected = state.view === 'meeting' ? 'meetings' : state.view;
     tabs.forEach(function (t) {
       var unread = t[0] === 'home' && state.view !== 'home' ? unreadCount() : 0;
-      nav.appendChild(h('button', { type: 'button', 'aria-selected': String(selected === t[0]), 'data-nav': t[0], onclick: function () { go(t[0]); } }, icon(t[0]), h('span', {}, t[1]), unread ? h('span', { class: 'nav-badge', 'aria-label': unread + ' new notices' }, String(unread)) : null));
+      nav.appendChild(h('button', { type: 'button', 'aria-current': selected === t[0] ? 'page' : 'false', 'data-nav': t[0], onclick: function () { go(t[0]); } }, icon(t[0]), h('span', {}, t[1]), unread ? h('span', { class: 'nav-badge', 'aria-label': unread + ' new notices' }, String(unread)) : null));
     });
     var execBtn = $('exec-btn'); execBtn.hidden = !o.can_view_roster; execBtn.setAttribute('aria-pressed', String(isExec));
     var acct = $('account-btn'); acct.setAttribute('aria-pressed', String(state.view === 'account'));

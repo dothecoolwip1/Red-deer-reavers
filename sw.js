@@ -1,4 +1,4 @@
-const CACHE="reavers-forged-v34";
+const CACHE="reavers-forged-v35";
 const STATIC=[
   "./",
   "./index.html",
@@ -9,18 +9,18 @@ const STATIC=[
   "./community.html",
   "./media.html",
   "./social.html",
-  "./styles.css?v=27",
-  "./app.js?v=27",
-  "./team-data.js?v=27",
-  "./buhurtos.js?v=27",
+  "./styles.css?v=28",
+  "./app.js?v=28",
+  "./team-data.js?v=28",
+  "./buhurtos.js?v=28",
   "./members.html",
   "./members.webmanifest",
-  "./assets/members-app.css?v=2",
+  "./assets/members-app.css?v=3",
   "./assets/js/buhurtos-config.js",
   "./assets/js/member-portal.js",
   "./assets/js/vendor/supabase-js-2.117.2.umd.js",
-  "./fighter.js?v=27",
-  "./gallery.js?v=27",
+  "./fighter.js?v=28",
+  "./gallery.js?v=28",
   "./assets/icons.svg",
   "./assets/crest-96.webp",
   "./assets/crest-256.webp",
@@ -29,7 +29,7 @@ const STATIC=[
   "./vendor/fonts/cinzel-latin-wght-normal.woff2",
   "./vendor/fonts/alegreya-sans-latin-400-normal.woff2",
   "./vendor/fonts/alegreya-sans-latin-700-normal.woff2",
-  "./vendor/photoswipe/photoswipe.css?v=27",
+  "./vendor/photoswipe/photoswipe.css?v=28",
   "./vendor/photoswipe/photoswipe-lightbox.esm.js",
   "./vendor/photoswipe/photoswipe.esm.js"
 ];

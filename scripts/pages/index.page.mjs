@@ -1,11 +1,25 @@
-import { head, header, footer, dock, scripts, marquee, photo, heroPicture, icon } from "./partials.mjs";
+import { head, header, footer, dock, scripts, marquee, photo, heroPicture, icon, SITE, SOCIAL } from "./partials.mjs";
 
 export const file = "index.html";
 export default () => `${head({
   title: "Red Deer Reavers | Central Alberta Buhurt",
   description: "Red Deer Reavers: full-contact armoured combat (buhurt) in Central Alberta. Meet the fighters, see training times and events, and join a practice. No armour or experience needed.",
   page: "home",
-  ogImage: 14
+  ogImage: 14,
+  // Tells search engines who the team is and which social accounts are theirs.
+  extra: `
+  <script type="application/ld+json">${JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "SportsTeam",
+    name: "Red Deer Reavers",
+    alternateName: "Red Deer Reavers Guild",
+    sport: "Buhurt (full-contact armoured combat)",
+    url: `${SITE}/`,
+    logo: `${SITE}/assets/icon-512.png`,
+    email: "reddeerreavers@gmail.com",
+    location: { "@type": "Place", name: "Red Deer, Alberta", address: { "@type": "PostalAddress", addressLocality: "Red Deer", addressRegion: "AB", addressCountry: "CA" } },
+    sameAs: [SOCIAL.instagram, SOCIAL.facebook]
+  })}</script>`
 })}${header("home")}
 <main id="content">
   <section class="hero" aria-labelledby="hero-title">
@@ -36,15 +50,6 @@ export default () => `${head({
       </div>
       <div class="war-grid">
         <article class="plate plate-ember rivets war-card" data-reveal>
-          <div class="war-top"><span class="label"><i class="pulse" aria-hidden="true"></i> AGM vote</span><span class="war-date">Sun Oct 18 · 5:30 PM</span></div>
-          <h3>Vote at the AGM</h3>
-          <p>Members vote on their phone in the members area. Ballots are secret: nobody sees how you voted.</p>
-          <div class="war-actions">
-            <a class="text-link" href="members.html?view=agm">Sign in to vote ${icon("arrow")}</a>
-            <a class="text-link" href="agm.html">About the AGM ${icon("arrow")}</a>
-          </div>
-        </article>
-        <article class="plate rivets war-card" data-reveal>
           <div class="war-top"><span class="label"><i class="pulse" aria-hidden="true"></i> Next practice</span><span class="war-date" data-next-practice-date>Weekly</span></div>
           <h3 data-next-practice-title>Sunday practice</h3>
           <p data-next-practice-meta>5:00 PM to 8:00 PM · Springbrook Archery Centre</p>

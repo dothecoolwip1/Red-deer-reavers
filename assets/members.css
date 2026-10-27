@@ -134,3 +134,7 @@ fieldset.plain .check { margin: 4px 0; }
 @media (prefers-reduced-motion: reduce) { .fighter-nudge { animation: none; } }
 @media (max-width: 480px) { .fighter-nudge { display: block; padding: 14px 12px 12px; } .fn-crest { float: left; margin: 0 10px 2px 0; } .fn-crest svg { width: 40px; height: 53px; } .fn-acts { clear: both; } .fighter-nudge h2 { font-size: 1.15rem; } .fn-acts > * { flex: 1 1 100%; } }
 @media print { .no-print, .site-header, .site-footer, .dock, .members-hero { display: none !important; } body, .parchment { background: #fff !important; } .members-sheet { padding: 0; } .agm-count b, .agm-out span { color: #000; } }
+
+/* AGM page: start the hero below the fixed site header, so its first line is not hidden */
+.members-hero { padding-top: calc(var(--header-h) + 28px); }
+.members-title { margin: 0 0 14px; font-family: var(--font-display); font-size: clamp(2.9rem, 11vw, 5.4rem); font-weight: 900; line-height: .92; letter-spacing: 0; color: var(--bone); text-shadow: 0 8px 30px rgba(0,0,0,.6); }

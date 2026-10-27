@@ -91,6 +91,39 @@ for (const [name, url] of Object.entries(qrTargets)) {
 }
 await fs.writeFile(path.join(generatedQr, "links.json"), JSON.stringify(qrTargets, null, 2));
 
+// Link-preview images (Facebook, Messenger, Discord, texts): 1200x630 JPEG, the size and format every app shows.
+// Only the photos a page names in its og:image are made.
+const generatedOg = path.join(out, "assets", "generated", "og");
+await fs.mkdir(generatedOg, { recursive: true });
+const ogNumbers = new Set();
+for (const file of publicFiles.filter(name => name.endsWith(".html"))) {
+  const html = await fs.readFile(path.join(root, file), "utf8");
+  for (const match of html.matchAll(/assets\/generated\/og\/image-(\d+)\.jpg/g)) ogNumbers.add(Number(match[1]));
+}
+for (const number of ogNumbers) {
+  const source = path.join(galleryDir, `image (${number}).jpg`);
+  await sharp(source)
+    .rotate()
+    .resize({ width: 1200, height: 630, fit: "cover", position: "attention" })
+    .jpeg({ quality: 82, mozjpeg: true })
+    .toFile(path.join(generatedOg, `image-${String(number).padStart(2, "0")}.jpg`));
+}
+
+// Search engines: every public page, and keep Admin out.
+const siteOrigin = "https://reddeerreavers.com";
+const sitemapPages = ["", "team.html", "training.html", "events.html", "community.html", "media.html", "social.html", "about.html", "agm.html"];
+await fs.writeFile(path.join(out, "sitemap.xml"), `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${sitemapPages.map(page => `  <url><loc>${siteOrigin}/${page}</loc></url>`).join("\n")}
+</urlset>
+`);
+await fs.writeFile(path.join(out, "robots.txt"), `User-agent: *
+Disallow: /admin.html
+Disallow: /members-t.html
+
+Sitemap: ${siteOrigin}/sitemap.xml
+`);
+
 const htmlFiles = publicFiles.filter(file => file.endsWith(".html"));
 for (const file of htmlFiles) {
   const target = path.join(out, file);
@@ -130,4 +163,4 @@ for (const [from, to] of vendorCopies) {
   else await fs.copyFile(source, target);
 }
 
-console.log(`Built Reavers site: ${manifest.length} gallery images optimized, ${Object.keys(qrTargets).length} QR codes generated.`);
+console.log(`Built Reavers site: ${manifest.length} gallery images optimized, ${Object.keys(qrTargets).length} QR codes, ${ogNumbers.size} link-preview images, sitemap and robots.txt generated.`);
