@@ -2,7 +2,7 @@
 export const V = "27";
 
 /** BuhurtOS is served from GitHub Pages. (buhurtos.ca is NOT a working address.) */
-export const BOS_SITE = "https://buhurt-os.vercel.app";
+export const BOS_SITE = "https://buhurt-os.app";
 
 export const SOCIAL = {
   instagram: "https://www.instagram.com/red_deer_reavers/",

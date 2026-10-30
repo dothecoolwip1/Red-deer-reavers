@@ -36,17 +36,17 @@
     },
     {
       "source": "/BuhurtOS",
-      "destination": "https://buhurt-os.vercel.app/",
+      "destination": "https://buhurt-os.app/",
       "permanent": false
     },
     {
       "source": "/BuhurtOS/",
-      "destination": "https://buhurt-os.vercel.app/",
+      "destination": "https://buhurt-os.app/",
       "permanent": false
     },
     {
       "source": "/BuhurtOS/:path+",
-      "destination": "https://buhurt-os.vercel.app/:path+",
+      "destination": "https://buhurt-os.app/:path+",
       "permanent": false
     },
     {

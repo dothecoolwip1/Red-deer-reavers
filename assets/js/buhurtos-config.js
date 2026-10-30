@@ -5,7 +5,7 @@
 window.BUHURTOS = {
   supabaseUrl: 'https://mvbxlebznlgroptwwdsm.supabase.co',
   publishableKey: 'sb_publishable_u76M-dggKSsdsyhUQKveJg_5fPJ5Nan',
-  appUrl: 'https://buhurt-os.vercel.app',   // BuhurtOS has its own Vercel project; both sites sign in to the same BuhurtOS account system
+  appUrl: 'https://buhurt-os.app',   // BuhurtOS has its own Vercel project; both sites sign in to the same BuhurtOS account system
   teamSlug: 'red-deer-reavers',
   // The Red Deer Reavers bylaws (PDF in the club's Google Drive), linked from the sign-up and join screens.
   bylawsUrl: 'https://drive.google.com/file/d/1R9EDu7BpUZ1KM790BDNN0iIaXZYtUtCE/view?usp=drivesdk',

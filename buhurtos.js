@@ -11,7 +11,7 @@
   const CONFIG = {
     url: "https://mvbxlebznlgroptwwdsm.supabase.co",
     key: "sb_publishable_u76M-dggKSsdsyhUQKveJg_5fPJ5Nan",
-    site: "https://buhurt-os.vercel.app", // BuhurtOS on Vercel (buhurtos.ca is not a working address)
+    site: "https://buhurt-os.app", // BuhurtOS (buhurt-os.app; the old buhurt-os.vercel.app still works)
     teamSlug: "red-deer-reavers"
   };
   const CACHE_MS = 5 * 60 * 1000;
