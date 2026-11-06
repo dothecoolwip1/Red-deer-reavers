@@ -1,5 +1,23 @@
 (() => {
-  const API = "https://oztfcnrwrovzasftsdwa.supabase.co/functions/v1/reavers-site-api";
+  // The team's practices, calendar, roster records and inquiries live on the BuhurtOS home server (public.reavers_site).
+  const BACKEND = { url: "https://api-home.buhurtoshome.app", key: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiaWF0IjoxNzkzNjQyNTkwLCJleHAiOjE5NTEzMjI1OTB9.f3LpnSfDwX5tVAJPYXAtBGSVtlJTAJE16xjvd_2V_D4" };
+  const API = `${BACKEND.url}/rest/v1/rpc/reavers_site`;
+  // POST one action ({action, ...}) to BuhurtOS. token: a BuhurtOS sign-in (admin), otherwise the public key.
+  const call = async (body, token) => {
+    const response = await fetch(API, {
+      method: "POST",
+      cache: "no-store",
+      headers: { apikey: BACKEND.key, Authorization: `Bearer ${token || BACKEND.key}`, "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({ p: body || { action: "get" } })
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const error = new Error(payload.message || payload.error || `Request failed (${response.status})`);
+      error.status = response.status; error.code = payload.code;
+      throw error;
+    }
+    return payload;
+  };
   const fallback = {
     season: "2026",
     organization: "Red Deer Reavers",
@@ -48,11 +66,11 @@
 
   window.REAVERS_DATA = fallback;
   window.REAVERS_API = API;
+  window.REAVERS_BACKEND = BACKEND;
+  window.REAVERS_CALL = call;
   window.REAVERS_DATA_PROMISE = (async () => {
     try {
-      const response = await fetch(API, { headers: { Accept: "application/json" }, cache: "no-store" });
-      if (!response.ok) throw new Error(`Reavers data request failed: ${response.status}`);
-      const data = await response.json();
+      const data = await call({ action: "get" });
       const settings = data.settings || {};
       const practices = Array.isArray(data.practices) ? data.practices : [];
       const events = Array.isArray(data.events) ? data.events : [];

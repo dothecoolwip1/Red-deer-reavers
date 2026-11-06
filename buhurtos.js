@@ -9,8 +9,8 @@
  */
 (() => {
   const CONFIG = {
-    url: "https://mvbxlebznlgroptwwdsm.supabase.co",
-    key: "sb_publishable_u76M-dggKSsdsyhUQKveJg_5fPJ5Nan",
+    url: "https://api-home.buhurtoshome.app", // the BuhurtOS home server (the old cloud project mvbxlebznlgroptwwdsm is only a copy now)
+    key: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiaWF0IjoxNzkzNjQyNTkwLCJleHAiOjE5NTEzMjI1OTB9.f3LpnSfDwX5tVAJPYXAtBGSVtlJTAJE16xjvd_2V_D4", // anon key: public by design
     site: "https://buhurt-os.app", // BuhurtOS (buhurt-os.app; the old buhurt-os.vercel.app still works)
     teamSlug: "red-deer-reavers"
   };
