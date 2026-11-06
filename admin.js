@@ -1,11 +1,19 @@
 (()=>{
-  const API=window.REAVERS_API||"https://oztfcnrwrovzasftsdwa.supabase.co/functions/v1/reavers-site-api";
-  const tokenKey="reaversAdminToken";
+  // Team data lives on the BuhurtOS home server (public.reavers_site). Admins sign in with their BuhurtOS account; only a
+  // Red Deer Reavers captain (or the BuhurtOS owner) can change anything, enforced by the database, never by this page.
+  // The Members page and this page share one BuhurtOS sign-in (same site, same session).
   const state={data:null,calendarMonth:new Date(new Date().getFullYear(),new Date().getMonth(),1),editor:null,rosterSortable:null};
   const $=(selector,root=document)=>root.querySelector(selector);
   const $$=(selector,root=document)=>Array.from(root.querySelectorAll(selector));
   const esc=value=>String(value??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[ch]));
-  const token=()=>sessionStorage.getItem(tokenKey)||"";
+  const sb=()=>{
+    if(window.REAVERS_BOS_SB)return window.REAVERS_BOS_SB;
+    const cfg=window.BUHURTOS_CFG;
+    if(!window.supabase||!cfg)throw new Error("Could not reach BuhurtOS. Reload the page.");
+    window.REAVERS_BOS_SB=window.supabase.createClient(cfg.supabaseUrl,cfg.publishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,flowType:"pkce"}});
+    return window.REAVERS_BOS_SB;
+  };
+  const accessToken=async()=>{const {data}=await sb().auth.getSession();return data?.session?.access_token||""};
   const timeShort=value=>{if(!value)return"";const [h,m]=String(value).split(":").map(Number);if(Number.isNaN(h))return String(value);const suffix=h>=12?"PM":"AM";const hour=h%12||12;return `${hour}:${String(m||0).padStart(2,"0")} ${suffix}`};
   const dateLabel=value=>{if(!value)return"";const d=new Date(`${value}T12:00:00`);return new Intl.DateTimeFormat("en-CA",{weekday:"short",month:"short",day:"numeric",year:"numeric"}).format(d)};
   // Today on the admin's own calendar (toISOString is UTC, which is already tomorrow on Alberta evenings)
@@ -25,19 +33,16 @@
     toastTimer=setTimeout(()=>el.classList.remove("show"),2400);
   }
 
+  const NOT_CAPTAIN="This BuhurtOS account is not a Red Deer Reavers captain. Ask a captain to make you one on BuhurtOS.";
   async function api(body=null){
-    const options={method:body?"POST":"GET",headers:{"Content-Type":"application/json"},cache:"no-store"};
-    if(token())options.headers["x-reavers-admin"]=token();
-    if(body)options.body=JSON.stringify(body);
-    const response=await fetch(API,options);
-    const payload=await response.json().catch(()=>({}));
-    if(response.status===401&&body?.action!=="login"){
-      sessionStorage.removeItem(tokenKey);
-      showLogin("Admin session expired. Enter the password again.");
-      throw new Error("Session expired");
+    const token=await accessToken();
+    if(!token){showLogin("Sign in with your BuhurtOS account.");throw new Error("Not signed in")}
+    try{return await window.REAVERS_CALL(body||{action:"get"},token)}
+    catch(error){
+      if(error.status===401){showLogin("Your sign-in expired. Sign in again.");throw new Error("Session expired")}
+      if(error.code==="42501"){showLogin(NOT_CAPTAIN);throw error}
+      throw error;
     }
-    if(!response.ok)throw new Error(payload.error||`Request failed (${response.status})`);
-    return payload;
   }
 
   function showLogin(message=""){
@@ -52,6 +57,7 @@
 
   async function loadData(){
     state.data=await api();
+    if(!state.data.admin){showLogin(NOT_CAPTAIN);throw new Error("Not a captain")}
     renderAll();
     if(!state.bosRequested){state.bosRequested=true;loadBos()}
   }
@@ -279,12 +285,16 @@
   }
 
   $("[data-login-form]").addEventListener("submit",async event=>{
-    event.preventDefault();const form=event.currentTarget;const password=form.elements.password.value;
+    event.preventDefault();const form=event.currentTarget;
+    const email=String(form.elements.email.value||"").trim(),password=form.elements.password.value;
     const msg=$("[data-login-message]");msg.textContent="Checking…";
-    try{const result=await api({action:"login",password});sessionStorage.setItem(tokenKey,result.token);form.reset();showDashboard();await loadData();msg.textContent=""}
-    catch(error){msg.textContent=error.message}
+    try{
+      const {error}=await sb().auth.signInWithPassword({email,password});
+      if(error)throw new Error(/invalid/i.test(error.message)?"That email and password do not match a BuhurtOS account.":error.message);
+      form.reset();showDashboard();await loadData();msg.textContent="";
+    }catch(error){if(msg.textContent==="Checking…")msg.textContent=error.message}
   });
-  $("[data-logout]").addEventListener("click",()=>{sessionStorage.removeItem(tokenKey);showLogin();});
+  $("[data-logout]").addEventListener("click",async()=>{try{await sb().auth.signOut()}catch{}showLogin();});
   $$('[data-tab-button]').forEach(button=>button.addEventListener("click",()=>setTab(button.dataset.tabButton)));
   $("[data-calendar-prev]").addEventListener("click",()=>{state.calendarMonth=new Date(state.calendarMonth.getFullYear(),state.calendarMonth.getMonth()-1,1);renderCalendar()});
   $("[data-calendar-next]").addEventListener("click",()=>{state.calendarMonth=new Date(state.calendarMonth.getFullYear(),state.calendarMonth.getMonth()+1,1);renderCalendar()});
@@ -349,8 +359,9 @@
   });
 
   (async()=>{
-    if(!token()){showLogin();return}
-    try{showDashboard();await loadData()}catch{showLogin("Enter the team password to continue.")}
+    let token="";try{token=await accessToken()}catch{}
+    if(!token){showLogin();return}
+    try{showDashboard();await loadData()}catch{if($("[data-login-panel]").hidden)showLogin("Sign in with your BuhurtOS account to continue.")}
   })();
   // Team Admin › Roster › Club members (admin-members.js) shows a member on the public site through the same roster records as Add person
   window.REAVERS_ADMIN={api,loadData,roster:()=>state.data?.roster||[]};

@@ -448,13 +448,7 @@
     if (button) { button.disabled = true; button.textContent = "Sending…"; }
     if (status) status.textContent = "Sending your inquiry…";
     try {
-      const response = await fetch(window.REAVERS_API, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "community_inquiry_submit", item, website })
-      });
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(payload.error || "Could not send inquiry");
+      await window.REAVERS_CALL({ action: "community_inquiry_submit", item, website });
       communityForm.reset();
       if (status) status.textContent = "Thank you. Your inquiry is with the Reavers now, and we will follow up using the contact you gave.";
       if (button) button.textContent = "Inquiry sent";

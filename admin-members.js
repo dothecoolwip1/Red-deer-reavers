@@ -5,7 +5,7 @@
   var box = document.querySelector('[data-club-members]');
   if (!box || !window.supabase || !window.BUHURTOS_CFG) return;
   var CFG = window.BUHURTOS_CFG;
-  var sb = window.supabase.createClient(CFG.supabaseUrl, CFG.publishableKey, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false, flowType: 'pkce' } });
+  var sb = window.REAVERS_BOS_SB || (window.REAVERS_BOS_SB = window.supabase.createClient(CFG.supabaseUrl, CFG.publishableKey, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false, flowType: 'pkce' } }));
   var esc = function (v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[c]; }); };
   var note = function (html) { box.innerHTML = '<li><span>' + html + '</span></li>'; };
   var statusWord = function (s) { return s === 'active' ? 'Active member' : s === 'pending' ? 'Application pending' : s === 'inactive' ? 'Inactive' : s === 'removed' ? 'Removed' : (s || ''); };

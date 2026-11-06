@@ -3,8 +3,8 @@
 // These values are public by design: the URL and publishable key only identify the project. Every permission is enforced by the
 // BuhurtOS database (row-level security and checked database functions), never by this website.
 window.BUHURTOS = {
-  supabaseUrl: 'https://mvbxlebznlgroptwwdsm.supabase.co',
-  publishableKey: 'sb_publishable_u76M-dggKSsdsyhUQKveJg_5fPJ5Nan',
+  supabaseUrl: 'https://api-home.buhurtoshome.app',   // the BuhurtOS home server
+  publishableKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiaWF0IjoxNzkzNjQyNTkwLCJleHAiOjE5NTEzMjI1OTB9.f3LpnSfDwX5tVAJPYXAtBGSVtlJTAJE16xjvd_2V_D4',
   appUrl: 'https://buhurt-os.app',   // BuhurtOS has its own Vercel project; both sites sign in to the same BuhurtOS account system
   teamSlug: 'red-deer-reavers',
   // The Red Deer Reavers bylaws (PDF in the club's Google Drive), linked from the sign-up and join screens.

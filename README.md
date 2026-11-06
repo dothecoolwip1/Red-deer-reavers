@@ -7,8 +7,8 @@ Public team website and lightweight team administration for the Red Deer Reavers
 ## Architecture
 
 - Static HTML, CSS, and JavaScript hosted on Vercel at reddeerreavers.com
-- Supabase PostgreSQL for practices, events, crew roster, site settings, and community inquiries
-- Supabase Edge Function `reavers-site-api` for public data and the password protected admin workflow
+- Team data lives on the BuhurtOS home server (https://api-home.buhurtoshome.app), the same backend as buhurt-os.app
+- BuhurtOS home server (`public.reavers_site`) for practices, the calendar, roster records, site settings and community inquiries; the admin signs in with a BuhurtOS account and only Red Deer Reavers captains can edit
 - **BuhurtOS** (`buhurtos.js`) for fighter profiles: the Team page, home page fighter cards, `fighter.html` profiles, the company record, tournament results and events are read live from BuhurtOS's public API
 - Progressive Web App manifest and service worker for installable mobile use
 - GitHub Actions production build and quality checks

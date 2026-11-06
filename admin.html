@@ -17,10 +17,13 @@
         <img class="admin-logo" src="assets/crest-256.webp" alt="Red Deer Reavers logo">
         <p class="kicker">RED DEER REAVERS</p>
         <h1>Team Admin</h1>
-        <p class="login-copy">One shared team password. No usernames or account setup.</p>
+        <p class="login-copy">Sign in with your BuhurtOS account. Red Deer Reavers captains can edit the site.</p>
         <form data-login-form class="login-form">
-          <label>Password
-            <input type="password" name="password" autocomplete="current-password" required autofocus>
+          <label>Email
+            <input type="email" name="email" autocomplete="username" required autofocus>
+          </label>
+          <label>BuhurtOS password
+            <input type="password" name="password" autocomplete="current-password" required>
           </label>
           <button type="submit">Open admin</button>
           <p class="form-message" data-login-message aria-live="polite"></p>
@@ -172,12 +175,12 @@
   </dialog>
 
   <div class="toast" data-toast role="status" aria-live="polite"></div>
-  <script src="team-data.js?v=27"></script>
-  <script src="buhurtos.js?v=27"></script>
+  <script src="team-data.js?v=28"></script>
+  <script src="buhurtos.js?v=28"></script>
   <script src="vendor/sortable/Sortable.min.js?v=13" defer></script>
-  <script src="admin.js?v=28" defer></script>
+  <script src="admin.js?v=29" defer></script>
 <script src="assets/js/vendor/supabase-js-2.117.2.umd.js"></script>
 <script>window.BUHURTOS_CFG = window.BUHURTOS && window.BUHURTOS.config ? { supabaseUrl: window.BUHURTOS.config.url, publishableKey: window.BUHURTOS.config.key, appUrl: window.BUHURTOS.config.site, teamSlug: window.BUHURTOS.config.teamSlug } : null;</script>
-<script src="admin-members.js?v=2"></script>
+<script src="admin-members.js?v=3"></script>
 </body>
 </html>
