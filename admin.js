@@ -10,7 +10,7 @@
     if(window.REAVERS_BOS_SB)return window.REAVERS_BOS_SB;
     const cfg=window.BUHURTOS_CFG;
     if(!window.supabase||!cfg)throw new Error("Could not reach BuhurtOS. Reload the page.");
-    window.REAVERS_BOS_SB=window.supabase.createClient(cfg.supabaseUrl,cfg.publishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,flowType:"pkce"}});
+    window.REAVERS_BOS_SB=window.supabase.createClient(cfg.supabaseUrl,cfg.publishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,flowType:"pkce"}});
     return window.REAVERS_BOS_SB;
   };
   const accessToken=async()=>{const {data}=await sb().auth.getSession();return data?.session?.access_token||""};
@@ -294,6 +294,16 @@
       form.reset();showDashboard();await loadData();msg.textContent="";
     }catch(error){if(msg.textContent==="Checking…")msg.textContent=error.message}
   });
+  // Google / Discord: BuhurtOS sign-in, back to this page (reddeerreavers.com is an allowed return address on the BuhurtOS server)
+  $$("[data-oauth]").forEach(button=>button.addEventListener("click",async()=>{
+    const msg=$("[data-login-message]");msg.textContent="Opening sign-in…";
+    try{
+      const {error}=await sb().auth.signInWithOAuth({provider:button.dataset.oauth,options:{redirectTo:location.origin+location.pathname}});
+      if(error)throw error;
+    }catch(error){msg.textContent=error.message||"Could not open sign-in."}
+  }));
+  // Coming back from Google / Discord: the client finishes the sign-in from the URL, then open the dashboard
+  try{sb().auth.onAuthStateChange((event)=>{if(event==="SIGNED_IN"&&!$("[data-login-panel]").hidden){showDashboard();loadData().catch(()=>{})}})}catch{}
   $("[data-logout]").addEventListener("click",async()=>{try{await sb().auth.signOut()}catch{}showLogin();});
   $$('[data-tab-button]').forEach(button=>button.addEventListener("click",()=>setTab(button.dataset.tabButton)));
   $("[data-calendar-prev]").addEventListener("click",()=>{state.calendarMonth=new Date(state.calendarMonth.getFullYear(),state.calendarMonth.getMonth()-1,1);renderCalendar()});

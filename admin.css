@@ -166,3 +166,11 @@ a.calendar-item{display:block;width:100%;margin:3px 0 0;padding:4px 5px;border-r
 .calendar-day{cursor:pointer}
 button.calendar-date{width:100%;padding:0;border:0;background:none;font-family:inherit;text-align:left;cursor:pointer}
 button.calendar-item{cursor:pointer;font-family:inherit}
+
+/* Team Admin sign-in: Google and Discord (BuhurtOS accounts), above the email form */
+.oauth-buttons{display:grid;gap:10px;margin-top:22px}
+.oauth-button{display:flex;align-items:center;justify-content:center;gap:10px;min-height:48px;border:1px solid rgba(214,168,76,.32);border-radius:2px;background:#0d0a10;color:#f3ead7;font-weight:800;font-size:1rem;cursor:pointer}
+.oauth-button:hover,.oauth-button:focus-visible{border-color:#d6a84c}
+.oauth-or{display:flex;align-items:center;gap:10px;margin:18px 0 0;color:rgba(243,234,215,.6);font-size:.85rem}
+.oauth-or::before,.oauth-or::after{content:"";flex:1;height:1px;background:rgba(255,255,255,.12)}
+.oauth-buttons+.oauth-or+.login-form{margin-top:12px}
