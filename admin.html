@@ -8,7 +8,7 @@
   <meta name="robots" content="noindex,nofollow">
   <title>Team Admin | Red Deer Reavers</title>
   <link rel="icon" href="assets/crest-96.webp" type="image/webp">
-  <link rel="stylesheet" href="admin.css?v=28">
+  <link rel="stylesheet" href="admin.css?v=29">
 </head>
 <body>
   <main class="admin-shell">
@@ -18,6 +18,11 @@
         <p class="kicker">RED DEER REAVERS</p>
         <h1>Team Admin</h1>
         <p class="login-copy">Sign in with your BuhurtOS account. Red Deer Reavers captains can edit the site.</p>
+        <div class="oauth-buttons">
+          <button type="button" class="oauth-button" data-oauth="google"><svg aria-hidden="true" viewBox="0 0 24 24" width="20" height="20"><path d="M21.6 12.2c0-.7-.1-1.3-.2-1.9H12v3.7h5.4a4.6 4.6 0 0 1-2 3v2.5h3.2c1.9-1.7 3-4.3 3-7.3z" fill="#4285F4"/><path d="M12 22c2.7 0 5-.9 6.6-2.4l-3.2-2.5c-.9.6-2 1-3.4 1-2.6 0-4.8-1.8-5.6-4.1H3.1v2.6A10 10 0 0 0 12 22z" fill="#34A853"/><path d="M6.4 14a6 6 0 0 1 0-3.9V7.5H3.1a10 10 0 0 0 0 9z" fill="#FBBC05"/><path d="M12 6c1.5 0 2.8.5 3.8 1.5l2.9-2.9A10 10 0 0 0 3.1 7.5l3.3 2.6C7.2 7.8 9.4 6 12 6z" fill="#EA4335"/></svg>Continue with Google</button>
+          <button type="button" class="oauth-button" data-oauth="discord"><svg aria-hidden="true" viewBox="0 0 24 24" width="20" height="20"><path fill="#5865F2" d="M20.3 4.4A19.7 19.7 0 0 0 15.4 3l-.6 1.3a18.3 18.3 0 0 0-5.6 0L8.6 3a19.6 19.6 0 0 0-4.9 1.5C.6 9.1-.3 13.6.1 18.1a19.8 19.8 0 0 0 6 3l1.3-2.1a12.8 12.8 0 0 1-2-1l.5-.4a14.1 14.1 0 0 0 12.2 0l.5.4c-.6.4-1.3.7-2 1l1.3 2.1a19.7 19.7 0 0 0 6-3c.5-5.2-.8-9.7-3.6-13.7zM8 15.3c-1.2 0-2.2-1.1-2.2-2.4S6.8 10.5 8 10.5s2.2 1.1 2.2 2.4-1 2.4-2.2 2.4zm8 0c-1.2 0-2.2-1.1-2.2-2.4s1-2.4 2.2-2.4 2.2 1.1 2.2 2.4-1 2.4-2.2 2.4z"/></svg>Continue with Discord</button>
+        </div>
+        <p class="oauth-or"><span>or with email and password</span></p>
         <form data-login-form class="login-form">
           <label>Email
             <input type="email" name="email" autocomplete="username" required autofocus>
@@ -178,9 +183,9 @@
   <script src="team-data.js?v=28"></script>
   <script src="buhurtos.js?v=28"></script>
   <script src="vendor/sortable/Sortable.min.js?v=13" defer></script>
-  <script src="admin.js?v=29" defer></script>
+  <script src="admin.js?v=30" defer></script>
 <script src="assets/js/vendor/supabase-js-2.117.2.umd.js"></script>
 <script>window.BUHURTOS_CFG = window.BUHURTOS && window.BUHURTOS.config ? { supabaseUrl: window.BUHURTOS.config.url, publishableKey: window.BUHURTOS.config.key, appUrl: window.BUHURTOS.config.site, teamSlug: window.BUHURTOS.config.teamSlug } : null;</script>
-<script src="admin-members.js?v=3"></script>
+<script src="admin-members.js?v=4"></script>
 </body>
 </html>

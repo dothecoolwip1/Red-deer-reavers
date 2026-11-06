@@ -1,4 +1,4 @@
-const CACHE="reavers-forged-v35";
+const CACHE="reavers-forged-v36";
 const STATIC=[
   "./",
   "./index.html",
