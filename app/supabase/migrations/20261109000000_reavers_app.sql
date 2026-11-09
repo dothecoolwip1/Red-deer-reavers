@@ -1,5 +1,6 @@
 -- Reavers app (app.reddeerreavers.com): back-office tables for the Red Deer Reavers, in the BuhurtOS database.
--- Apply on the BuhurtOS project (the same one the members area and Team Admin sign in to). Not yet applied to production.
+-- Apply on the BuhurtOS home server (the database the members area and Team Admin sign in to), for example by copying it
+-- into the BuhurtOS repository's migrations. Not yet applied to production.
 --
 -- Roles come from data BuhurtOS already keeps; nothing new to assign:
 --   finance = BuhurtOS owner, a Reavers captain, or the current president or treasurer (team_officers, not ended)

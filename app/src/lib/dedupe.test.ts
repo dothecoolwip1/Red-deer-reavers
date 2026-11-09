@@ -10,8 +10,13 @@ describe("markDuplicates", () => {
     ];
     expect(markDuplicates(incoming, existing).map(r => r.duplicate)).toEqual([true, false]);
   });
-  it("flags a repeat inside the same file", () => {
-    const row = { date: "2026-11-01", description: "Dues", amount_cents: 6000 };
-    expect(markDuplicates([row, { ...row }], []).map(r => r.duplicate)).toEqual([false, true]);
+  it("keeps two identical lines in one export (two members paying the same dues the same day)", () => {
+    const row = { date: "2026-11-01", description: "e-Transfer", amount_cents: 6000 };
+    expect(markDuplicates([row, { ...row }], []).map(r => r.duplicate)).toEqual([false, false]);
+  });
+  it("matches each ledger line once, so re-importing the same export adds nothing and an extra copy is new", () => {
+    const row = { date: "2026-11-01", description: "e-Transfer", amount_cents: 6000 };
+    expect(markDuplicates([row, { ...row }], [row, row]).map(r => r.duplicate)).toEqual([true, true]);
+    expect(markDuplicates([row, { ...row }], [row]).map(r => r.duplicate)).toEqual([true, false]);
   });
 });

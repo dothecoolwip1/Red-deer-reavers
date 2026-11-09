@@ -78,6 +78,26 @@
   ],
   "rewrites": [
     {
+      "source": "/",
+      "has": [
+        {
+          "type": "host",
+          "value": "app.reddeerreavers.com"
+        }
+      ],
+      "destination": "/app/index.html"
+    },
+    {
+      "source": "/:path((?!app/).*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "app.reddeerreavers.com"
+        }
+      ],
+      "destination": "/app/:path"
+    },
+    {
       "source": "/members",
       "destination": "/members.html"
     },

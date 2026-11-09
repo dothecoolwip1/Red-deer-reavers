@@ -12,7 +12,7 @@ below were chosen without a reply and are easy to change.
 
 | Question | Default | Why |
 | --- | --- | --- |
-| Which Supabase project | The BuhurtOS project (same as the members area and Team Admin) | One sign-in; roles come from `team_officers` and captains already there |
+| Which Supabase project | The BuhurtOS home server (same as the members area and Team Admin) | One sign-in; roles come from `team_officers` and captains already there |
 | Bank feed | CSV import from online banking first; Plaid/Flinks later | Works with any bank, no contract, no stored bank credentials |
 | Payments | Stripe Payment Links + a webhook Edge Function that writes to the ledger; e-Transfers entered or imported from CSV | No card data touches the app |
 | Accounting software | Books kept in the app, with CSV export for an accountant | Nothing to buy now |

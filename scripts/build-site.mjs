@@ -130,4 +130,13 @@ for (const [from, to] of vendorCopies) {
   else await fs.copyFile(source, target);
 }
 
+// The Reavers app (app/), built by `npm run build:app`, is served at /app/ and at app.reddeerreavers.com (vercel.json).
+const appDist = path.join(root, "app", "dist");
+try {
+  await fs.access(path.join(appDist, "index.html"));
+  await fs.cp(appDist, path.join(out, "app"), { recursive: true });
+} catch {
+  console.warn("Reavers app not built (run npm run build:app); /app/ is left out of this build.");
+}
+
 console.log(`Built Reavers site: ${manifest.length} gallery images optimized, ${Object.keys(qrTargets).length} QR codes generated.`);
