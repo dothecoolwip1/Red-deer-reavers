@@ -18,3 +18,9 @@ ledger|Reimbursement: Member - Tape|-30000|reimbursement
 u3 waivers|1
 ERROR:  new row violates row-level security policy for table "objects"
 u5 receipts visible|0
+ERROR:  new row for relation "reavers_app_site_content" violates check constraint "reavers_app_site_content_check"
+site history|2
+ERROR:  new row violates row-level security policy for table "reavers_app_site_content"
+member history visible|0
+
+anon reads|Fight with the Reavers

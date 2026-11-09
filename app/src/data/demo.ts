@@ -70,7 +70,9 @@ function seed(): Db {
     ],
     gear_log: [],
     waivers: [],
-    incidents: []
+    incidents: [],
+    site_content: [],
+    site_content_history: []
   };
 }
 
@@ -87,6 +89,9 @@ export function demoStore(role: Role = "finance"): Store {
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(db)); } catch { /* ignore */ } };
   const session: Session = { mode: "demo", userId: ME, name: "Demo Treasurer", email: "demo@reddeerreavers.com", role };
   const rows = <T extends TableName>(t: T) => db[t] as Tables[T][];
+  const logSite = (row: Tables["site_content"], previous: string | null) => {
+    db.site_content_history.unshift({ id: id(), page: row.page, key: row.key, kind: row.kind, value: row.value ?? null, previous, original: row.original, changed_at: new Date().toISOString() });
+  };
   return {
     session,
     async list(t) {
@@ -96,6 +101,7 @@ export function demoStore(role: Role = "finance"): Store {
     },
     async insert(t, row) {
       const full = { id: id(), ...row } as Tables[typeof t];
+      if (t === "site_content") logSite(full as Tables["site_content"], null);
       if (t === "waivers") Object.assign(full, { user_id: ME, signed_at: new Date().toISOString() });
       if (t === "reimbursements") Object.assign(full, { submitted_by: ME, status: "submitted" });
       rows(t).unshift(full);
@@ -109,10 +115,13 @@ export function demoStore(role: Role = "finance"): Store {
     },
     async update(t, rowId, patch) {
       const row = rows(t).find(r => (r as { id: Id }).id === rowId);
+      if (t === "site_content" && row) logSite({ ...(row as Tables["site_content"]), ...(patch as object) }, (row as Tables["site_content"]).value);
       if (row) Object.assign(row, patch);
       save();
     },
     async remove(t, rowId) {
+      const gone = t === "site_content" ? db.site_content.find(r => r.id === rowId) : undefined;
+      if (gone) logSite({ ...gone, value: null as unknown as string }, gone.value);
       (db[t] as { id: Id }[]) = (db[t] as { id: Id }[]).filter(r => r.id !== rowId);
       save();
     },
@@ -145,6 +154,15 @@ export function demoStore(role: Role = "finance"): Store {
       save();
     },
     async uploadReceipt(file) { return `demo/${file.name}`; },
+    async uploadSiteImage(file) {
+      // Sample mode keeps the picture in the browser only (the live site accepts only https addresses).
+      return await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result));
+        reader.onerror = () => reject(new Error("Could not read the image"));
+        reader.readAsDataURL(file);
+      });
+    },
     async receiptUrl() { return null; },
     async signOut() { try { localStorage.removeItem(KEY); } catch { /* ignore */ } }
   };

@@ -48,3 +48,21 @@ insert into storage.objects(bucket_id,name) values ('reavers-app-receipts', :'u4
 insert into storage.objects(bucket_id,name) values ('reavers-app-receipts', :'u1' || '/r.jpg');
 \set ON_ERROR_STOP 1
 select set_config('test.uid', :'u5', false); select 'u5 receipts visible', count(*) from storage.objects;
+-- site editor: anon reads, members cannot write, exec writes, history kept, unsafe image values refused
+select set_config('test.uid', :'u3', false);
+insert into reavers_app_site_content(page, key, kind, value, original) values ('index.html', 'txt:abc', 'text', 'Fight with us', 'Train together.');
+update reavers_app_site_content set value = 'Fight with the Reavers' where key = 'txt:abc';
+\set ON_ERROR_STOP 0
+insert into reavers_app_site_content(page, key, kind, value) values ('index.html', 'img:x1', 'image', 'javascript:alert(1)');
+\set ON_ERROR_STOP 1
+select 'site history', count(*) from reavers_app_site_content_history;
+select set_config('test.uid', :'u4', false);
+\set ON_ERROR_STOP 0
+update reavers_app_site_content set value = 'hacked' where key = 'txt:abc';
+insert into reavers_app_site_content(page, key, kind, value) values ('index.html', 'txt:zz', 'text', 'x');
+\set ON_ERROR_STOP 1
+select 'member history visible', count(*) from reavers_app_site_content_history;
+reset role;
+set role anon;
+select set_config('test.uid', '', false);
+select 'anon reads', value from reavers_app_site_content;

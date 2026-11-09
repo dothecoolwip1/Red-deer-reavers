@@ -55,6 +55,13 @@ below were chosen without a reply and are easy to change.
     schedules the next one.
 11. **Grants**: pipeline (researching → drafting → submitted → awarded / declined → reporting) with amounts and deadlines.
 
+12. **Site editor** (added 2026-11-09 at Garrett's request): Wix-style click-to-edit for the public site's text and
+    pictures, with drafts, undo, publish, history and device previews. Public pages load `site-content.js`, which finds
+    text automatically (keyed by page + hash of the original wording), applies published values with `textContent`
+    only, and in the editor's frame (`?reavers-edit=1`) turns on click-to-edit over `postMessage` with origin checks.
+    Published values live in `reavers_app_site_content` (anyone reads, executive writes, every change logged to
+    `reavers_app_site_content_history`); uploaded pictures go to the public `reavers-site-media` bucket.
+
 ## Error handling
 
 Every database call surfaces its error in a toast; a missing table (migration not applied) switches to demo mode with a

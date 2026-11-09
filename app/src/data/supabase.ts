@@ -1,5 +1,5 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { RECEIPTS_BUCKET, SUPABASE_KEY, SUPABASE_URL, TABLE_PREFIX } from "./config";
+import { RECEIPTS_BUCKET, SITE_MEDIA_BUCKET, SUPABASE_KEY, SUPABASE_URL, TABLE_PREFIX } from "./config";
 import type { Id, Session, Store, TableName, Tables } from "./types";
 import { roleFrom, type Role } from "../lib/roles";
 
@@ -15,7 +15,8 @@ const table = (name: TableName) => supabase().from(TABLE_PREFIX + name);
 const ORDER: Partial<Record<TableName, [string, boolean]>> = {
   transactions: ["date", false], reimbursements: ["created_at", false], compliance: ["due", true], grants: ["deadline", true],
   sponsors: ["name", true], gear: ["name", true], incidents: ["date", false], waivers: ["signed_at", false],
-  budgets: ["category", true], payment_links: ["title", true], gear_log: ["at", false], sponsor_deliverables: ["due", true]
+  budgets: ["category", true], payment_links: ["title", true], gear_log: ["at", false], sponsor_deliverables: ["due", true],
+  site_content: ["updated_at", false], site_content_history: ["changed_at", false]
 };
 
 function fail(error: { message: string; code?: string } | null): void {
@@ -97,6 +98,13 @@ export function liveStore(session: Session): Store {
     async receiptUrl(path) {
       const { data, error } = await supabase().storage.from(RECEIPTS_BUCKET).createSignedUrl(path, 300);
       return error ? null : data.signedUrl;
+    },
+    async uploadSiteImage(file) {
+      const safe = file.name.replace(/[^\w.-]+/g, "-").slice(-80);
+      const path = `${new Date().getFullYear()}/${Date.now()}-${safe}`;
+      const { error } = await supabase().storage.from(SITE_MEDIA_BUCKET).upload(path, file, { contentType: file.type });
+      fail(error);
+      return supabase().storage.from(SITE_MEDIA_BUCKET).getPublicUrl(path).data.publicUrl;
     },
     async signOut() {
       await supabase().auth.signOut();

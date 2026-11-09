@@ -9,7 +9,7 @@
   "scripts": {
     "build": "npm run build:app && node scripts/build-site.mjs",
     "check": "node scripts/check-static.mjs",
-    "check:js": "node --check app.js && node --check admin.js && node --check team-data.js && node --check buhurtos.js && node --check fighter.js && node --check gallery.js && node --check sw.js",
+    "check:js": "node --check app.js && node --check admin.js && node --check team-data.js && node --check buhurtos.js && node --check site-content.js && node --check fighter.js && node --check gallery.js && node --check sw.js",
     "lighthouse": "lhci autorun",
     "a11y": "pa11y-ci --config .pa11yci.json",
     "pages": "node scripts/build-pages.mjs",

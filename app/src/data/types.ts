@@ -45,10 +45,18 @@ export type Incident = {
   id: Id; date: string; person: string; description: string; treatment: string | null; cleared_to_fight: boolean; reported_by: string | null;
 };
 
+export type SiteContent = {
+  id: Id; page: string; key: string; kind: "text" | "image"; value: string; original: string; updated_at?: string; updated_by?: string | null;
+};
+export type SiteHistory = {
+  id: Id; page: string; key: string; kind: "text" | "image"; value: string | null; previous: string | null; original: string; changed_at: string;
+};
+
 export type Tables = {
   transactions: Transaction; budgets: Budget; payment_links: PaymentLink; reimbursements: Reimbursement;
   reimbursement_approvals: Approval; sponsors: Sponsor; sponsor_deliverables: Deliverable; grants: Grant;
   compliance: Compliance; gear: Gear; gear_log: GearLog; waivers: Waiver; incidents: Incident;
+  site_content: SiteContent; site_content_history: SiteHistory;
 };
 export type TableName = keyof Tables;
 
@@ -67,5 +75,7 @@ export interface Store {
   rejectClaim(id: Id, note: string): Promise<void>;
   uploadReceipt(file: File): Promise<string>;
   receiptUrl(path: string): Promise<string | null>;
+  /** Uploads an image for the public website and returns its public address. */
+  uploadSiteImage(file: File): Promise<string>;
   signOut(): Promise<void>;
 }

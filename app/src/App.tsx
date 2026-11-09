@@ -17,6 +17,7 @@ import { Compliance } from "./pages/Compliance";
 import { Gear } from "./pages/Gear";
 import { Waivers } from "./pages/Waivers";
 import { Incidents } from "./pages/Incidents";
+import { SiteEditor } from "./pages/SiteEditor";
 
 type Nav = { path: string; label: string; need: Action; element: JSX.Element; group: string };
 const NAV: Nav[] = [
@@ -30,7 +31,8 @@ const NAV: Nav[] = [
   { path: "/waivers", label: "Waiver", need: "self.use", element: <Waivers />, group: "Safety" },
   { path: "/incidents", label: "Incidents", need: "self.use", element: <Incidents />, group: "Safety" },
   { path: "/gear", label: "Armory", need: "records.view", element: <Gear />, group: "Safety" },
-  { path: "/compliance", label: "Deadlines", need: "records.view", element: <Compliance />, group: "Society" }
+  { path: "/compliance", label: "Deadlines", need: "records.view", element: <Compliance />, group: "Society" },
+  { path: "/site", label: "Site editor", need: "records.edit", element: <SiteEditor />, group: "Society" }
 ];
 
 type Gate =

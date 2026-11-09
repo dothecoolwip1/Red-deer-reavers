@@ -1,7 +1,7 @@
 # Reavers app (app.reddeerreavers.com)
 
 The club's back office: ledger, bank CSV import, receipts, reimbursements, budget, Stripe payment links, sponsors,
-grants, waivers, incidents, the armory and a deadlines calendar. Design: `docs/superpowers/specs/2026-11-09-reavers-app-design.md`.
+grants, waivers, incidents, the armory, a deadlines calendar and a click-to-edit **site editor** for reddeerreavers.com. Design: `docs/superpowers/specs/2026-11-09-reavers-app-design.md`.
 
 People sign in with their BuhurtOS account (Google, Discord or email), the same one as the members area. What they can do
 comes from BuhurtOS, so there is nothing new to assign:
@@ -28,9 +28,10 @@ Until the migration below is applied, a signed-in person sees sample data with a
 
 ## Go live (one-time)
 
-1. **Database.** Apply `supabase/migrations/20261109000000_reavers_app.sql` on the BuhurtOS home server (copy it into the
-   BuhurtOS repository's migrations, or run it in the SQL editor). It only adds `reavers_app_*` tables, a private
-   `reavers-app-receipts` bucket and a few functions; nothing existing changes. To check it first against a local Postgres:
+1. **Database.** Apply `supabase/migrations/20261109000000_reavers_app.sql`, then `20261109010000_reavers_app_site_editor.sql`,
+   on the BuhurtOS home server (copy them into the BuhurtOS repository's migrations, or run them in the SQL editor). They
+   only add `reavers_app_*` tables, a private `reavers-app-receipts` bucket, a public `reavers-site-media` bucket and a few
+   functions; nothing existing changes. To check it first against a local Postgres:
    `PGHOST=... PGUSER=postgres supabase/tests/run.sh`.
 2. **Domain.** In the Vercel project for reddeerreavers.com, add the domain `app.reddeerreavers.com` and the DNS record
    Vercel asks for. `vercel.json` already serves the app there. It also works at `https://reddeerreavers.com/app/`.
@@ -50,3 +51,18 @@ Until the migration below is applied, a signed-in person sees sample data with a
   Transfers and the opening balance are left out of money-in and money-out totals.
 - **Reimbursements:** a member files with a receipt photo; treasury approves (two different people over $250, never
   your own) and marks it paid, which writes the expense to the ledger.
+
+## Site editor
+
+Society → Site editor shows a real page of reddeerreavers.com in a frame. Click any text to type over it, or click a
+picture to upload a new one; the panel on the right lists everything editable on the page, with search. Changes are
+drafts (kept in your browser, with Undo and Discard) until someone presses **Publish**. History shows every published
+change with "Restore this version". Desktop, tablet and phone previews show how it looks on each.
+
+How it works: `site-content.js`, loaded on every public page, finds the text and pictures by itself (no markup needed;
+each piece is named by its page and a fingerprint of its original wording) and applies what was published from the
+`reavers_app_site_content` table, as plain text only. Text filled in live (practices, events, the roster) isn't editable
+here; it comes from Team Admin and BuhurtOS. If a developer later rewrites a sentence in the code, the old edit stops
+applying and the new wording shows. Only the executive can publish; anyone can read what was published.
+
+Click-to-edit needs this update deployed to reddeerreavers.com, because the editor talks to the script on the page.
