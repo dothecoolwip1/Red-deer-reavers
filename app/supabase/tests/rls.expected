@@ -1,0 +1,20 @@
+u1 role|finance
+u3 role|exec
+u4 role|member
+u5 role|none
+u3 sees ledger rows|1
+ERROR:  new row violates row-level security policy for table "reavers_app_transactions"
+u4 sees ledger rows|0
+u4 own claims|1
+ERROR:  Only the treasurer, president or a captain can approve
+ERROR:  new row for relation "reavers_app_waivers" violates check constraint "reavers_app_waivers_check"
+u5 claims visible|0
+ERROR:  new row violates row-level security policy for table "reavers_app_reimbursements"
+after u1|submitted
+after u2|approved
+paid tx|t
+ledger|Rent|-40000|manual
+ledger|Reimbursement: Member - Tape|-30000|reimbursement
+u3 waivers|1
+ERROR:  new row violates row-level security policy for table "objects"
+u5 receipts visible|0
