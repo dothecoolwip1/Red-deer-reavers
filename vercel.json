@@ -3,6 +3,11 @@
   "outputDirectory": "_site",
   "redirects": [
     {
+      "source": "/app",
+      "destination": "/app/",
+      "permanent": false
+    },
+    {
       "source": "/:path*",
       "has": [
         {

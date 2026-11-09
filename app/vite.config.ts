@@ -1,9 +1,9 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
-// Served at reddeerreavers.com/app/ and, through a host rewrite in vercel.json, at app.reddeerreavers.com.
+// Relative paths: served at reddeerreavers.com/app/ and, through a host rewrite in vercel.json, at app.reddeerreavers.com.
 export default defineConfig({
-  base: "/app/",
+  base: "./",
   plugins: [react()],
   build: { outDir: "dist", emptyOutDir: true },
   test: { environment: "node" }
