@@ -11,6 +11,9 @@ import { Ledger } from "./pages/Ledger";
 import { Claims } from "./pages/Claims";
 import { Budgets } from "./pages/Budgets";
 import { Pay } from "./pages/Pay";
+import { Buy } from "./pages/Buy";
+import { Sales } from "./pages/Sales";
+import { Dues } from "./pages/Dues";
 import { Sponsors } from "./pages/Sponsors";
 import { Grants } from "./pages/Grants";
 import { Compliance } from "./pages/Compliance";
@@ -34,6 +37,8 @@ const NAV: Nav[] = [
   { path: "/claims", label: "Reimbursements", need: "self.use", element: <Claims />, group: "Money" },
   { path: "/budget", label: "Budget", need: "money.view", element: <Budgets />, group: "Money" },
   { path: "/pay", label: "Pay the club", need: "self.use", element: <Pay />, group: "Money" },
+  { path: "/sales", label: "Square sales", need: "money.view", element: <Sales />, group: "Money" },
+  { path: "/dues", label: "Dues", need: "money.view", element: <Dues />, group: "Money" },
   { path: "/sponsors", label: "Sponsors", need: "records.view", element: <Sponsors />, group: "Growth" },
   { path: "/grants", label: "Grants", need: "records.view", element: <Grants />, group: "Growth" },
   { path: "/waivers", label: "Waiver", need: "self.use", element: <Waivers />, group: "Safety" },
@@ -55,7 +60,20 @@ type Gate =
   | { kind: "not-member"; session: Session }
   | { kind: "ready"; store: Store; note?: string };
 
+const isOpenPayPage = () => /^#\/buy(\?|$)/.test(window.location.hash);
+
 export function App() {
+  const [open, setOpen] = useState(isOpenPayPage);
+  useEffect(() => {
+    const onHash = () => setOpen(isOpenPayPage());
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
+  }, []);
+  // The open pay page needs no sign-in, so it skips the gate entirely.
+  return open ? <ToastHost><Buy /></ToastHost> : <SignedInApp />;
+}
+
+function SignedInApp() {
   const [gate, setGate] = useState<Gate>({ kind: "loading" });
 
   async function check() {

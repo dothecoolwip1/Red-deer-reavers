@@ -69,6 +69,42 @@ select 'anon reads', value from reavers_app_site_content;
 \set ON_ERROR_STOP 0
 select updated_by from reavers_app_site_content;
 \set ON_ERROR_STOP 1
+-- Square: anon sees only public items; finance manages items and dues; payments are written by the webhook only
+reset role;
+insert into reavers_app_square_items(title, kind, price_cents, public) values ('Visitor fee','visitor',500,true), ('Monthly dues','dues',3000,false);
+insert into reavers_app_square_payments(square_payment_id, paid_at, status, amount_cents, kind, member_user) values
+  ('P1', now(), 'COMPLETED', 3000, 'dues', '00000000-0000-0000-0000-000000000004'), ('P2', now(), 'COMPLETED', 500, 'other', null);
+insert into reavers_app_transactions(date, description, amount_cents, category, account, source, external_id) values
+  (current_date, 'Square: Other from card reader', 500, 'Other', 'Square', 'square', 'square-P2-other'),
+  (current_date, 'Square processing fee', -15, 'Fees', 'Square', 'square', 'square-P2-fee');
+set role anon;
+select 'anon items', string_agg(title, ',') from reavers_app_square_items;
+\set ON_ERROR_STOP 0
+select count(*) from reavers_app_square_payments;
+\set ON_ERROR_STOP 1
+reset role;
+set role authenticated;
+select set_config('test.uid', :'u4', false);
+select 'member items', count(*) from reavers_app_square_items;
+select 'member own payments', count(*) from reavers_app_square_payments;
+\set ON_ERROR_STOP 0
+insert into reavers_app_dues(member_key, member_name, month, method) values ('user:x', 'Me', '2026-11-01', 'cash');
+insert into reavers_app_square_payments(square_payment_id, paid_at, status, amount_cents, kind) values ('FAKE', now(), 'COMPLETED', 1, 'other');
+select reavers_app_square_set_kind((select id from reavers_app_square_payments where square_payment_id = 'P2'), 'visitor');
+\set ON_ERROR_STOP 1
+select set_config('test.uid', :'u3', false);
+select 'exec payments', count(*) from reavers_app_square_payments;
+select set_config('test.uid', :'u1', false);
+insert into reavers_app_dues(member_key, member_name, member_user, month, method, amount_cents) values ('membership:1', 'Mem Ber', :'u4', '2026-11-01', 'cash', 3000);
+\set ON_ERROR_STOP 0
+insert into reavers_app_dues(member_key, member_name, month, method) values ('membership:1', 'Mem Ber', '2026-11-01', 'cash');
+insert into reavers_app_dues(member_key, member_name, month, method) values ('membership:1', 'Mem Ber', '2026-11-15', 'cash');
+\set ON_ERROR_STOP 1
+select reavers_app_square_set_kind((select id from reavers_app_square_payments where square_payment_id = 'P2'), 'visitor');
+select 'relabelled', kind from reavers_app_square_payments where square_payment_id = 'P2';
+select 'ledger follows', category, amount_cents from reavers_app_transactions where external_id like 'square-P2-%' order by amount_cents;
+select set_config('test.uid', :'u4', false);
+select 'member own dues', count(*) from reavers_app_dues;
 -- attendance: exec only; the removal timer only through its functions; the bot functions only for the service role
 reset role;
 insert into public.club_memberships values ('10000000-0000-0000-0000-000000000004', :'u4');

@@ -3,11 +3,12 @@ import type { ClaimStatus } from "../lib/reimburse";
 import type { Recurrence } from "../lib/compliance";
 import type { WebsiteApi } from "./website";
 import type { AttendanceApi } from "./attendance";
+import type { Kind, PaymentItem, PaymentKind } from "../lib/square";
 
 export type Id = string;
 export type Transaction = {
   id: Id; date: string; description: string; amount_cents: number; category: string | null; account: string;
-  notes: string | null; receipt_path: string | null; source: "manual" | "csv" | "stripe" | "reimbursement"; created_at?: string;
+  notes: string | null; receipt_path: string | null; source: "manual" | "csv" | "stripe" | "square" | "reimbursement"; external_id?: string | null; created_at?: string;
 };
 export type Budget = { id: Id; year: number; category: string; kind: "income" | "expense"; amount_cents: number };
 export type PaymentLink = {
@@ -47,6 +48,21 @@ export type Incident = {
   id: Id; date: string; person: string; description: string; treatment: string | null; cleared_to_fight: boolean; reported_by: string | null;
 };
 
+export type SquareItem = {
+  id: Id; title: string; kind: Kind; description: string | null; price_cents: number; max_quantity: number; public: boolean; active: boolean; sort_order: number;
+};
+export type SquarePaymentRow = {
+  id: Id; square_payment_id: string; square_order_id: string | null; paid_at: string; status: string; amount_cents: number; fee_cents: number;
+  refunded_cents: number; kind: PaymentKind; summary: string; items: PaymentItem[]; channel: "online" | "in_person";
+  buyer_name: string | null; buyer_email: string | null; member_user: string | null; dues_month: string | null; receipt_url: string | null;
+};
+export type DuesMethod = "square" | "cash" | "etransfer" | "waived" | "other";
+export type Dues = {
+  id: Id; member_key: string; member_name: string; member_user: string | null; month: string; amount_cents: number; method: DuesMethod;
+  paid_on: string; square_payment_id: string | null; note: string | null;
+};
+export type CheckoutRequest = { item_id: Id; quantity: number; buyer_name: string; buyer_email: string; dues_month?: string | null; return_url: string };
+
 export type SiteContent = {
   id: Id; page: string; key: string; kind: "text" | "image"; value: string; original: string; updated_at?: string; updated_by?: string | null;
 };
@@ -59,6 +75,7 @@ export type Tables = {
   reimbursement_approvals: Approval; sponsors: Sponsor; sponsor_deliverables: Deliverable; grants: Grant;
   compliance: Compliance; gear: Gear; gear_log: GearLog; waivers: Waiver; incidents: Incident;
   site_content: SiteContent; site_content_history: SiteHistory;
+  square_items: SquareItem; square_payments: SquarePaymentRow; dues: Dues;
 };
 export type TableName = keyof Tables;
 
@@ -83,5 +100,9 @@ export interface Store {
   website: WebsiteApi;
   /** Who shows up to practices, tournaments, events and fundraisers, and the 3-month no-show policy. */
   attendance: AttendanceApi;
+  /** Starts a Square checkout and returns the address of Square's payment page. */
+  checkout(req: CheckoutRequest): Promise<string>;
+  /** Treasury re-labels what a Square payment was for; its ledger lines follow. */
+  setPaymentKind(id: Id, kind: Kind): Promise<void>;
   signOut(): Promise<void>;
 }

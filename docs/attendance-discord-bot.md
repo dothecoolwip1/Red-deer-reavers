@@ -8,7 +8,7 @@ Everything below happens on the BuhurtOS home server (self-hosted Supabase at `a
 
 ## 1. Database
 
-Apply `app/supabase/migrations/20261110000000_reavers_app_attendance.sql` to the home server, the same way as the other
+Apply `app/supabase/migrations/20261110010000_reavers_app_attendance.sql` to the home server, the same way as the other
 `reavers_app_*` files (Studio → SQL editor, or `psql -f`). It only adds new `reavers_app_*` tables, a view and functions.
 Check it first against a throwaway Postgres with `PGHOST=... PGUSER=postgres app/supabase/tests/run.sh`.
 

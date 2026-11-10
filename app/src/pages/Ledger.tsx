@@ -3,7 +3,7 @@ import { CATEGORIES } from "../data/categories";
 import type { Transaction } from "../data/types";
 import { guessMapping, parseCsv, rowsToTransactions, type ColumnMapping } from "../lib/csv";
 import { markDuplicates } from "../lib/dedupe";
-import { isTransfer, withStripePayoutTransfers } from "../lib/transfers";
+import { isTransfer, withPayoutTransfers } from "../lib/transfers";
 import { formatMoney } from "../lib/money";
 import { Empty, Loading, Modal, Money, Page, Pill, RecordForm, dateLabel, downloadCsv, todayIso, useAction, useCan, useStore, useTable, type Field } from "../ui";
 
@@ -12,7 +12,7 @@ const FIELDS: Field[] = [
   { key: "amount_cents", label: "Amount (negative for money out)", type: "money", required: true, hint: "e.g. -400 for rent, 60 for dues" },
   { key: "description", label: "Description", required: true, wide: true },
   { key: "category", label: "Category", type: "select", options: CATEGORIES },
-  { key: "account", label: "Account", hint: "Chequing, Savings, Cash box, Stripe…" },
+  { key: "account", label: "Account", hint: "Chequing, Savings, Cash box, Square…" },
   { key: "notes", label: "Notes", type: "textarea" }
 ];
 
@@ -137,7 +137,7 @@ function ImportDialog({ existing, onClose, onDone }: { existing: Transaction[]; 
 
   return (
     <Modal title="Import a bank CSV" onClose={onClose}>
-      <p>In online banking, download the account activity as CSV, then pick the file. Lines already in the ledger are skipped, and Stripe payouts are booked as transfers because the payments were already recorded when they happened.</p>
+      <p>In online banking, download the account activity as CSV, then pick the file. Lines already in the ledger are skipped, and Square (or Stripe) payouts are booked as transfers because the payments were already recorded when they happened.</p>
       <input type="file" accept=".csv,text/csv" onChange={async e => {
         const file = e.target.files?.[0];
         if (!file) return;
@@ -166,7 +166,7 @@ function ImportDialog({ existing, onClose, onDone }: { existing: Transaction[]; 
           <div className="form-actions">
             <button className="primary" disabled={busy || fresh.length === 0} onClick={async () => {
               setBusy(true);
-              const ok = await run(() => store.insertMany("transactions", withStripePayoutTransfers(fresh.map(({ duplicate: _d, ...t }) => t), account).map(t => ({ ...t, source: "csv" as const }))), `Imported ${fresh.length} lines`);
+              const ok = await run(() => store.insertMany("transactions", withPayoutTransfers(fresh.map(({ duplicate: _d, ...t }) => t), account).map(t => ({ ...t, source: "csv" as const }))), `Imported ${fresh.length} lines`);
               setBusy(false);
               if (ok) { onClose(); await onDone(); }
             }}>Import {fresh.length} lines</button>

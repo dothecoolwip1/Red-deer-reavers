@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { PersonStatus } from "../lib/attendance";
 
 // Member attendance (reavers_app_people, reavers_app_gatherings, reavers_app_attendance) and the removal timer.
-// Design and rules: supabase/migrations/20261110000000_reavers_app_attendance.sql.
+// Design and rules: supabase/migrations/20261110010000_reavers_app_attendance.sql.
 
 export const GATHERING_KINDS = ["practice", "tournament", "event", "fundraiser"] as const;
 export type GatheringKind = (typeof GATHERING_KINDS)[number];

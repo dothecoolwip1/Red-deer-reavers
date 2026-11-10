@@ -310,3 +310,28 @@ button.link { background: none; border: 0; padding: 0; min-height: 0; color: var
 .checkin button span { width: 1.2em; color: var(--good); font-weight: 700; }
 .checkin button.here { background: #1f3d2b; border-color: var(--good); color: var(--bone); }
 @media (max-width: 820px) { .att-stats { grid-template-columns: repeat(2, 1fr); } }
+/* Square: pay cards, open pay page, sales and dues */
+.banner.good { background: #1d2e20; border-color: var(--good); color: #cfeed8; }
+.card.buy .form { margin-top: 4px; }
+.card.buy.open { border-color: var(--gilt); }
+.public-pay { max-width: 1040px; margin: 0 auto; padding: 0 16px 40px; }
+.public-head { display: flex; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--line); margin-bottom: 20px; }
+.stat.picked { border-color: var(--ember); background: #2a1c14; }
+button.stat { text-align: left; font: inherit; cursor: pointer; min-height: 0; justify-content: stretch; align-items: start; }
+.kind-pick { width: auto; min-height: 30px; padding: .15em .4em; font-size: .85rem; }
+.row-line { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.row-line:last-child { border-bottom: 0; }
+.table-wrap.dues-wrap { max-height: none; margin: 0 0 8px; }
+table.dues td { vertical-align: middle; }
+.dues-cell { text-align: center; width: 1%; padding: 6px 4px; }
+.dues-mark { min-height: 36px; min-width: 60px; padding: 2px 6px; display: inline-grid; gap: 0; line-height: 1.1; font-size: 1rem; }
+.dues-mark span { white-space: nowrap; font-size: .68rem; text-transform: uppercase; letter-spacing: .06em; }
+.dues-mark:disabled { opacity: 1; cursor: default; }
+.dues-mark.paid { color: var(--good); border-color: #2f6b45; background: #1a271d; }
+.dues-mark.waived { color: var(--info); border-color: #3a4a7a; }
+.dues-mark.unpaid { color: var(--bad); border-color: #7a2d27; }
+.dues-mark.due { color: var(--mute); }
+.segmented button.on { background: var(--royal); color: #fff; }
+.segmented { flex-wrap: wrap; }
+@media (max-width: 820px) { .dues .older { display: none; } }
+@media (max-width: 820px) { .dues-mark { min-width: 50px; padding: 2px 3px; } .dues-mark span { font-size: .6rem; letter-spacing: .02em; } table.dues td:first-child { padding-right: 4px; } }

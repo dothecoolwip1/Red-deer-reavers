@@ -126,7 +126,7 @@ function MemberHome() {
         {(gear.rows || []).length === 0 ? <p className="muted">None on loan.</p> : <ul className="list">{gear.rows!.map(g => <li key={g.id}>{g.name}</li>)}</ul>}
       </article>
       <article className="card">
-        <h2>Pay dues or donate</h2>
+        <h2>Pay dues or buy</h2>
         <Link to="/pay">Payment options</Link>
       </article>
     </div>
