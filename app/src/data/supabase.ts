@@ -1,6 +1,6 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { RECEIPTS_BUCKET, SITE_MEDIA_BUCKET, SUPABASE_KEY, SUPABASE_URL, TABLE_PREFIX } from "./config";
-import type { Id, Session, Store, TableName, Tables } from "./types";
+import type { CheckoutRequest, Id, Session, SquareItem, Store, TableName, Tables } from "./types";
 import { roleFrom, type Role } from "../lib/roles";
 import { liveWebsite } from "./website";
 
@@ -17,8 +17,29 @@ const ORDER: Partial<Record<TableName, [string, boolean]>> = {
   transactions: ["date", false], reimbursements: ["created_at", false], compliance: ["due", true], grants: ["deadline", true],
   sponsors: ["name", true], gear: ["name", true], incidents: ["date", false], waivers: ["signed_at", false],
   budgets: ["category", true], payment_links: ["title", true], gear_log: ["at", false], sponsor_deliverables: ["due", true],
-  site_content: ["updated_at", false], site_content_history: ["changed_at", false]
+  site_content: ["updated_at", false], site_content_history: ["changed_at", false],
+  square_items: ["sort_order", true], square_payments: ["paid_at", false], dues: ["month", false]
 };
+
+/** Starts a Square checkout through the reavers-square-checkout function. Works signed in or not (the open pay page). */
+export async function startCheckout(req: CheckoutRequest): Promise<string> {
+  const { data, error } = await supabase().functions.invoke("reavers-square-checkout", { body: req });
+  if (error) {
+    // The function answers problems in words for the buyer ({ error }); show those rather than the HTTP status.
+    const ctx = (error as { context?: Response }).context;
+    const said = ctx && typeof ctx.json === "function" ? await ctx.json().then(b => b?.error as string | undefined, () => undefined) : undefined;
+    throw new Error(said || "Couldn't reach Square. Try again in a minute, or pay at the table.");
+  }
+  if (!data?.url) throw new Error(data?.error || "Square didn't start the checkout.");
+  return data.url as string;
+}
+
+/** What the club sells on the open pay page, for people who aren't signed in. */
+export async function publicItems(): Promise<SquareItem[]> {
+  const { data, error } = await supabase().from(TABLE_PREFIX + "square_items").select("*").eq("active", true).eq("public", true).order("sort_order");
+  fail(error);
+  return (data || []) as SquareItem[];
+}
 
 function fail(error: { message: string; code?: string } | null): void {
   if (error) throw Object.assign(new Error(error.message), { code: error.code });
@@ -108,6 +129,11 @@ export function liveStore(session: Session): Store {
       return supabase().storage.from(SITE_MEDIA_BUCKET).getPublicUrl(path).data.publicUrl;
     },
     website: liveWebsite(supabase),
+    checkout: startCheckout,
+    async setPaymentKind(id, kind) {
+      const { error } = await supabase().rpc("reavers_app_square_set_kind", { p_payment: id, p_kind: kind });
+      fail(error);
+    },
     async signOut() {
       await supabase().auth.signOut();
     }

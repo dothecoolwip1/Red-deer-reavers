@@ -2,9 +2,10 @@ import type { Id, Session, Store, TableName, Tables } from "./types";
 import { approvalState, canApprove } from "../lib/reimburse";
 import type { Role } from "../lib/roles";
 import { demoWebsite } from "./website";
+import { LEDGER_CATEGORY, paymentRecord, ledgerLines, type Kind, type SquarePayment, type SquareOrder } from "../lib/square";
 
 // Sample data for trying the app without signing in or before the database is set up. Nothing here reaches the database.
-const KEY = "reavers-app-demo-v1";
+const KEY = "reavers-app-demo-v2";
 const ME = "demo-user";
 const today = new Date();
 const day = (offset: number) => {
@@ -73,16 +74,70 @@ function seed(): Db {
     waivers: [],
     incidents: [],
     site_content: [],
-    site_content_history: []
+    site_content_history: [],
+    ...squareSeed()
   };
+}
+
+const monthIso = (offset: number) => {
+  const d = new Date(today.getFullYear(), today.getMonth() + offset, 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-01`;
+};
+
+/** A month of sample Square activity: an event day at the card reader, online registrations and dues. */
+function squareSeed(): Pick<Db, "square_items" | "square_payments" | "dues"> {
+  const item = (title: string, kind: Kind, price_cents: number, extra: Partial<Tables["square_items"]> = {}) =>
+    ({ id: id(), title, kind, description: null, price_cents, max_quantity: 1, public: true, active: true, sort_order: 0, ...extra });
+  const square_items = [
+    item("Tournament registration", "tournament", 4000, { description: "One fighter, one tournament day. Bring your own kit or ask about loaners.", sort_order: 1 }),
+    item("Event visitor fee", "visitor", 500, { description: "Spectator entry for a Reavers event. Kids under 12 free.", max_quantity: 10, sort_order: 2 }),
+    item("Reavers sticker", "sticker", 300, { description: "Weatherproof vinyl crest sticker.", max_quantity: 20, sort_order: 3 }),
+    item("Fighter trading cards (pack of 5)", "trading_card", 500, { description: "Five random Reavers fighter cards.", max_quantity: 20, sort_order: 4 }),
+    item("Monthly dues", "dues", 3000, { description: "Practice, coaching and team armour for the month.", public: false, sort_order: 5 })
+  ];
+  const known = square_items.map(i => ({ title: i.title, kind: i.kind }));
+  const pay = (n: number, offset: number, total: number, fee: number, lines: [string, number, number][], meta?: Record<string, string>, email?: string): Tables["square_payments"] => {
+    const p: SquarePayment = { id: `sq-demo-${n}`, status: "COMPLETED", created_at: `${day(offset)}T19:${String(10 + n).padStart(2, "0")}:00Z`, order_id: `ord-${n}`, total_money: { amount: total }, processing_fee: [{ amount_money: { amount: fee } }], buyer_email_address: email ?? null, receipt_url: "https://squareup.com/receipt/preview/sample" };
+    const o: SquareOrder = { id: `ord-${n}`, metadata: meta ?? null, line_items: lines.map(([name, q, amt]) => ({ name, quantity: String(q), total_money: { amount: amt } })) };
+    return { id: id(), refunded_cents: 0, ...paymentRecord(p, o, known) } as Tables["square_payments"];
+  };
+  const square_payments = [
+    pay(1, -1, 4000, 116, [["Tournament registration", 1, 4000]], { reavers_kind: "tournament", buyer_name: "Riley Hart (sample)" }, "riley@example.com"),
+    pay(2, -1, 3000, 87, [["Monthly dues", 1, 3000]], { reavers_kind: "dues", buyer_name: "Sam Okafor (sample)", user_id: "00000000-0000-0000-0000-0000000000a1", dues_month: monthIso(0).slice(0, 7) }, "sam@example.com"),
+    pay(3, -4, 1500, 40, [["Event visitor fee", 3, 1500]]),
+    pay(4, -4, 1400, 37, [["Reavers sticker", 3, 900], ["Fighter trading cards (pack of 5)", 1, 500]]),
+    pay(5, -4, 600, 16, [["Reavers sticker", 2, 600]]),
+    pay(6, -4, 1000, 27, [["Event visitor fee", 2, 1000]]),
+    pay(7, -4, 3000, 80, [["Monthly dues", 1, 3000]]),
+    pay(8, -6, 4000, 116, [["Tournament registration", 1, 4000]], { reavers_kind: "tournament", buyer_name: "Morgan Vale (sample)" }, "morgan@example.com"),
+    pay(9, -12, 2000, 54, [["Custom amount", 1, 2000]])
+  ];
+  const due = (member_key: string, member_name: string, offset: number, method: Tables["dues"]["method"], square_payment_id: string | null = null): Tables["dues"] =>
+    ({ id: id(), member_key, member_name, member_user: null, month: monthIso(offset), amount_cents: method === "waived" ? 0 : 3000, method, paid_on: day(offset * 30 - 2), square_payment_id, note: null });
+  const dues = [
+    { ...due("user:00000000-0000-0000-0000-0000000000a1", "Sam Okafor (sample)", 0, "square", "sq-demo-2"), member_user: "00000000-0000-0000-0000-0000000000a1", paid_on: day(-1) },
+    due("membership:m1", "Garrett (sample)", 0, "cash"),
+    due("membership:m1", "Garrett (sample)", -1, "etransfer"),
+    due("membership:m2", "Casey (sample)", -1, "square"),
+    due("membership:m2", "Casey (sample)", -2, "square"),
+    due("membership:m3", "Drew (sample)", 0, "waived"),
+    due("membership:m3", "Drew (sample)", -1, "waived"),
+    due("membership:m1", "Garrett (sample)", -2, "cash")
+  ];
+  return { square_items, square_payments, dues };
+}
+
+function withSquareLedger(db: Db): Db {
+  for (const p of db.square_payments) for (const l of ledgerLines(p)) db.transactions.push({ id: id(), receipt_path: null, ...l });
+  return db;
 }
 
 function load(): Db {
   try {
     const saved = localStorage.getItem(KEY);
-    if (saved) return { ...seed(), ...JSON.parse(saved) };
+    if (saved) return { ...withSquareLedger(seed()), ...JSON.parse(saved) };
   } catch { /* private mode or blocked storage: fall back to fresh sample data */ }
-  return seed();
+  return withSquareLedger(seed());
 }
 
 export function demoStore(role: Role = "finance"): Store {
@@ -166,6 +221,36 @@ export function demoStore(role: Role = "finance"): Store {
     },
     async receiptUrl() { return null; },
     website: demoWebsite(),
+    async checkout(req) {
+      // Sample mode has no Square: the payment "goes through" at once, the way the webhook would record it.
+      const item = db.square_items.find(i => i.id === req.item_id);
+      if (!item) throw new Error("That item isn't for sale any more.");
+      const n = Date.now();
+      const total = item.price_cents * req.quantity;
+      const meta: Record<string, string> = { reavers_kind: item.kind, buyer_name: req.buyer_name };
+      if (item.kind === "dues" && req.dues_month) meta.dues_month = req.dues_month.slice(0, 7);
+      const rec = paymentRecord(
+        { id: `sq-demo-${n}`, status: "COMPLETED", created_at: new Date().toISOString(), order_id: `ord-${n}`, total_money: { amount: total }, processing_fee: [{ amount_money: { amount: Math.round(total * 0.029) } }], buyer_email_address: req.buyer_email },
+        { id: `ord-${n}`, metadata: meta, line_items: [{ name: item.title, quantity: String(req.quantity), total_money: { amount: total }, metadata: { reavers_kind: item.kind } }] });
+      rec.member_user = ME;
+      db.square_payments.unshift({ id: id(), refunded_cents: 0, ...rec } as Tables["square_payments"]);
+      for (const l of ledgerLines(rec)) db.transactions.unshift({ id: id(), receipt_path: null, ...l });
+      if (rec.kind === "dues" && rec.dues_month) {
+        const key = db.dues.find(d => d.member_user === rec.member_user)?.member_key || `user:${rec.member_user}`;
+        if (!db.dues.some(d => d.member_key === key && d.month === rec.dues_month))
+          db.dues.unshift({ id: id(), member_key: key, member_name: req.buyer_name, member_user: rec.member_user, month: rec.dues_month, amount_cents: total, method: "square", paid_on: day(0), square_payment_id: rec.square_payment_id, note: null });
+      }
+      save();
+      return `${window.location.href.split("#")[0]}#/pay?paid=1`;
+    },
+    async setPaymentKind(payId, kind) {
+      const p = db.square_payments.find(x => x.id === payId);
+      if (!p) throw new Error("Payment not found");
+      p.kind = kind;
+      p.items = p.items.map(i => ({ ...i, kind }));
+      for (const t of db.transactions) if (t.external_id?.startsWith(`square-${p.square_payment_id}-`) && !t.external_id.endsWith("-fee")) t.category = LEDGER_CATEGORY[kind];
+      save();
+    },
     async signOut() { try { localStorage.removeItem(KEY); localStorage.removeItem("reavers-app-website-demo-v1"); } catch { /* ignore */ } }
   };
 }
