@@ -25,3 +25,18 @@ member history visible|0
 
 anon reads|Fight with the Reavers
 ERROR:  permission denied for table reavers_app_site_content
+anon items|Visitor fee
+ERROR:  permission denied for table reavers_app_square_payments
+member items|2
+member own payments|1
+ERROR:  new row violates row-level security policy for table "reavers_app_dues"
+ERROR:  permission denied for table reavers_app_square_payments
+ERROR:  Only treasury can change a payment
+exec payments|2
+ERROR:  duplicate key value violates unique constraint "reavers_app_dues_member_key_month_key"
+ERROR:  new row for relation "reavers_app_dues" violates check constraint "reavers_app_dues_month_check"
+
+relabelled|visitor
+ledger follows|Fees|-15
+ledger follows|Admissions|500
+member own dues|1
