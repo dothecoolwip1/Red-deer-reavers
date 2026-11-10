@@ -1,6 +1,9 @@
-do $$ begin if not exists (select from pg_roles where rolname=$q$anon$q$) then create role anon nologin; create role authenticated nologin; end if; end $$;
+do $$ begin if not exists (select from pg_roles where rolname=$q$anon$q$) then create role anon nologin; create role authenticated nologin; end if; if not exists (select from pg_roles where rolname=$q$service_role$q$) then create role service_role nologin bypassrls; end if; end $$;
 create schema auth; create schema private; create schema storage;
 create table auth.users(id uuid primary key);
+create table auth.identities(id uuid default gen_random_uuid(), user_id uuid, provider text, provider_id text);
+create table public.club_memberships(id uuid primary key, user_id uuid);
+create table public.fighter_accounts(fighter_id uuid, user_id uuid);
 create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('test.uid', true),'')::uuid $$;
 create table storage.buckets(id text primary key, name text, public boolean, file_size_limit bigint, allowed_mime_types text[]);
 create table storage.objects(id text primary key default gen_random_uuid()::text, bucket_id text, name text);

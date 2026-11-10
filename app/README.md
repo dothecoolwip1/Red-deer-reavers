@@ -1,6 +1,6 @@
 # Reavers app (app.reddeerreavers.com)
 
-The club's back office: ledger, bank CSV import, receipts, reimbursements, budget, Square payments and monthly dues, sponsors,
+The club's back office: member attendance and the 3-month no-show policy, ledger, bank CSV import, receipts, reimbursements, budget, Square payments and monthly dues, sponsors,
 grants, waivers, incidents, the armory, a deadlines calendar and a click-to-edit **site editor** for reddeerreavers.com. Design: `docs/superpowers/specs/2026-11-09-reavers-app-design.md`.
 
 People sign in with their BuhurtOS account (Google, Discord or email), the same one as the members area. What they can do
@@ -37,8 +37,10 @@ Until the migration below is applied, a signed-in person sees sample data with a
    Vercel asks for. `vercel.json` already serves the app there. It also works at `https://reddeerreavers.com/app/`.
 3. **Sign-in redirect.** Add `https://app.reddeerreavers.com/**` to the home server's auth redirect allow-list (next to
    `https://reddeerreavers.com/**`), so Google and Discord sign-in return to the app.
-4. **Square.** See "Turn on Square" below.
-5. **Stripe (optional, older).** Deploy `supabase/functions/reavers-stripe-webhook` with `--no-verify-jwt`, set
+4. **Attendance bot (optional).** Apply `20261110010000_reavers_app_attendance.sql`, then follow
+   `docs/attendance-discord-bot.md`.
+5. **Square.** See "Turn on Square" below.
+6. **Stripe (optional, older).** Deploy `supabase/functions/reavers-stripe-webhook` with `--no-verify-jwt`, set
    `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET`, and add the endpoint in Stripe for `checkout.session.completed`.
    Square replaces this; existing Stripe links still show under Pay the club → Other payment links.
 
@@ -92,6 +94,16 @@ One-time setup (about 20 minutes):
 
 To try it without real money first, do steps 2 to 4 with the **Sandbox** toggle instead, add `SQUARE_ENVIRONMENT=sandbox`,
 and pay with Square's test card 4111 1111 1111 1111.
+
+## Attendance
+
+Team → Attendance tracks who comes to practices, tournaments, events and fundraisers: how often each member shows up,
+when they started, their last practice, and the last time anyone heard from them. **Take attendance** starts a check-in
+where you tap everyone who's there. Anyone active and not seen for over 3 months is flagged (on the page, on Home and,
+once the bot is set up, in the leadership channel). A captain or executive can mark them away, log that they heard from
+them, or start a **removal timer** (14, 30 or 60 days); the Discord bot then messages them asking why, and their answer
+shows on their record. When the timer runs out, the executive keeps them or marks them removed. Nothing kicks anyone
+automatically. Executive only; the database enforces it. Bot setup: `docs/attendance-discord-bot.md`.
 
 ## How money flows
 
