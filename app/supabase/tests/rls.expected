@@ -40,6 +40,10 @@ relabelled|visitor
 ledger follows|Fees|-15
 ledger follows|Admissions|500
 member own dues|1
+ERROR:  new row for relation "reavers_app_dues_exemptions" violates check constraint "reavers_app_dues_exemptions_check"
+exec exemptions|1
+ERROR:  new row violates row-level security policy for table "reavers_app_dues_exemptions"
+member exemptions|0
 stats|Mem Ber|1|1|0|0|f
 stats|Regular|2|1|1|2|t
 ERROR:  permission denied for table reavers_app_people

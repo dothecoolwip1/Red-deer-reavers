@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { checkoutProblem, duesKey, kindOf, ledgerLines, paymentLinkBody, paymentRecord, splitByKind, squareSignature, validSignature } from "./square";
+import { checkoutFailure, checkoutProblem, duesKey, kindOf, ledgerLines, paymentLinkBody, paymentRecord, splitByKind, squareSignature, validSignature } from "./square";
 
 const known = [{ title: "Visitor fee", kind: "visitor" }, { title: "Reavers sticker", kind: "sticker" }];
 
@@ -102,5 +102,17 @@ describe("checkout", () => {
     expect(b.order.line_items[0]).toMatchObject({ name: "Monthly dues (November 2026)", quantity: "1", base_price_money: { amount: 3000, currency: "CAD" } });
     expect(b.order.metadata).toEqual({ reavers_kind: "dues", reavers_item: item.id, buyer_name: "Sam", user_id: "u1", dues_month: "2026-11" });
     expect(b.checkout_options.redirect_url).toBe(req.return_url);
+  });
+});
+
+describe("checkoutFailure", () => {
+  it("gives the buyer a 422 they can act on when Square refuses what they typed", () => {
+    expect(checkoutFailure(400, [{ category: "INVALID_REQUEST_ERROR", code: "INVALID_EMAIL_ADDRESS", field: "pre_populated_data.buyer_email" }]))
+      .toEqual({ status: 422, error: "Square didn't accept that email address. Check it and try again." });
+    expect(checkoutFailure(400, [{ category: "INVALID_REQUEST_ERROR", code: "INVALID_VALUE", field: "order.line_items[0].quantity" }]).status).toBe(422);
+  });
+  it("keeps 502 for outages, bad credentials and rate limits", () => {
+    for (const s of [500, 503, 401, 403, 429]) expect(checkoutFailure(s, [{ category: "API_ERROR" }]).status).toBe(502);
+    expect(checkoutFailure(200, undefined).status).toBe(502); // answered OK but without a link
   });
 });

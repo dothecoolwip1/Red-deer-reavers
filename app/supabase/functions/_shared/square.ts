@@ -199,3 +199,27 @@ export function paymentLinkBody(item: CheckoutItem, r: CheckoutRequest, location
     payment_note: `${item.title}${forMonth}: ${r.buyer_name.trim()}`.slice(0, 500)
   };
 }
+
+// ------------------------------------------------------------------ checkout errors
+
+export type SquareError = { category?: string; code?: string; detail?: string; field?: string };
+
+/**
+ * What the checkout function answers when Square refuses a payment link. Square rejecting what the buyer typed (a bad
+ * email address, say) is the buyer's to fix, so it gets a 422 with words they can act on. Anything else (Square down,
+ * a bad token, rate limits) is a 502. The Cloudflare tunnel in front of the home server swaps 502 bodies for its own
+ * error page, so only real outages should use it.
+ */
+export function checkoutFailure(status: number, errors: SquareError[] | undefined): { status: number; error: string } {
+  const outage = { status: 502, error: "Square didn't start the checkout. Try again in a minute, or pay at the table." };
+  if (status >= 500 || status === 401 || status === 403 || status === 429 || status < 400) return outage;
+  const list = errors || [];
+  const has = (re: RegExp) => list.some(e => re.test(`${e.code || ""} ${e.field || ""}`));
+  if (has(/EMAIL/i)) return { status: 422, error: "Square didn't accept that email address. Check it and try again." };
+  if (has(/PHONE/i)) return { status: 422, error: "Square didn't accept that phone number. Check it and try again." };
+  if (has(/NAME|NOTE/i)) return { status: 422, error: "Square didn't accept that name. Try a shorter one without symbols." };
+  if (list.some(e => e.category === "INVALID_REQUEST_ERROR") || status === 400 || status === 422) {
+    return { status: 422, error: "Square couldn't start this checkout with those details. Check your name and email, or pay at the table." };
+  }
+  return outage;
+}

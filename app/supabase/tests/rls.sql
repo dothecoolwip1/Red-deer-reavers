@@ -105,6 +105,19 @@ select 'relabelled', kind from reavers_app_square_payments where square_payment_
 select 'ledger follows', category, amount_cents from reavers_app_transactions where external_id like 'square-P2-%' order by amount_cents;
 select set_config('test.uid', :'u4', false);
 select 'member own dues', count(*) from reavers_app_dues;
+-- Dues exemptions: treasury sets them, the executive reads them, members neither
+select set_config('test.uid', :'u1', false);
+insert into reavers_app_dues_exemptions(member_key, member_name, reason, starts_month) values ('membership:1', 'Mem Ber', 'Coach', '2026-11-01');
+\set ON_ERROR_STOP 0
+insert into reavers_app_dues_exemptions(member_key, member_name, starts_month, ends_month) values ('membership:2', 'X', '2026-11-01', '2026-10-01');
+\set ON_ERROR_STOP 1
+select set_config('test.uid', :'u3', false);
+select 'exec exemptions', count(*) from reavers_app_dues_exemptions;
+\set ON_ERROR_STOP 0
+insert into reavers_app_dues_exemptions(member_key, member_name) values ('membership:3', 'Y');
+\set ON_ERROR_STOP 1
+select set_config('test.uid', :'u4', false);
+select 'member exemptions', count(*) from reavers_app_dues_exemptions;
 -- attendance: exec only; the removal timer only through its functions; the bot functions only for the service role
 reset role;
 insert into public.club_memberships values ('10000000-0000-0000-0000-000000000004', :'u4');

@@ -1,6 +1,19 @@
-import type { Dues, SquarePaymentRow } from "../data/types";
+import type { Dues, DuesExemption, SquarePaymentRow } from "../data/types";
 
-export type DuesRow = { key: string; name: string; onRoster: boolean; user: string | null; cells: Record<string, Dues | undefined> };
+export type DuesRow = {
+  key: string; name: string; onRoster: boolean; user: string | null; cells: Record<string, Dues | undefined>;
+  /** The exemption covering each month, if any. */
+  exempt: Record<string, DuesExemption | undefined>;
+  /** The member's current or latest exemption, for editing. */
+  exemption: DuesExemption | undefined;
+};
+
+/** Whether an exemption covers a month ("2026-11-01"). An exemption with no end runs on. */
+export const covers = (e: Pick<DuesExemption, "starts_month" | "ends_month">, month: string) =>
+  e.starts_month <= month && (!e.ends_month || month <= e.ends_month);
+
+/** Paid, waived or exempt: nothing owed for that month. */
+export const settled = (row: DuesRow, month: string) => Boolean(row.cells[month] || row.exempt[month]);
 
 /** Month keys ("2026-11-01"), oldest first, ending with the month that holds `today`. */
 export function lastMonths(today: string, count: number): string[] {
@@ -15,14 +28,21 @@ export function lastMonths(today: string, count: number): string[] {
  * One row per person: everyone on the club roster, then anyone who paid dues but isn't matched to the roster yet
  * (paid from the app with an account, or at the table under a name), so nobody's payment goes missing.
  */
-export function duesGrid(roster: { key: string; name: string }[], dues: Dues[], months: string[]): DuesRow[] {
+export function duesGrid(roster: { key: string; name: string }[], dues: Dues[], months: string[], exemptions: DuesExemption[] = []): DuesRow[] {
   const rows = new Map<string, DuesRow>();
-  for (const r of roster) rows.set(r.key, { key: r.key, name: r.name, onRoster: true, user: null, cells: {} });
+  const blank = (key: string, name: string, onRoster: boolean): DuesRow => ({ key, name, onRoster, user: null, cells: {}, exempt: {}, exemption: undefined });
+  for (const r of roster) rows.set(r.key, blank(r.key, r.name, true));
   for (const d of dues) {
-    const row = rows.get(d.member_key) ?? { key: d.member_key, name: d.member_name, onRoster: false, user: null, cells: {} };
+    const row = rows.get(d.member_key) ?? blank(d.member_key, d.member_name, false);
     row.user ??= d.member_user;
     if (months.includes(d.month)) row.cells[d.month] = d;
     rows.set(d.member_key, row);
+  }
+  for (const e of [...exemptions].sort((a, b) => a.starts_month.localeCompare(b.starts_month))) {
+    const row = rows.get(e.member_key) ?? blank(e.member_key, e.member_name, false);
+    for (const m of months) if (covers(e, m)) row.exempt[m] = e;
+    row.exemption = e;
+    rows.set(e.member_key, row);
   }
   return [...rows.values()].sort((a, b) => Number(b.onRoster) - Number(a.onRoster) || a.name.localeCompare(b.name));
 }

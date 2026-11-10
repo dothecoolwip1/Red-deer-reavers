@@ -61,6 +61,9 @@ export type Dues = {
   id: Id; member_key: string; member_name: string; member_user: string | null; month: string; amount_cents: number; method: DuesMethod;
   paid_on: string; square_payment_id: string | null; note: string | null;
 };
+export type DuesExemption = {
+  id: Id; member_key: string; member_name: string; reason: string | null; starts_month: string; ends_month: string | null;
+};
 export type CheckoutRequest = { item_id: Id; quantity: number; buyer_name: string; buyer_email: string; dues_month?: string | null; return_url: string };
 
 export type SiteContent = {
@@ -75,7 +78,7 @@ export type Tables = {
   reimbursement_approvals: Approval; sponsors: Sponsor; sponsor_deliverables: Deliverable; grants: Grant;
   compliance: Compliance; gear: Gear; gear_log: GearLog; waivers: Waiver; incidents: Incident;
   site_content: SiteContent; site_content_history: SiteHistory;
-  square_items: SquareItem; square_payments: SquarePaymentRow; dues: Dues;
+  square_items: SquareItem; square_payments: SquarePaymentRow; dues: Dues; dues_exemptions: DuesExemption;
 };
 export type TableName = keyof Tables;
 

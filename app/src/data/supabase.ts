@@ -19,7 +19,7 @@ const ORDER: Partial<Record<TableName, [string, boolean]>> = {
   sponsors: ["name", true], gear: ["name", true], incidents: ["date", false], waivers: ["signed_at", false],
   budgets: ["category", true], payment_links: ["title", true], gear_log: ["at", false], sponsor_deliverables: ["due", true],
   site_content: ["updated_at", false], site_content_history: ["changed_at", false],
-  square_items: ["sort_order", true], square_payments: ["paid_at", false], dues: ["month", false]
+  square_items: ["sort_order", true], square_payments: ["paid_at", false], dues: ["month", false], dues_exemptions: ["starts_month", false]
 };
 
 /** Starts a Square checkout through the reavers-square-checkout function. Works signed in or not (the open pay page). */
