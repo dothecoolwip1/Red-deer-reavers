@@ -66,3 +66,6 @@ reset role;
 set role anon;
 select set_config('test.uid', '', false);
 select 'anon reads', value from reavers_app_site_content;
+\set ON_ERROR_STOP 0
+select updated_by from reavers_app_site_content;
+\set ON_ERROR_STOP 1
