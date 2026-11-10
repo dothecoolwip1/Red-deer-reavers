@@ -15,7 +15,7 @@ Public team website and lightweight team administration for the Red Deer Reavers
 
 ## Reavers app (app.reddeerreavers.com)
 
-`app/` is the club's back office (ledger and bank import, reimbursements, budget, Stripe payment links, sponsors, grants, waivers, incidents, armory, deadlines), a React app that signs in with BuhurtOS accounts. `npm run build` builds it into `_site/app/`, and `vercel.json` serves it at app.reddeerreavers.com. Setup and roles: [app/README.md](app/README.md).
+`app/` is the club's back office (ledger and bank import, reimbursements, budget, Stripe payment links, sponsors, grants, waivers, incidents, armory, deadlines), a React app that signs in with BuhurtOS accounts. `npm run build` builds it into `_site/app/`, and `vercel.json` sends app.reddeerreavers.com to it (a redirect to `/app/`, because Vercel rewrites never override an existing file such as `index.html`). Setup and roles: [app/README.md](app/README.md).
 
 ## Fighter profiles from BuhurtOS
 
