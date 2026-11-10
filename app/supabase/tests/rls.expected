@@ -44,3 +44,21 @@ ERROR:  new row for relation "reavers_app_dues_exemptions" violates check constr
 exec exemptions|1
 ERROR:  new row violates row-level security policy for table "reavers_app_dues_exemptions"
 member exemptions|0
+stats|Mem Ber|1|1|0|0|f
+stats|Regular|2|1|1|2|t
+ERROR:  permission denied for table reavers_app_people
+ERROR:  Give them between 7 and 90 days
+ERROR:  permission denied for function reavers_app_bot_daily
+timer|removal|t
+mem set|t
+NOTICE:  too early refused: t
+member sees people|0
+ERROR:  Only a captain or the executive can stop a removal timer
+bot target|123456789012345678
+ERROR:  Not the person this was sent to
+bot reply|removal
+daily|1
+daily again|0
+expired|Hurt my knee, back in January
+removed|removed
+kept|active

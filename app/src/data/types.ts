@@ -2,6 +2,7 @@ import type { Role } from "../lib/roles";
 import type { ClaimStatus } from "../lib/reimburse";
 import type { Recurrence } from "../lib/compliance";
 import type { WebsiteApi } from "./website";
+import type { AttendanceApi } from "./attendance";
 import type { Kind, PaymentItem, PaymentKind } from "../lib/square";
 
 export type Id = string;
@@ -100,6 +101,8 @@ export interface Store {
   uploadSiteImage(file: File): Promise<string>;
   /** The public website's calendar, practices, team page, inquiries and settings (what the old /admin page managed). */
   website: WebsiteApi;
+  /** Who shows up to practices, tournaments, events and fundraisers, and the 3-month no-show policy. */
+  attendance: AttendanceApi;
   /** Starts a Square checkout and returns the address of Square's payment page. */
   checkout(req: CheckoutRequest): Promise<string>;
   /** Treasury re-labels what a Square payment was for; its ledger lines follow. */
