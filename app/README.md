@@ -62,7 +62,7 @@ dues, online and on the card reader at the table. What's in the app:
 One-time setup (about 20 minutes):
 
 1. **Database.** Apply `supabase/migrations/20261110000000_reavers_app_square.sql` and then
-   `20261110010000_reavers_app_dues_exemptions.sql` on the home server (and the cloud copy), like the earlier ones. It adds `reavers_app_square_items`, `reavers_app_square_payments`, `reavers_app_dues` and one
+   `20261110020000_reavers_app_dues_exemptions.sql` on the home server (and the cloud copy), like the earlier ones. It adds `reavers_app_square_items`, `reavers_app_square_payments`, `reavers_app_dues` and one
    function, and lets the ledger take `square` lines. Nothing existing changes.
 2. **Square app and keys.** Sign in at https://developer.squareup.com/apps with the Reavers Square account →
    **Create an application** (name it "Reavers app") → open it → switch the toggle at the top to **Production** →
@@ -92,6 +92,10 @@ One-time setup (about 20 minutes):
 6. **Test.** In Square's webhook subscription press **Send test event**: Square should show a 200 reply. Then buy a $3
    sticker on the open pay page with your own card, check it appears in Square sales and the Ledger, and refund it in
    the Square Dashboard (the refund shows too).
+
+**Keep BuhurtOS in step.** The server's copy of the Square functions is deployed from the BuhurtOS repository
+(`supabase/functions/`). Whenever `reavers-square-checkout`, `reavers-square-webhook` or `_shared/square.ts` change here,
+copy them into BuhurtOS too, or the next BuhurtOS deploy puts the old version back.
 
 To try it without real money first, do steps 2 to 4 with the **Sandbox** toggle instead, add `SQUARE_ENVIRONMENT=sandbox`,
 and pay with Square's test card 4111 1111 1111 1111.

@@ -3,7 +3,7 @@
 // Public items need no sign-in; members-only items (dues) need the member's sign-in, sent as the Authorization header.
 // Secrets: SQUARE_ACCESS_TOKEN, SQUARE_LOCATION_ID, optional SQUARE_ENVIRONMENT=sandbox and SQUARE_VERSION.
 import { createClient } from "npm:@supabase/supabase-js@2.117.2";
-import { checkoutProblem, paymentLinkBody, type CheckoutItem } from "../_shared/square.ts";
+import { checkoutFailure, checkoutProblem, paymentLinkBody, type CheckoutItem } from "../_shared/square.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const db = createClient(SUPABASE_URL, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "", { auth: { persistSession: false } });
@@ -56,19 +56,27 @@ Deno.serve(async req => {
   const problem = checkoutProblem(item as CheckoutItem, request);
   if (problem) return reply(400, { error: problem });
 
-  const res = await fetch(`${SQUARE_API}/v2/online-checkout/payment-links`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${Deno.env.get("SQUARE_ACCESS_TOKEN") ?? ""}`,
-      "Square-Version": Deno.env.get("SQUARE_VERSION") ?? "2026-09-16",
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify(paymentLinkBody(item as CheckoutItem, request, Deno.env.get("SQUARE_LOCATION_ID") ?? "", crypto.randomUUID()))
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${SQUARE_API}/v2/online-checkout/payment-links`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${Deno.env.get("SQUARE_ACCESS_TOKEN") ?? ""}`,
+        "Square-Version": Deno.env.get("SQUARE_VERSION") ?? "2026-09-16",
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(paymentLinkBody(item as CheckoutItem, request, Deno.env.get("SQUARE_LOCATION_ID") ?? "", crypto.randomUUID()))
+    });
+  } catch (err) {
+    console.error("Square unreachable", (err as Error).message);
+    return reply(502, { error: "Square didn't start the checkout. Try again in a minute, or pay at the table." });
+  }
   const out = await res.json().catch(() => ({}));
   if (!res.ok || !out.payment_link?.url) {
     console.error("Square checkout failed", res.status, JSON.stringify(out.errors ?? out));
-    return reply(502, { error: "Square didn't start the checkout. Try again in a minute, or pay at the table." });
+    // A 422 for what the buyer can fix (shown as-is in the app); 502 only for real outages.
+    const failure = checkoutFailure(res.ok ? 502 : res.status, out.errors);
+    return reply(failure.status, { error: failure.error });
   }
   return reply(200, { url: out.payment_link.url });
 });
