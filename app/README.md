@@ -28,10 +28,10 @@ Until the migration below is applied, a signed-in person sees sample data with a
 
 ## Go live (one-time)
 
-1. **Database.** Apply `supabase/migrations/20261109000000_reavers_app.sql`, then `20261109010000_reavers_app_site_editor.sql`,
-   on the BuhurtOS home server (copy them into the BuhurtOS repository's migrations, or run them in the SQL editor). They
-   only add `reavers_app_*` tables, a private `reavers-app-receipts` bucket, a public `reavers-site-media` bucket and a few
-   functions; nothing existing changes. To check it first against a local Postgres:
+1. **Database.** Done on the home server and the cloud copy on 2026-11-10 (BuhurtOS PR #182 carries the same files). For a
+   fresh server, apply the four files in `supabase/migrations/` in name order. They only add `reavers_app_*` tables, a private
+   `reavers-app-receipts` bucket, a public `reavers-site-media` bucket, a few functions and the grants signed-in users need
+   (BuhurtOS grants nothing by default); nothing existing changes. To check them first against a local Postgres:
    `PGHOST=... PGUSER=postgres supabase/tests/run.sh`.
 2. **Domain.** In the Vercel project for reddeerreavers.com, add the domain `app.reddeerreavers.com` and the DNS record
    Vercel asks for. `vercel.json` already serves the app there. It also works at `https://reddeerreavers.com/app/`.

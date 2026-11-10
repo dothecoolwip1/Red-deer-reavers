@@ -24,3 +24,4 @@ ERROR:  new row violates row-level security policy for table "reavers_app_site_c
 member history visible|0
 
 anon reads|Fight with the Reavers
+ERROR:  permission denied for table reavers_app_site_content
