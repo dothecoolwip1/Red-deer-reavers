@@ -2,6 +2,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { RECEIPTS_BUCKET, SITE_MEDIA_BUCKET, SUPABASE_KEY, SUPABASE_URL, TABLE_PREFIX } from "./config";
 import type { Id, Session, Store, TableName, Tables } from "./types";
 import { roleFrom, type Role } from "../lib/roles";
+import { liveWebsite } from "./website";
 
 let client: SupabaseClient | null = null;
 export function supabase(): SupabaseClient {
@@ -106,6 +107,7 @@ export function liveStore(session: Session): Store {
       fail(error);
       return supabase().storage.from(SITE_MEDIA_BUCKET).getPublicUrl(path).data.publicUrl;
     },
+    website: liveWebsite(supabase),
     async signOut() {
       await supabase().auth.signOut();
     }

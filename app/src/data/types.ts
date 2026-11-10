@@ -1,6 +1,7 @@
 import type { Role } from "../lib/roles";
 import type { ClaimStatus } from "../lib/reimburse";
 import type { Recurrence } from "../lib/compliance";
+import type { WebsiteApi } from "./website";
 
 export type Id = string;
 export type Transaction = {
@@ -77,5 +78,7 @@ export interface Store {
   receiptUrl(path: string): Promise<string | null>;
   /** Uploads an image for the public website and returns its public address. */
   uploadSiteImage(file: File): Promise<string>;
+  /** The public website's calendar, practices, team page, inquiries and settings (what the old /admin page managed). */
+  website: WebsiteApi;
   signOut(): Promise<void>;
 }
