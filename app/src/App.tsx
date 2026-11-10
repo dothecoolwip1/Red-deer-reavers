@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { HashRouter, NavLink, Navigate, Route, Routes } from "react-router-dom";
+import { HashRouter, NavLink, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { demoStore } from "./data/demo";
 import { SITE_URL } from "./data/config";
 import { isMissingSetup, liveSession, liveStore, supabase } from "./data/supabase";
@@ -98,13 +98,7 @@ function Shell({ store, note, onExit }: { store: Store; note?: string; onExit: (
             <span className="who">{store.session.name} · {store.session.role === "finance" ? "Treasury" : store.session.role === "exec" ? "Executive" : "Member"}{store.session.mode === "demo" && " · demo"}</span>
             <button className="ghost" onClick={onExit}>{store.session.mode === "demo" ? "Leave demo" : "Sign out"}</button>
           </header>
-          <nav id="nav" className={menu ? "side open" : "side"} onClick={() => setMenu(false)}>
-            {groups.map(g => (
-              <div key={g || "home"}>
-                {g && <h3>{g}</h3>}
-                {nav.filter(n => n.group === g).map(n => <NavLink key={n.path} to={n.path} end>{n.label}</NavLink>)}
-              </div>))}
-          </nav>
+          <SideNav nav={nav} groups={groups} open={menu} onPick={() => setMenu(false)} />
           <main>
             {note && <p className="banner">{note}</p>}
             <Routes>
@@ -115,6 +109,21 @@ function Shell({ store, note, onExit }: { store: Store; note?: string; onExit: (
         </div>
       </HashRouter>
     </StoreProvider>
+  );
+}
+
+/** The side menu. Each section's heading is a clear label, and the section holding the open page is marked. */
+function SideNav({ nav, groups, open, onPick }: { nav: Nav[]; groups: string[]; open: boolean; onPick: () => void }) {
+  const { pathname } = useLocation();
+  const current = nav.find(n => n.path === pathname)?.group ?? "";
+  return (
+    <nav id="nav" className={open ? "side open" : "side"} onClick={onPick} aria-label="Sections">
+      {groups.map(g => (
+        <div key={g || "home"} className={g && g === current ? "nav-group current" : "nav-group"}>
+          {g && <h3 aria-current={g === current ? "true" : undefined}>{g}</h3>}
+          {nav.filter(n => n.group === g).map(n => <NavLink key={n.path} to={n.path} end>{n.label}</NavLink>)}
+        </div>))}
+    </nav>
   );
 }
 
