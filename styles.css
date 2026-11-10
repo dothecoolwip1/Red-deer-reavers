@@ -708,7 +708,7 @@ add-to-calendar-button{--btn-background:var(--iron-700);--btn-text:var(--bone);-
 
 @media (min-width:1024px){
   .hero .hero-content{padding-bottom:110px;display:grid;grid-template-columns:1fr auto;align-items:end;gap:40px}
-  .hero-crest{display:block;width:clamp(220px,24vw,330px);filter:drop-shadow(0 20px 40px rgba(0,0,0,.7)) drop-shadow(0 0 60px rgba(255,123,28,.18));animation:crest-in 1.4s var(--ease) both .2s}
+  .hero-crest{display:block;width:clamp(220px,24vw,330px);filter:drop-shadow(0 20px 40px rgba(0,0,0,.7)) drop-shadow(0 0 70px rgba(255,123,28,.26)) saturate(.92);animation:crest-in 1.4s var(--ease) both .2s}
   @keyframes crest-in{from{opacity:0;transform:translateY(30px) scale(.94)}}
   .war-grid{grid-template-columns:1.35fr 1fr 1fr 1fr}
   .lore-grid{grid-template-columns:1.15fr 1fr;gap:64px}
