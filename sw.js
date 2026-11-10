@@ -1,4 +1,4 @@
-const CACHE="reavers-forged-v36";
+const CACHE="reavers-forged-v37";
 const STATIC=[
   "./",
   "./index.html",
@@ -13,6 +13,7 @@ const STATIC=[
   "./app.js?v=28",
   "./team-data.js?v=28",
   "./buhurtos.js?v=28",
+  "./site-content.js?v=27",
   "./members.html",
   "./members.webmanifest",
   "./assets/members-app.css?v=2",

@@ -13,6 +13,10 @@ Public team website and lightweight team administration for the Red Deer Reavers
 - Progressive Web App manifest and service worker for installable mobile use
 - GitHub Actions production build and quality checks
 
+## Reavers app (app.reddeerreavers.com)
+
+`app/` is the club's back office (ledger and bank import, reimbursements, budget, Stripe payment links, sponsors, grants, waivers, incidents, armory, deadlines), a React app that signs in with BuhurtOS accounts. `npm run build` builds it into `_site/app/`, and `vercel.json` serves it at app.reddeerreavers.com. Setup and roles: [app/README.md](app/README.md).
+
 ## Fighter profiles from BuhurtOS
 
 Fighters do not need to be added on this site. A fighter signs in to BuhurtOS, asks to join the Red Deer Reavers, and builds their profile there (photo, disciplines, bio, socials). Once the team captain approves them on BuhurtOS, they appear on the Team page automatically, and their record and placings fill in as they compete at BuhurtOS events. The Team page has an "Add your fighter profile" section that links straight into that flow.

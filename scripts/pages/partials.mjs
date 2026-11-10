@@ -138,6 +138,7 @@ export const footer = () => `
 export const scripts = (...extra) => `
 <script src="team-data.js?v=${V}"></script>
 <script src="buhurtos.js?v=${V}"></script>
+<script src="site-content.js?v=${V}"></script>
 <script src="app.js?v=${V}" defer></script>${extra.map(s => `\n${s}`).join("")}
 </body>
 </html>
