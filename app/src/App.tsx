@@ -24,10 +24,12 @@ import { Practices } from "./pages/website/Practices";
 import { Inquiries } from "./pages/website/Inquiries";
 import { Promo } from "./pages/website/Promo";
 import { SiteSettings } from "./pages/website/SiteSettings";
+import { Attendance } from "./pages/Attendance";
 
 type Nav = { path: string; label: string; need: Action; element: JSX.Element; group: string };
 const NAV: Nav[] = [
   { path: "/", label: "Home", need: "self.use", element: <Dashboard />, group: "" },
+  { path: "/attendance", label: "Attendance", need: "records.view", element: <Attendance />, group: "Team" },
   { path: "/ledger", label: "Ledger", need: "money.view", element: <Ledger />, group: "Money" },
   { path: "/claims", label: "Reimbursements", need: "self.use", element: <Claims />, group: "Money" },
   { path: "/budget", label: "Budget", need: "money.view", element: <Budgets />, group: "Money" },

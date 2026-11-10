@@ -69,3 +69,53 @@ select 'anon reads', value from reavers_app_site_content;
 \set ON_ERROR_STOP 0
 select updated_by from reavers_app_site_content;
 \set ON_ERROR_STOP 1
+-- attendance: exec only; the removal timer only through its functions; the bot functions only for the service role
+reset role;
+insert into public.club_memberships values ('10000000-0000-0000-0000-000000000004', :'u4');
+insert into auth.identities(user_id, provider, provider_id) values (:'u4', 'discord', '123456789012345678');
+set role authenticated;
+select set_config('test.uid', :'u3', false);
+insert into reavers_app_people(name, membership_id, started_on) values ('Mem Ber', '10000000-0000-0000-0000-000000000004', current_date - 400);
+insert into reavers_app_people(name, started_on) values ('Regular', current_date - 400);
+insert into reavers_app_gatherings(kind, title, date) values ('practice', 'Old practice', current_date - 200), ('practice', 'Last week', current_date - 7), ('fundraiser', 'Bottle drive', current_date - 20);
+insert into reavers_app_attendance(gathering_id, person_id) select g.id, p.id from reavers_app_gatherings g, reavers_app_people p where p.name = 'Mem Ber' and g.title = 'Old practice';
+insert into reavers_app_attendance(gathering_id, person_id) select g.id, p.id from reavers_app_gatherings g, reavers_app_people p where p.name = 'Regular' and g.title <> 'Old practice';
+reset role;
+select id as mem from reavers_app_people where name = 'Mem Ber' \gset
+set role authenticated;
+select 'stats', p.name, s.total, s.practices, s.fundraisers, s.recent, s.last_practice = current_date - 7 from reavers_app_people_stats s join reavers_app_people p on p.id = s.person_id order by p.name;
+\set ON_ERROR_STOP 0
+update reavers_app_people set status = 'removed' where name = 'Mem Ber';
+select reavers_app_start_removal(:'mem', 3);
+select reavers_app_bot_daily();
+\set ON_ERROR_STOP 1
+select 'timer', status, removal_deadline = current_date + 30 from reavers_app_start_removal(:'mem', 30, 'No practice since spring');
+select 'mem set', set_config('test.mem', :'mem', false) is not null;
+do $$ begin perform reavers_app_mark_removed(current_setting('test.mem')::uuid); raise notice 'removed too early';
+exception when raise_exception then raise notice 'too early refused: %', sqlerrm ~ '^The timer runs until'; end $$;
+select set_config('test.uid', :'u4', false);
+select 'member sees people', count(*) from reavers_app_people;
+\set ON_ERROR_STOP 0
+select reavers_app_stop_removal((select id from reavers_app_people limit 1));
+\set ON_ERROR_STOP 1
+reset role;
+set role service_role;
+select 'bot target', reavers_app_bot_target(:'mem')->>'discord_id';
+\set ON_ERROR_STOP 0
+select reavers_app_bot_reply(:'mem', '999999999999999999', 'not me');
+\set ON_ERROR_STOP 1
+select 'bot reply', reavers_app_bot_reply(:'mem', '123456789012345678', 'Hurt my knee, back in January')->>'status';
+reset role;
+update reavers_app_people set status = 'active', removal_deadline = null, removal_started_at = null where name = 'Mem Ber';
+set role service_role;
+select 'daily', jsonb_array_length(reavers_app_bot_daily()->'no_shows');
+select 'daily again', jsonb_array_length(reavers_app_bot_daily()->'no_shows');
+reset role;
+update reavers_app_people set status = 'removal', removal_started_at = now(), removal_deadline = current_date where name = 'Mem Ber';
+set role service_role;
+select 'expired', reavers_app_bot_daily()->'expired'->0->>'reply_text';
+reset role;
+set role authenticated;
+select set_config('test.uid', :'u3', false);
+select 'removed', status from reavers_app_mark_removed(:'mem');
+select 'kept', status from reavers_app_stop_removal(:'mem', 'Back in January');

@@ -2,6 +2,7 @@ import type { Role } from "../lib/roles";
 import type { ClaimStatus } from "../lib/reimburse";
 import type { Recurrence } from "../lib/compliance";
 import type { WebsiteApi } from "./website";
+import type { AttendanceApi } from "./attendance";
 
 export type Id = string;
 export type Transaction = {
@@ -80,5 +81,7 @@ export interface Store {
   uploadSiteImage(file: File): Promise<string>;
   /** The public website's calendar, practices, team page, inquiries and settings (what the old /admin page managed). */
   website: WebsiteApi;
+  /** Who shows up to practices, tournaments, events and fundraisers, and the 3-month no-show policy. */
+  attendance: AttendanceApi;
   signOut(): Promise<void>;
 }

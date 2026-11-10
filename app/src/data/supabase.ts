@@ -3,6 +3,7 @@ import { RECEIPTS_BUCKET, SITE_MEDIA_BUCKET, SUPABASE_KEY, SUPABASE_URL, TABLE_P
 import type { Id, Session, Store, TableName, Tables } from "./types";
 import { roleFrom, type Role } from "../lib/roles";
 import { liveWebsite } from "./website";
+import { liveAttendance } from "./attendance";
 
 let client: SupabaseClient | null = null;
 export function supabase(): SupabaseClient {
@@ -108,6 +109,7 @@ export function liveStore(session: Session): Store {
       return supabase().storage.from(SITE_MEDIA_BUCKET).getPublicUrl(path).data.publicUrl;
     },
     website: liveWebsite(supabase),
+    attendance: liveAttendance(supabase),
     async signOut() {
       await supabase().auth.signOut();
     }

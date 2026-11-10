@@ -1,4 +1,7 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import type { Person } from "../data/attendance";
+import { NO_SHOW_MONTHS, ago, isNoShow, timerState } from "../lib/attendance";
 import { Money, Page, Pill, dateLabel, todayIso, useCan, useStore, useTable } from "../ui";
 import { deadlineStatus } from "../lib/compliance";
 import { isTransfer } from "../lib/transfers";
@@ -60,6 +63,7 @@ function ExecDashboard({ records }: { records: boolean }) {
               <ul className="list">{followUps.map(s => <li key={s.id}><span>{s.name}</span><Pill tone="soon">{dateLabel(s.next_follow_up)}</Pill></li>)}</ul>)}
             <Link to="/sponsors">Sponsor pipeline</Link>
           </article>
+          <AttendanceCard />
           <article className="card">
             <h2>Latest money</h2>
             <ul className="list">
@@ -70,6 +74,27 @@ function ExecDashboard({ records }: { records: boolean }) {
         </div>
       )}
     </>
+  );
+}
+
+/** The 3-month no-show policy: who's past it and whose removal timer is running. */
+function AttendanceCard() {
+  const store = useStore();
+  const [people, setPeople] = useState<Person[] | null>(null);
+  useEffect(() => { store.attendance.people().then(setPeople, () => setPeople([])); }, [store]);
+  const today = todayIso();
+  const noShows = (people || []).filter(p => isNoShow({ ...p, last_seen: p.stats.last_seen }, today));
+  const timers = (people || []).filter(p => p.status === "removal");
+  return (
+    <article className="card">
+      <h2>Attendance</h2>
+      {people === null ? <p className="muted">Checking…</p> : noShows.length === 0 && timers.length === 0 ? <p className="muted">Nobody past the {NO_SHOW_MONTHS}-month no-show line.</p> : (
+        <ul className="list">
+          {noShows.map(p => <li key={p.id}><span>{p.name}</span><Pill tone="overdue">{p.stats.last_seen ? ago(p.stats.last_seen, today) : "never seen"}</Pill></li>)}
+          {timers.map(p => { const t = timerState(p, today); return <li key={p.id}><span>{p.name}{p.reply_text ? " · replied" : ""}</span><Pill tone="soon">{t.running && t.expired ? "Time's up" : t.running ? `${t.daysLeft} days left` : ""}</Pill></li>; })}
+        </ul>)}
+      <Link to="/attendance">Attendance tracker</Link>
+    </article>
   );
 }
 
