@@ -52,14 +52,15 @@ dues, online and on the card reader at the table. What's in the app:
 - **Money → Square sales**: every Square payment, by month, with totals for each kind, fees, refunds and CSV export.
   Treasury can re-label a payment (say a card-reader "Custom amount" that was a visitor fee); its ledger lines follow.
 - **Money → Dues**: everyone on the club roster by month. Square dues tick themselves off; treasury marks cash, e-Transfer
-  and waived months, and files card-reader dues payments under the right person.
+  and waived months, files card-reader dues payments under the right person, and can make a member **payment exempt**
+  (click their name: a reason, a start month and an optional end month). Exempt months show as "Exempt", not unpaid.
 - **Ledger**: each payment lands in the `Square` account (income by kind, plus Square's fee as its own line). When Square
   deposits to the bank, the CSV import books it as a transfer, so nothing is counted twice.
 
 One-time setup (about 20 minutes):
 
-1. **Database.** Apply `supabase/migrations/20261110000000_reavers_app_square.sql` on the home server (and the cloud copy),
-   like the earlier ones. It adds `reavers_app_square_items`, `reavers_app_square_payments`, `reavers_app_dues` and one
+1. **Database.** Apply `supabase/migrations/20261110000000_reavers_app_square.sql` and then
+   `20261110010000_reavers_app_dues_exemptions.sql` on the home server (and the cloud copy), like the earlier ones. It adds `reavers_app_square_items`, `reavers_app_square_payments`, `reavers_app_dues` and one
    function, and lets the ledger take `square` lines. Nothing existing changes.
 2. **Square app and keys.** Sign in at https://developer.squareup.com/apps with the Reavers Square account →
    **Create an application** (name it "Reavers app") → open it → switch the toggle at the top to **Production** →

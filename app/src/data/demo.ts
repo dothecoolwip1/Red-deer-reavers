@@ -85,7 +85,7 @@ const monthIso = (offset: number) => {
 };
 
 /** A month of sample Square activity: an event day at the card reader, online registrations and dues. */
-function squareSeed(): Pick<Db, "square_items" | "square_payments" | "dues"> {
+function squareSeed(): Pick<Db, "square_items" | "square_payments" | "dues" | "dues_exemptions"> {
   const item = (title: string, kind: Kind, price_cents: number, extra: Partial<Tables["square_items"]> = {}) =>
     ({ id: id(), title, kind, description: null, price_cents, max_quantity: 1, public: true, active: true, sort_order: 0, ...extra });
   const square_items = [
@@ -120,11 +120,10 @@ function squareSeed(): Pick<Db, "square_items" | "square_payments" | "dues"> {
     due("membership:m1", "Garrett (sample)", -1, "etransfer"),
     due("membership:m2", "Casey (sample)", -1, "square"),
     due("membership:m2", "Casey (sample)", -2, "square"),
-    due("membership:m3", "Drew (sample)", 0, "waived"),
-    due("membership:m3", "Drew (sample)", -1, "waived"),
     due("membership:m1", "Garrett (sample)", -2, "cash")
   ];
-  return { square_items, square_payments, dues };
+  const dues_exemptions = [{ id: id(), member_key: "membership:m3", member_name: "Drew (sample)", reason: "Volunteer coach", starts_month: monthIso(-1), ends_month: null }];
+  return { square_items, square_payments, dues, dues_exemptions };
 }
 
 function withSquareLedger(db: Db): Db {

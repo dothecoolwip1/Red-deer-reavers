@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Dues, SquarePaymentRow } from "../data/types";
-import { duesGrid, lastMonths, unassignedDues } from "./dues";
+import { covers, duesGrid, lastMonths, settled, unassignedDues } from "./dues";
 
 const due = (member_key: string, member_name: string, month: string, extra: Partial<Dues> = {}): Dues =>
   ({ id: `${member_key}-${month}`, member_key, member_name, member_user: null, month, amount_cents: 3000, method: "cash", paid_on: month, square_payment_id: null, note: null, ...extra });
@@ -18,6 +18,20 @@ describe("duesGrid", () => {
       ["Amy", true, []], ["Zed", true, ["2026-11-01"]], ["Sam", false, ["2026-11-01"]]
     ]);
     expect(grid[2].user).toBe("u9");
+  });
+});
+
+describe("exemptions", () => {
+  it("cover their months, open-ended or not", () => {
+    expect(covers({ starts_month: "2026-09-01", ends_month: null }, "2027-03-01")).toBe(true);
+    expect(covers({ starts_month: "2026-09-01", ends_month: "2026-10-01" }, "2026-11-01")).toBe(false);
+    expect(covers({ starts_month: "2026-09-01", ends_month: null }, "2026-08-01")).toBe(false);
+  });
+  it("mark exempt months as settled without a dues record", () => {
+    const [row] = duesGrid([{ key: "membership:1", name: "Coach" }], [],
+      ["2026-09-01", "2026-10-01", "2026-11-01"], [{ id: "e", member_key: "membership:1", member_name: "Coach", reason: "Volunteer coach", starts_month: "2026-10-01", ends_month: null }]);
+    expect(["2026-09-01", "2026-10-01", "2026-11-01"].map(m => settled(row, m))).toEqual([false, true, true]);
+    expect(row.exemption?.reason).toBe("Volunteer coach");
   });
 });
 
