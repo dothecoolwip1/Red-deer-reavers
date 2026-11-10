@@ -82,7 +82,7 @@ function Shell({ store, note, onExit }: { store: Store; note?: string; onExit: (
         <div className="shell">
           <header className="top">
             <button className="ghost menu-button" onClick={() => setMenu(m => !m)} aria-expanded={menu} aria-controls="nav">☰</button>
-            <a className="brand" href={SITE_URL}><img src={`${import.meta.env.BASE_URL}crest.svg`} alt="" width="28" height="28" /> Reavers</a>
+            <a className="brand" href={SITE_URL}><img src={`${import.meta.env.BASE_URL}crest.png`} alt="" width="28" height="28" /> Reavers</a>
             <span className="who">{store.session.name} · {store.session.role === "finance" ? "Treasury" : store.session.role === "exec" ? "Executive" : "Member"}{store.session.mode === "demo" && " · demo"}</span>
             <button className="ghost" onClick={onExit}>{store.session.mode === "demo" ? "Leave demo" : "Sign out"}</button>
           </header>
@@ -116,7 +116,7 @@ function SignIn({ note, onDemo }: { note?: string; onDemo: () => void }) {
   return (
     <div className="center">
       <div className="signin card">
-        <img src={`${import.meta.env.BASE_URL}crest.svg`} alt="" width="64" height="64" />
+        <img src={`${import.meta.env.BASE_URL}crest.png`} alt="" width="64" height="64" />
         <h1>Reavers app</h1>
         <p>The club's back office: money, sponsors, gear, waivers and deadlines. Sign in with your BuhurtOS account, the same one you use for the members area.</p>
         <button className="primary wide" onClick={() => oauth("google")}>Continue with Google</button>
