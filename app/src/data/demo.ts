@@ -1,6 +1,7 @@
 import type { Id, Session, Store, TableName, Tables } from "./types";
 import { approvalState, canApprove } from "../lib/reimburse";
 import type { Role } from "../lib/roles";
+import { demoWebsite } from "./website";
 
 // Sample data for trying the app without signing in or before the database is set up. Nothing here reaches the database.
 const KEY = "reavers-app-demo-v1";
@@ -164,6 +165,7 @@ export function demoStore(role: Role = "finance"): Store {
       });
     },
     async receiptUrl() { return null; },
-    async signOut() { try { localStorage.removeItem(KEY); } catch { /* ignore */ } }
+    website: demoWebsite(),
+    async signOut() { try { localStorage.removeItem(KEY); localStorage.removeItem("reavers-app-website-demo-v1"); } catch { /* ignore */ } }
   };
 }

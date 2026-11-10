@@ -19,6 +19,11 @@
       "permanent": false
     },
     {
+      "source": "/admin(.html)?",
+      "destination": "/app/",
+      "permanent": true
+    },
+    {
       "source": "/:path*",
       "has": [
         {

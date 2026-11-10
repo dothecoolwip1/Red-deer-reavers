@@ -8,7 +8,7 @@ Public team website and lightweight team administration for the Red Deer Reavers
 
 - Static HTML, CSS, and JavaScript hosted on Vercel at reddeerreavers.com
 - Team data lives on the BuhurtOS home server (https://api-home.buhurtoshome.app), the same backend as buhurt-os.app
-- BuhurtOS home server (`public.reavers_site`) for practices, the calendar, roster records, site settings and community inquiries; the admin signs in with a BuhurtOS account and only Red Deer Reavers captains can edit
+- BuhurtOS home server (`public.reavers_site`) for practices, the calendar, roster records, site settings and community inquiries; the app signs in with a BuhurtOS account and only Red Deer Reavers captains can edit
 - **BuhurtOS** (`buhurtos.js`) for fighter profiles: the Team page, home page fighter cards, `fighter.html` profiles, the company record, tournament results and events are read live from BuhurtOS's public API
 - Progressive Web App manifest and service worker for installable mobile use
 - GitHub Actions production build and quality checks
@@ -21,11 +21,11 @@ Public team website and lightweight team administration for the Red Deer Reavers
 
 Fighters do not need to be added on this site. A fighter signs in to BuhurtOS, asks to join the Red Deer Reavers, and builds their profile there (photo, disciplines, bio, socials). Once the team captain approves them on BuhurtOS, they appear on the Team page automatically, and their record and placings fill in as they compete at BuhurtOS events. The Team page has an "Add your fighter profile" section that links straight into that flow.
 
-**Hiding people who come and go.** In Admin → Roster, every BuhurtOS fighter has a **Hide** / **Show** button. Hiding keeps them off the Team page, the home page, the crew count and their profile page, and leaves their BuhurtOS record untouched. The hide list is stored with the team's roster data as a record whose discipline is `hide-buhurtos:<fighter id>`; those records are never shown as people.
+**Hiding people who come and go.** In the app under Website → Team page, every BuhurtOS fighter has a **Hide** / **Show** button. Hiding keeps them off the Team page, the home page, the crew count and their profile page, and leaves their BuhurtOS record untouched. The hide list is stored with the team's roster data as a record whose discipline is `hide-buhurtos:<fighter id>`; those records are never shown as people.
 
-**Events from BuhurtOS.** Every published event on BuhurtOS, past and future, appears on the Events page. Upcoming ones are merged into the calendar list, the home page "upcoming" card and the add-to-calendar buttons. Finished ones go in a "Past events" archive, newest first, 12 at a time, each linking to its BuhurtOS page for results. Events the Reavers host or enter are labelled "Reavers hosting" / "Reavers entered". Events also entered by hand in Admin are not duplicated, and test events are never shown. Admin → Calendar lists what is being pulled in.
+**Events from BuhurtOS.** Every published event on BuhurtOS, past and future, appears on the Events page. Upcoming ones are merged into the calendar list, the home page "upcoming" card and the add-to-calendar buttons. Finished ones go in a "Past events" archive, newest first, 12 at a time, each linking to its BuhurtOS page for results. Events the Reavers host or enter are labelled "Reavers hosting" / "Reavers entered". Events also entered by hand in the app are not duplicated, and test events are never shown. The app's Website → Calendar lists what is being pulled in.
 
-`buhurtos.js` reads only public data with the BuhurtOS publishable (browser-safe) key: the team roster, public fighter profile fields, team and fighter statistics, results, and entries. It never shows birth year, age, gender, account or contact data, and leaves synthetic/test fighters and events out of the roster and records. Anyone on the admin crew roster whose name matches a BuhurtOS fighter is merged into that fighter's card, so crew, coaches and media can still be listed from Admin.
+`buhurtos.js` reads only public data with the BuhurtOS publishable (browser-safe) key: the team roster, public fighter profile fields, team and fighter statistics, results, and entries. It never shows birth year, age, gender, account or contact data, and leaves synthetic/test fighters and events out of the roster and records. Anyone on the admin crew roster whose name matches a BuhurtOS fighter is merged into that fighter's card, so crew, coaches and media can still be listed from the app.
 
 ## Social photo sync
 
@@ -55,7 +55,6 @@ The site intentionally stays framework free while using focused libraries where 
 
 - **Sharp** generates responsive WebP versions of every gallery photo during deployment.
 - **PhotoSwipe** powers the mobile friendly, swipe and zoom media gallery.
-- **SortableJS** lets Admin drag and save roster ordering.
 - **Add to Calendar Button** gives public events Apple, Google, iCal, Microsoft, Outlook, and Yahoo calendar actions.
 - **node-qrcode** generates printable SVG QR codes for the website, Join, Community, and Events pages.
 - **Lighthouse CI** checks performance, accessibility, best practices, and SEO.
@@ -88,13 +87,14 @@ The production output is written to `_site/`. GitHub Pages deploys only that dir
 
 ## Admin
 
-Open `admin.html` to manage:
+The old `admin.html` page is gone: everything it did now lives in the Reavers app (`/app/`, also at app.reddeerreavers.com) under **Website**, and `/admin` redirects there:
 
-- Events
-- Roster profiles, public visibility, and drag ordering
-- Recurring practices
+- Calendar: events, weekly practices and every BuhurtOS event on one month grid
+- Team page: hide or show BuhurtOS fighters, put club members on the website, and add, order and edit crew, coaches and media
+- Practices
 - Community inquiries
-- Printable/downloadable QR codes
-- Basic site settings
+- Site editor
+- Printable and downloadable QR codes
+- Site settings
 
-Routine content changes are designed to be made from Admin rather than by editing site files.
+Routine content changes are designed to be made from the app rather than by editing site files.

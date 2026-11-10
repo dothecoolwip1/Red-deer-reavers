@@ -18,6 +18,12 @@ import { Gear } from "./pages/Gear";
 import { Waivers } from "./pages/Waivers";
 import { Incidents } from "./pages/Incidents";
 import { SiteEditor } from "./pages/SiteEditor";
+import { Calendar } from "./pages/website/Calendar";
+import { TeamPage } from "./pages/website/TeamPage";
+import { Practices } from "./pages/website/Practices";
+import { Inquiries } from "./pages/website/Inquiries";
+import { Promo } from "./pages/website/Promo";
+import { SiteSettings } from "./pages/website/SiteSettings";
 
 type Nav = { path: string; label: string; need: Action; element: JSX.Element; group: string };
 const NAV: Nav[] = [
@@ -32,7 +38,13 @@ const NAV: Nav[] = [
   { path: "/incidents", label: "Incidents", need: "self.use", element: <Incidents />, group: "Safety" },
   { path: "/gear", label: "Armory", need: "records.view", element: <Gear />, group: "Safety" },
   { path: "/compliance", label: "Deadlines", need: "records.view", element: <Compliance />, group: "Society" },
-  { path: "/site", label: "Site editor", need: "records.edit", element: <SiteEditor />, group: "Society" }
+  { path: "/calendar", label: "Calendar", need: "records.edit", element: <Calendar />, group: "Website" },
+  { path: "/team", label: "Team page", need: "records.edit", element: <TeamPage />, group: "Website" },
+  { path: "/practices", label: "Practices", need: "records.edit", element: <Practices />, group: "Website" },
+  { path: "/inquiries", label: "Inquiries", need: "records.edit", element: <Inquiries />, group: "Website" },
+  { path: "/site", label: "Site editor", need: "records.edit", element: <SiteEditor />, group: "Website" },
+  { path: "/qr", label: "QR codes", need: "records.edit", element: <Promo />, group: "Website" },
+  { path: "/site-settings", label: "Site settings", need: "records.edit", element: <SiteSettings />, group: "Website" }
 ];
 
 type Gate =
@@ -118,7 +130,7 @@ function SignIn({ note, onDemo }: { note?: string; onDemo: () => void }) {
       <div className="signin card">
         <img src={`${import.meta.env.BASE_URL}crest.png`} alt="" width="64" height="64" />
         <h1>Reavers app</h1>
-        <p>The club's back office: money, sponsors, gear, waivers and deadlines. Sign in with your BuhurtOS account, the same one you use for the members area.</p>
+        <p>The club's back office: money, sponsors, gear, waivers, deadlines and the website. Sign in with your BuhurtOS account, the same one you use for the members area.</p>
         <button className="primary wide" onClick={() => oauth("google")}>Continue with Google</button>
         <button className="wide" onClick={() => oauth("discord")}>Continue with Discord</button>
         <form className="form" onSubmit={async e => {

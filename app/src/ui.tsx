@@ -105,7 +105,7 @@ export function Modal({ title, onClose, children }: { title: string; onClose: ()
 // ------------------------------------------------------------------ forms
 
 export type Field = {
-  key: string; label: string; type?: "text" | "textarea" | "date" | "money" | "number" | "select" | "checkbox" | "email" | "url";
+  key: string; label: string; type?: "text" | "textarea" | "date" | "money" | "number" | "select" | "checkbox" | "email" | "url" | "time";
   options?: string[]; required?: boolean; hint?: string; wide?: boolean;
 };
 
