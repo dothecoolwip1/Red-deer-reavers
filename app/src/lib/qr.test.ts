@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cleanLink, qrFileName, shortLink } from "./qr";
+import { addLogo, cleanLink, qrFileName, shortLink } from "./qr";
 
 describe("cleanLink", () => {
   it("keeps full web links", () => {
@@ -29,5 +29,18 @@ describe("qrFileName", () => {
 describe("shortLink", () => {
   it("drops the scheme and trailing slash", () => {
     expect(shortLink("https://reddeerreavers.com/")).toBe("reddeerreavers.com");
+  });
+});
+
+describe("addLogo", () => {
+  it("adds a centred badge and the logo before the end of the SVG", () => {
+    const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 37 37"><path d="M0 0h1"/></svg>\n';
+    const out = addLogo(svg, "data:image/png;base64,AAAA");
+    expect(out).toContain('<rect x="14.06" y="14.06" width="8.88" height="8.88"');
+    expect(out).toContain('href="data:image/png;base64,AAAA"');
+    expect(out.trim().endsWith("</svg>")).toBe(true);
+  });
+  it("leaves an SVG without a viewBox alone", () => {
+    expect(addLogo("<svg></svg>", "x")).toBe("<svg></svg>");
   });
 });

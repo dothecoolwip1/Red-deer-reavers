@@ -3,7 +3,8 @@ import QRCode from "qrcode";
 import { siteOrigin } from "../../data/config";
 import { isMissingSetup } from "../../data/supabase";
 import type { QrCode } from "../../data/types";
-import { cleanLink, qrFileName, shortLink } from "../../lib/qr";
+import { addLogo, cleanLink, qrFileName, shortLink } from "../../lib/qr";
+import crestUrl from "../../assets/qr-logo.png";
 import { Empty, Loading, Modal, Page, errorText, useCan, useStore, useToast } from "../../ui";
 
 // Generated on every site build (scripts/build-site.mjs), so they always point at the live pages.
@@ -22,7 +23,8 @@ const QUICK_LINKS = [
   { label: "Contact", title: "Contact the Reavers", note: "Get in touch", url: "https://reddeerreavers.com/contact.html" }
 ];
 
-const SVG_OPTIONS = { type: "svg", errorCorrectionLevel: "M", margin: 2, width: 720 } as const;
+// Level H so the code still scans with the crest covering its middle (same as scripts/build-site.mjs).
+const SVG_OPTIONS = { type: "svg", errorCorrectionLevel: "H", margin: 2, width: 720 } as const;
 
 function download(href: string, name: string) {
   const a = document.createElement("a");
@@ -31,16 +33,42 @@ function download(href: string, name: string) {
   a.click();
 }
 
-/** Draws a QR code in the browser from a link. */
+// The crest goes into each SVG as a data: address, so a downloaded file shows it anywhere. Loaded once.
+let crestData: Promise<string> | null = null;
+function crest(): Promise<string> {
+  crestData ??= fetch(crestUrl).then(r => r.blob()).then(blob => new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(blob);
+  }));
+  return crestData;
+}
+
+/** Draws a QR code in the browser from a link, with the club crest in the middle. */
 function useQrSvg(url: string | null) {
   const [svg, setSvg] = useState<string | null>(null);
   useEffect(() => {
     let live = true;
     if (!url) { setSvg(null); return; }
-    QRCode.toString(url, SVG_OPTIONS).then(s => { if (live) setSvg(s); }, () => { if (live) setSvg(null); });
+    Promise.all([QRCode.toString(url, SVG_OPTIONS), crest()]).then(([s, logo]) => { if (live) setSvg(addLogo(s, logo)); }, () => { if (live) setSvg(null); });
     return () => { live = false; };
   }, [url]);
   return svg;
+}
+/** Draws the finished SVG (code and crest) onto a canvas, for a PNG that drops into Canva, Word or a print shop. */
+async function svgToPng(svg: string, px: number): Promise<string> {
+  const img = new Image();
+  img.src = svgSrc(svg);
+  await img.decode();
+  const canvas = document.createElement("canvas");
+  canvas.width = canvas.height = px;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Couldn't make the PNG in this browser. Try the SVG.");
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, px, px);
+  ctx.drawImage(img, 0, 0, px, px);
+  return canvas.toDataURL("image/png");
 }
 const svgSrc = (svg: string) => `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
 
@@ -122,7 +150,7 @@ function CustomCard({ code, canEdit, onEdit }: { code: QrCode; canEdit: boolean;
   const toast = useToast();
   const svg = useQrSvg(code.url);
   async function png() {
-    try { download(await QRCode.toDataURL(code.url, { errorCorrectionLevel: "M", margin: 2, width: 1200 }), `${qrFileName(code.title)}.png`); }
+    try { if (svg) download(await svgToPng(svg, 1200), `${qrFileName(code.title)}.png`); }
     catch (e) { toast(errorText(e), true); }
   }
   return (
@@ -135,7 +163,7 @@ function CustomCard({ code, canEdit, onEdit }: { code: QrCode; canEdit: boolean;
       </div>
       <div className="qr-actions no-print">
         <button disabled={!svg} onClick={() => svg && download(svgSrc(svg), `${qrFileName(code.title)}.svg`)}>SVG</button>
-        <button onClick={() => void png()}>PNG</button>
+        <button disabled={!svg} onClick={() => void png()}>PNG</button>
         {canEdit && <button className="ghost" onClick={onEdit}>Edit</button>}
       </div>
     </article>

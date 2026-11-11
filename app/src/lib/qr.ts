@@ -22,3 +22,20 @@ export function qrFileName(title: string): string {
 
 /** Short form of a link for the card: no https://, no trailing slash. */
 export const shortLink = (url: string) => url.replace(/^https?:\/\//i, "").replace(/\/$/, "");
+
+/**
+ * Puts the club crest in a white badge in the middle of a QR code SVG (from the qrcode package).
+ * The code must use error correction level H, which still scans with up to 30% hidden; the badge covers about 6%.
+ * scripts/build-site.mjs does the same for the website codes; keep the two in step.
+ */
+export function addLogo(svg: string, logoHref: string): string {
+  const size = Number(/viewBox="0 0 (\d+(?:\.\d+)?) /.exec(svg)?.[1]);
+  if (!size) return svg;
+  const badge = size * 0.24;
+  const at = (size - badge) / 2;
+  const pad = badge * 0.1;
+  const fmt = (n: number) => +n.toFixed(2);
+  const overlay = `<rect x="${fmt(at)}" y="${fmt(at)}" width="${fmt(badge)}" height="${fmt(badge)}" rx="${fmt(badge * 0.18)}" fill="#ffffff"/>`
+    + `<image x="${fmt(at + pad)}" y="${fmt(at + pad)}" width="${fmt(badge - 2 * pad)}" height="${fmt(badge - 2 * pad)}" href="${logoHref}" preserveAspectRatio="xMidYMid meet"/>`;
+  return svg.replace(/<\/svg>\s*$/, `${overlay}</svg>`);
+}
