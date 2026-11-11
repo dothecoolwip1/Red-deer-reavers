@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { CATEGORIES } from "../data/categories";
 import { budgetActuals } from "../lib/budget";
-import { Empty, Loading, Money, Page, RecordList, useCan, useTable } from "../ui";
+import { Empty, Loading, Money, Page, RecordList, usePage, useTable } from "../ui";
 
 export function Budgets() {
   const budgets = useTable("budgets");
   const tx = useTable("transactions");
-  const canEdit = useCan("money.edit");
+  const canEdit = usePage("budget") === 2;
   const [year, setYear] = useState(new Date().getFullYear());
   const rows = budgets.rows && tx.rows ? budgetActuals(budgets.rows, tx.rows, year) : null;
   const years = [...new Set([year, new Date().getFullYear(), ...(budgets.rows || []).map(b => b.year)])].sort();

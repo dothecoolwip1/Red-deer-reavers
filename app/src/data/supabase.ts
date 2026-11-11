@@ -4,6 +4,8 @@ import type { CheckoutRequest, Id, Session, SquareItem, Store, TableName, Tables
 import { roleFrom, type Role } from "../lib/roles";
 import { liveWebsite } from "./website";
 import { liveAttendance } from "./attendance";
+import { liveAccess } from "./access";
+import { parseLevels } from "../lib/pages";
 
 let client: SupabaseClient | null = null;
 export function supabase(): SupabaseClient {
@@ -60,12 +62,17 @@ export async function liveSession(): Promise<Session | null> {
   const { data: role, error } = await supabase().rpc("reavers_app_my_role");
   fail(error);
   const meta = user.user_metadata || {};
+  const r = (["finance", "exec", "member"].includes(role) ? role : roleFrom({ finance: false, exec: false, member: false })) as Role;
+  // Before the page access migration is applied the function doesn't exist: every page then follows the role, as before.
+  const pages = await supabase().rpc("reavers_app_my_pages");
+  if (pages.error && !isMissingSetup(pages.error)) fail(pages.error);
   return {
     mode: "live",
     userId: user.id,
     email: user.email || "",
     name: meta.full_name || meta.name || meta.user_name || user.email || "Member",
-    role: (["finance", "exec", "member"].includes(role) ? role : roleFrom({ finance: false, exec: false, member: false })) as Role
+    role: r,
+    pages: parseLevels(r, pages.error ? null : pages.data)
   };
 }
 
@@ -132,6 +139,7 @@ export function liveStore(session: Session): Store {
     },
     website: liveWebsite(supabase),
     attendance: liveAttendance(supabase),
+    access: liveAccess(supabase),
     checkout: startCheckout,
     async setPaymentKind(id, kind) {
       const { error } = await supabase().rpc("reavers_app_square_set_kind", { p_payment: id, p_kind: kind });

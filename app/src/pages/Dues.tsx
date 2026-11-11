@@ -4,7 +4,7 @@ import type { Dues as DuesRecord, DuesExemption, DuesMethod, SquarePaymentRow } 
 import { duesGrid, lastMonths, settled, unassignedDues, type DuesRow } from "../lib/dues";
 import { monthLabel } from "../lib/square";
 import { parseMoney } from "../lib/money";
-import { Empty, Loading, Modal, Money, Page, Pill, dateLabel, todayIso, useAction, useCan, useStore, useTable } from "../ui";
+import { Empty, Loading, Modal, Money, Page, Pill, dateLabel, todayIso, useAction, usePage, useStore, useTable } from "../ui";
 
 const METHOD: Record<DuesMethod, string> = { square: "Square", cash: "Cash", etransfer: "e-Transfer", waived: "Waived", other: "Other" };
 const TAG: Record<DuesMethod, string> = { square: "Square", cash: "Cash", etransfer: "e-Tr", waived: "Waived", other: "Other" };
@@ -13,7 +13,7 @@ const short = (month: string) => new Intl.DateTimeFormat("en-CA", { month: "shor
 export function Dues() {
   const store = useStore();
   const run = useAction();
-  const canEdit = useCan("money.edit");
+  const canEdit = usePage("dues") === 2;
   const dues = useTable("dues");
   const payments = useTable("square_payments");
   const items = useTable("square_items");

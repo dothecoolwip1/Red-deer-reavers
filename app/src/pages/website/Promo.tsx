@@ -5,7 +5,7 @@ import { isMissingSetup } from "../../data/supabase";
 import type { QrCode } from "../../data/types";
 import { addLogo, cleanLink, qrFileName, shortLink } from "../../lib/qr";
 import crestUrl from "../../assets/qr-logo.png";
-import { Empty, Loading, Modal, Page, errorText, useCan, useStore, useToast } from "../../ui";
+import { Empty, Loading, Modal, Page, errorText, usePage, useStore, useToast } from "../../ui";
 
 // Generated on every site build (scripts/build-site.mjs), so they always point at the live pages.
 const CODES = [
@@ -75,7 +75,7 @@ const svgSrc = (svg: string) => `data:image/svg+xml;charset=utf-8,${encodeURICom
 export function Promo() {
   const store = useStore();
   const toast = useToast();
-  const canEdit = useCan("records.edit");
+  const canEdit = usePage("qr") === 2;
   const origin = useMemo(siteOrigin, []);
   const src = (file: string) => `${origin}/assets/generated/qr/${file}.svg`;
   const [mine, setMine] = useState<QrCode[] | null>(null);

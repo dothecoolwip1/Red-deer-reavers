@@ -3,6 +3,8 @@ import type { ClaimStatus } from "../lib/reimburse";
 import type { Recurrence } from "../lib/compliance";
 import type { WebsiteApi } from "./website";
 import type { AttendanceApi } from "./attendance";
+import type { AccessApi } from "./access";
+import type { PageLevels } from "../lib/pages";
 import type { Kind, PaymentItem, PaymentKind } from "../lib/square";
 
 export type Id = string;
@@ -84,7 +86,11 @@ export type Tables = {
 };
 export type TableName = keyof Tables;
 
-export type Session = { mode: "live" | "demo"; userId: string; name: string; email: string; role: Role };
+export type Session = {
+  mode: "live" | "demo"; userId: string; name: string; email: string; role: Role;
+  /** What this person can do on each staff page (role default, or what an admin set on the Page access screen). */
+  pages: PageLevels;
+};
 
 /** Everything the screens need from the database. Two implementations: Supabase (live) and in-browser sample data (demo). */
 export interface Store {
@@ -105,6 +111,8 @@ export interface Store {
   website: WebsiteApi;
   /** Who shows up to practices, tournaments, events and fundraisers, and the 3-month no-show policy. */
   attendance: AttendanceApi;
+  /** Who can see and use each staff page (treasury manages it). */
+  access: AccessApi;
   /** Starts a Square checkout and returns the address of Square's payment page. */
   checkout(req: CheckoutRequest): Promise<string>;
   /** Treasury re-labels what a Square payment was for; its ledger lines follow. */
