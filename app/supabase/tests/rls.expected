@@ -89,3 +89,6 @@ ERROR:  new row for relation "reavers_app_qr_codes" violates check constraint "r
 exec qr codes|1
 member qr codes|0
 ERROR:  new row violates row-level security policy for table "reavers_app_qr_codes"
+anon store items|Store sticker
+ERROR:  new row for relation "reavers_app_square_items" violates check constraint "reavers_app_square_items_image_url_check"
+store sticker after exec|t|t

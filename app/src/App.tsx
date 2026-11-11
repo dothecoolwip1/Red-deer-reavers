@@ -25,6 +25,7 @@ import { Calendar } from "./pages/website/Calendar";
 import { TeamPage } from "./pages/website/TeamPage";
 import { Practices } from "./pages/website/Practices";
 import { Inquiries } from "./pages/website/Inquiries";
+import { MerchStore } from "./pages/website/MerchStore";
 import { Promo } from "./pages/website/Promo";
 import { SiteSettings } from "./pages/website/SiteSettings";
 import { Attendance } from "./pages/Attendance";
@@ -54,6 +55,7 @@ const NAV: Nav[] = [
   { path: "/practices", label: "Practices", need: { page: "practices" }, element: <Practices />, group: "Website" },
   { path: "/inquiries", label: "Inquiries", need: { page: "inquiries" }, element: <Inquiries />, group: "Website" },
   { path: "/site", label: "Site editor", need: { page: "site" }, element: <SiteEditor />, group: "Website" },
+  { path: "/store", label: "Merch store", need: "money.edit", element: <MerchStore />, group: "Website" },
   { path: "/qr", label: "QR codes", need: { page: "qr" }, element: <Promo />, group: "Website" },
   { path: "/site-settings", label: "Site settings", need: { page: "site-settings" }, element: <SiteSettings />, group: "Website" }
 ];

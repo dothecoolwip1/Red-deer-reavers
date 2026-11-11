@@ -58,6 +58,7 @@ const NAV = [
   ["community", "community.html", "Community"],
   ["media", "media.html", "Media", "nav-wide"],
   ["social", "social.html", "Social"],
+  ["store", "store.html", "Store"],
   ["members", "members.html", "Members"]
 ];
 
@@ -117,6 +118,7 @@ export const footer = () => `
           <a href="events.html#results">Results</a>
           <a href="community.html">Book the Reavers</a>
           <a href="media.html">Media</a>
+          <a href="store.html">Merch store</a>
         </div>
         <div>
           <h2 class="footer-h">Follow</h2>

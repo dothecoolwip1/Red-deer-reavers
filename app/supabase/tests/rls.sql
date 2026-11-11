@@ -230,3 +230,20 @@ select 'member qr codes', count(*) from reavers_app_qr_codes;
 \set ON_ERROR_STOP 0
 insert into reavers_app_qr_codes(title, url) values ('Sneaky', 'https://example.com');
 \set ON_ERROR_STOP 1
+-- Merch store: anyone reads in-store items (for sale, on the open page); treasury sets photos (https only); the executive can't
+reset role;
+insert into reavers_app_square_items(title, kind, price_cents, public, in_store) values
+  ('Store sticker', 'sticker', 300, true, true), ('Members tee', 'other', 2500, false, true), ('Not listed', 'sticker', 500, true, false);
+set role anon;
+select 'anon store items', string_agg(title, ',' order by title) from reavers_app_square_items where in_store;
+reset role;
+set role authenticated;
+select set_config('test.uid', :'u1', false);
+update reavers_app_square_items set image_url = 'https://api-home.buhurtoshome.app/storage/v1/object/public/reavers-site-media/2026/s.webp' where title = 'Store sticker';
+\set ON_ERROR_STOP 0
+update reavers_app_square_items set image_url = 'javascript:alert(1)' where title = 'Store sticker';
+\set ON_ERROR_STOP 1
+select set_config('test.uid', :'u3', false);
+update reavers_app_square_items set in_store = false where title = 'Store sticker';
+reset role;
+select 'store sticker after exec', in_store, image_url like 'https://%' from reavers_app_square_items where title = 'Store sticker';

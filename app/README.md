@@ -50,6 +50,10 @@ Until the migration below is applied, a signed-in person sees sample data with a
 5. **Your own QR codes.** Apply `20261111010000_reavers_app_qr_codes.sql` (home server and the cloud copy). Until then the
    QR codes page still shows the website codes and says the update is needed before admins can add their own.
 6. **Square.** See "Turn on Square" below.
+   **Merch store.** Apply `20261111024000_reavers_app_merch_store.sql` (home server and the cloud copy). It adds "in the
+   store" and a photo to each Square item and puts the existing sticker and trading card items in the store. Then
+   Website → **Merch store** shows or hides items on https://reddeerreavers.com/store.html and takes their photos. Until it's
+   applied, the store page still sells every sticker and trading card that's for sale, just without photos.
 7. **Stripe (optional, older).** Deploy `supabase/functions/reavers-stripe-webhook` with `--no-verify-jwt`, set
    `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET`, and add the endpoint in Stripe for `checkout.session.completed`.
    Square replaces this; existing Stripe links still show under Pay the club → Other payment links.
