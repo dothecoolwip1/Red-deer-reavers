@@ -49,8 +49,12 @@ Until the migration below is applied, a signed-in person sees sample data with a
    `docs/attendance-discord-bot.md`.
 5. **Your own QR codes.** Apply `20261111010000_reavers_app_qr_codes.sql` (home server and the cloud copy). Until then the
    QR codes page still shows the website codes and says the update is needed before admins can add their own.
-6. **Square.** See "Turn on Square" below.
-7. **Stripe (optional, older).** Deploy `supabase/functions/reavers-stripe-webhook` with `--no-verify-jwt`, set
+6. **Sponsors on the website.** Apply `20261112000000_reavers_app_sponsors_public.sql` (home server and the cloud copy).
+   It lets the website's Sponsors page (`sponsors.html`) list signed sponsors switched on under Sponsors → Website, and
+   sends its "Become a sponsor" form into the Sponsors pipeline and the Inquiries page. Until then the page shows an
+   open "Your logo here" wall and the form says to email instead.
+7. **Square.** See "Turn on Square" below.
+8. **Stripe (optional, older).** Deploy `supabase/functions/reavers-stripe-webhook` with `--no-verify-jwt`, set
    `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET`, and add the endpoint in Stripe for `checkout.session.completed`.
    Square replaces this; existing Stripe links still show under Pay the club → Other payment links.
 

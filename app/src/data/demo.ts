@@ -55,8 +55,9 @@ function seed(): Db {
     ],
     reimbursement_approvals: [],
     sponsors: [
-      { id: id(), name: "Prairie Iron Works (sample)", contact_name: "Dana", email: null, phone: null, website: null, stage: "signed", tier: "Knight", value_cents: 150000, in_kind: false, next_follow_up: day(45), renews_on: day(300), notes: "Logo on tabards" },
-      { id: id(), name: "Gaetz Ave Gym (sample)", contact_name: null, email: null, phone: null, website: null, stage: "proposal", tier: "Squire", value_cents: 50000, in_kind: true, next_follow_up: day(3), renews_on: null, notes: "Offering free mat time" },
+      { id: id(), name: "Prairie Iron Works (sample)", contact_name: "Dana", email: null, phone: null, website: null, stage: "signed", tier: "Gold", value_cents: 150000, in_kind: false, next_follow_up: day(45), renews_on: day(300), notes: "Logo on tabards", logo_url: null, blurb: "Custom steel and fabrication in Red Deer.", show_on_site: true, source: "app" },
+      { id: id(), name: "Gaetz Ave Gym (sample)", contact_name: null, email: null, phone: null, website: null, stage: "proposal", tier: "In-kind", value_cents: 50000, in_kind: true, next_follow_up: day(3), renews_on: null, notes: "Offering free mat time", show_on_site: false, source: "app" },
+      { id: id(), name: "Sylvan Lake Coffee Co. (sample)", contact_name: "Jo", email: "jo@example.com", phone: null, website: "https://example.com", stage: "prospect", tier: "Silver", value_cents: null, in_kind: false, next_follow_up: day(2), renews_on: null, notes: "From the website sponsor form:\nWe'd love our logo at your spring tournament.", show_on_site: false, source: "website", created_at: new Date().toISOString() },
       { id: id(), name: "Central Alberta Welding (sample)", contact_name: null, email: null, phone: null, website: null, stage: "contacted", tier: null, value_cents: null, in_kind: false, next_follow_up: day(-1), renews_on: null, notes: null }
     ],
     sponsor_deliverables: [],
@@ -217,6 +218,14 @@ export function demoStore(role: Role = "finance"): Store {
     async uploadReceipt(file) { return `demo/${file.name}`; },
     async uploadSiteImage(file) {
       // Sample mode keeps the picture in the browser only (the live site accepts only https addresses).
+      return await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result));
+        reader.onerror = () => reject(new Error("Could not read the image"));
+        reader.readAsDataURL(file);
+      });
+    },
+    async uploadSponsorLogo(file) {
       return await new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = () => resolve(String(reader.result));

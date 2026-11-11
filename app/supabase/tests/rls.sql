@@ -230,3 +230,30 @@ select 'member qr codes', count(*) from reavers_app_qr_codes;
 \set ON_ERROR_STOP 0
 insert into reavers_app_qr_codes(title, url) values ('Sneaky', 'https://example.com');
 \set ON_ERROR_STOP 1
+-- Sponsors on the website: the public sees only signed sponsors switched on, and only their public fields
+reset role;
+set role authenticated;
+select set_config('test.uid', :'u1', false);
+insert into reavers_app_sponsors(name, stage, tier, email, value_cents, show_on_site, logo_url, website) values
+  ('Shown Gold', 'signed', 'Gold', 'secret@x.com', 100000, true, 'https://cdn.example.com/a.png', 'https://shown.example.com'),
+  ('Shown Bronze', 'renewed', 'Bronze', null, null, true, null, 'javascript:alert(1)'),
+  ('Hidden signed', 'signed', 'Silver', null, null, false, null, null),
+  ('Prospect on', 'prospect', 'Gold', null, null, true, null, null);
+\set ON_ERROR_STOP 0
+update reavers_app_sponsors set logo_url = 'javascript:alert(1)' where name = 'Shown Gold';
+\set ON_ERROR_STOP 1
+reset role;
+set role anon;
+select set_config('test.uid', '', false);
+select 'public sponsors', jsonb_array_length(reavers_sponsors_public()), reavers_sponsors_public()->0->>'name', reavers_sponsors_public()->1->>'website' is null;
+select 'public sponsors hide contacts', reavers_sponsors_public()::text like '%secret%' or reavers_sponsors_public()::text like '%100000%';
+\set ON_ERROR_STOP 0
+select count(*) from reavers_app_sponsors;
+select reavers_sponsor_inquiry('{"name":"", "email":"a@b.co"}');
+select reavers_sponsor_inquiry('{"name":"No contact"}');
+\set ON_ERROR_STOP 1
+select 'inquiry', reavers_sponsor_inquiry('{"name":"Prairie Coffee","contact_name":"Jo","email":"Jo@Prairie.ca","website":"prairie.ca","tier":"Silver","message":"Love the sport"}')->>'ok';
+select 'inquiry repeat ignored', reavers_sponsor_inquiry('{"name":"Prairie Coffee","email":"jo@prairie.ca"}')->>'ok';
+select 'inquiry bot ignored', reavers_sponsor_inquiry('{"name":"Spam Co","email":"s@s.co","trap":"http://spam"}')->>'ok';
+reset role;
+select 'website prospects', name, stage, source, tier, email, website, notes from reavers_app_sponsors where source = 'website' order by name;
