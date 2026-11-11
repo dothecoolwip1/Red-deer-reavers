@@ -89,3 +89,16 @@ ERROR:  new row for relation "reavers_app_qr_codes" violates check constraint "r
 exec qr codes|1
 member qr codes|0
 ERROR:  new row violates row-level security policy for table "reavers_app_qr_codes"
+member my fighters|1
+ERROR:  new row violates row-level security policy for table "reavers_app_fighter_profiles"
+ERROR:  new row for relation "reavers_app_fighter_profiles" violates check constraint "reavers_app_fighter_profiles_photo_url_check"
+member stamped|t
+ERROR:  new row violates row-level security policy for table "objects"
+ERROR:  new row violates row-level security policy for table "objects"
+outsider my fighters|0
+ERROR:  new row violates row-level security policy for table "reavers_app_fighter_profiles"
+outsider sees hidden profiles|0
+exec sees profiles|1
+visitor sees shown profiles|1
+visitor reads extras|The Anvil|Heavyweight
+ERROR:  permission denied for table reavers_app_fighter_profiles
