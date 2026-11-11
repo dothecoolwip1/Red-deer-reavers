@@ -3,7 +3,7 @@ import QRCode from "qrcode";
 import { siteOrigin } from "../../data/config";
 import { isMissingSetup } from "../../data/supabase";
 import type { QrCode } from "../../data/types";
-import { addLogo, cleanLink, qrFileName, shortLink } from "../../lib/qr";
+import { addLogo, cleanLink, makeTransparent, qrFileName, shortLink } from "../../lib/qr";
 import crestUrl from "../../assets/qr-logo.png";
 import { Empty, Loading, Modal, Page, errorText, usePage, useStore, useToast } from "../../ui";
 
@@ -56,8 +56,9 @@ function useQrSvg(url: string | null) {
   }, [url]);
   return svg;
 }
-/** Draws the finished SVG (code and crest) onto a canvas, for a PNG that drops into Canva, Word or a print shop. */
-async function svgToPng(svg: string, px: number): Promise<string> {
+/** Draws the finished SVG (code and crest) onto a canvas, for a PNG that drops into Canva, Word or a print shop.
+ * A transparent SVG stays transparent: only a white one gets a white fill. */
+async function svgToPng(svg: string, px: number, transparent = false): Promise<string> {
   const img = new Image();
   img.src = svgSrc(svg);
   await img.decode();
@@ -65,8 +66,10 @@ async function svgToPng(svg: string, px: number): Promise<string> {
   canvas.width = canvas.height = px;
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("Couldn't make the PNG in this browser. Try the SVG.");
-  ctx.fillStyle = "#ffffff";
-  ctx.fillRect(0, 0, px, px);
+  if (!transparent) {
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, px, px);
+  }
   ctx.drawImage(img, 0, 0, px, px);
   return canvas.toDataURL("image/png");
 }
@@ -81,6 +84,15 @@ export function Promo() {
   const [mine, setMine] = useState<QrCode[] | null>(null);
   const [notSetUp, setNotSetUp] = useState(false);
   const [editing, setEditing] = useState<Partial<QrCode> | null>(null);
+  const [clear, setClear] = useState(() => { try { return localStorage.getItem("reavers-qr-transparent") === "1"; } catch { return false; } });
+  const setTransparent = (on: boolean) => { setClear(on); try { localStorage.setItem("reavers-qr-transparent", on ? "1" : "0"); } catch { /* ignore */ } };
+  // The website codes' SVG text, so they can be shown and saved without their background too.
+  const [siteSvgs, setSiteSvgs] = useState<Record<string, string>>({});
+  useEffect(() => {
+    let live = true;
+    for (const c of CODES) void fetch(src(c.file)).then(r => (r.ok ? r.text() : null)).then(t => { if (live && t) setSiteSvgs(m => ({ ...m, [c.file]: t })); }, () => undefined);
+    return () => { live = false; };
+  }, [origin]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function reload() {
     try { setMine(await store.list("qr_codes")); setNotSetUp(false); }
@@ -88,13 +100,12 @@ export function Promo() {
   }
   useEffect(() => { void reload(); }, [store]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  async function save(file: string, name: string) {
+  const siteSvg = (file: string) => { const t = siteSvgs[file]; return t && clear ? makeTransparent(t) : t; };
+  async function save(file: string, name: string, png = false) {
     try {
-      const response = await fetch(src(file));
-      if (!response.ok) throw new Error(`Could not download the QR code (${response.status})`);
-      const href = URL.createObjectURL(await response.blob());
-      download(href, name);
-      setTimeout(() => URL.revokeObjectURL(href), 1000);
+      const svg = siteSvg(file);
+      if (!svg) throw new Error("Couldn't load that QR code. Check the connection and try again.");
+      download(png ? await svgToPng(svg, 1200, clear) : svgSrc(svg), png ? name.replace(/\.svg$/, ".png") : name);
     } catch (e) {
       toast(errorText(e), true);
     }
@@ -109,16 +120,18 @@ export function Promo() {
   return (
     <Page title="QR codes" intro="For posters, tables at demos and flyers. Add your own for any link, like a tournament signup or a sponsor's page, then download it or print the sheet."
       actions={<>
+        <label className="qr-toggle no-print"><input type="checkbox" checked={clear} onChange={e => setTransparent(e.target.checked)} /> Transparent background</label>
         {canEdit && !notSetUp && <button onClick={() => setEditing({})}>Add QR code</button>}
         <button className="primary" onClick={() => window.print()}>Print sheet</button>
       </>}>
 
+      {clear && <p className="muted small no-print qr-clear-note">Downloads have no background, for laying over a poster or shirt. Put them on something light: phones need dark squares on a pale background.</p>}
       <div className="section qr-section">
         <div className="section-head"><h2>Club codes <small className="muted">your own links</small></h2></div>
         {notSetUp ? <p className="banner no-print">Adding your own QR codes needs one database update first (the <code>reavers_app_qr_codes</code> table). The website codes below still work.</p>
           : mine === null ? <Loading />
           : mine.length === 0 ? <Empty>No codes of your own yet. Use <strong>Add QR code</strong> to make one for any link.</Empty>
-          : <div className="qr-grid">{mine.map(c => <CustomCard key={c.id} code={c} canEdit={canEdit} onEdit={() => setEditing(c)} />)}</div>}
+          : <div className="qr-grid">{mine.map(c => <CustomCard key={c.id} code={c} clear={clear} canEdit={canEdit} onEdit={() => setEditing(c)} />)}</div>}
       </div>
 
       <div className="section qr-section">
@@ -126,12 +139,15 @@ export function Promo() {
         <div className="qr-grid">
           {CODES.map(c => (
             <article key={c.file} className="card qr">
-              <img src={src(c.file)} alt={`QR code: ${c.title}`} width="220" height="220" />
+              <img className={clear ? "clear" : undefined} src={siteSvg(c.file) ? svgSrc(siteSvg(c.file)!) : src(c.file)} alt={`QR code: ${c.title}`} width="220" height="220" />
               <div>
                 <strong>{c.title}</strong>
                 <small className="muted block">{c.note}</small>
               </div>
-              <button className="no-print" onClick={() => void save(c.file, c.download)}>Download SVG</button>
+              <div className="qr-actions no-print">
+                <button onClick={() => void save(c.file, c.download)}>SVG</button>
+                <button onClick={() => void save(c.file, c.download, true)}>PNG</button>
+              </div>
             </article>))}
         </div>
       </div>
@@ -146,16 +162,17 @@ export function Promo() {
   );
 }
 
-function CustomCard({ code, canEdit, onEdit }: { code: QrCode; canEdit: boolean; onEdit: () => void }) {
+function CustomCard({ code, clear, canEdit, onEdit }: { code: QrCode; clear: boolean; canEdit: boolean; onEdit: () => void }) {
   const toast = useToast();
-  const svg = useQrSvg(code.url);
+  const full = useQrSvg(code.url);
+  const svg = full && clear ? makeTransparent(full) : full;
   async function png() {
-    try { if (svg) download(await svgToPng(svg, 1200), `${qrFileName(code.title)}.png`); }
+    try { if (svg) download(await svgToPng(svg, 1200, clear), `${qrFileName(code.title)}.png`); }
     catch (e) { toast(errorText(e), true); }
   }
   return (
     <article className="card qr">
-      {svg ? <img src={svgSrc(svg)} alt={`QR code: ${code.title}`} width="220" height="220" /> : <div className="qr-blank" aria-busy="true" />}
+      {svg ? <img className={clear ? "clear" : undefined} src={svgSrc(svg)} alt={`QR code: ${code.title}`} width="220" height="220" /> : <div className="qr-blank" aria-busy="true" />}
       <div>
         <strong>{code.title}</strong>
         {code.note && <small className="muted block">{code.note}</small>}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addLogo, cleanLink, qrFileName, shortLink } from "./qr";
+import { addLogo, cleanLink, makeTransparent, qrFileName, shortLink } from "./qr";
 
 describe("cleanLink", () => {
   it("keeps full web links", () => {
@@ -42,5 +42,15 @@ describe("addLogo", () => {
   });
   it("leaves an SVG without a viewBox alone", () => {
     expect(addLogo("<svg></svg>", "x")).toBe("<svg></svg>");
+  });
+});
+
+describe("makeTransparent", () => {
+  it("removes the white background and the crest badge, keeping the code and the crest", () => {
+    const svg = addLogo('<svg viewBox="0 0 25 25"><path fill="#ffffff" d="M0 0h25v25H0z"/><path stroke="#000000" d="M2 2.5h7"/></svg>', "logo");
+    const out = makeTransparent(svg);
+    expect(out).not.toContain('fill="#ffffff"');
+    expect(out).toContain('<path stroke="#000000" d="M2 2.5h7"/>');
+    expect(out).toContain('href="logo"');
   });
 });
