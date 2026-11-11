@@ -26,3 +26,8 @@ insert into public.team_officers(team_id,user_id,office) values
  ('a87fcf7c-c3a3-4fb6-b373-9c0b61676d68','00000000-0000-0000-0000-000000000002','president'),
  ('a87fcf7c-c3a3-4fb6-b373-9c0b61676d68','00000000-0000-0000-0000-000000000003','secretary');
 insert into public.team_memberships_stub values ('a87fcf7c-c3a3-4fb6-b373-9c0b61676d68','00000000-0000-0000-0000-000000000004');
+-- BuhurtOS tables the page access people list reads (empty unless a test fills them)
+create table public.team_roles(team_id uuid, user_id uuid, role text, title text);
+create table public.team_memberships(id uuid default gen_random_uuid(), fighter_id uuid, team_id uuid, to_date date);
+create table public.fighters(id uuid primary key, display_name text, team_id uuid);
+create table public.profiles(id uuid primary key, display_name text);

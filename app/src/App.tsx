@@ -28,30 +28,34 @@ import { Inquiries } from "./pages/website/Inquiries";
 import { Promo } from "./pages/website/Promo";
 import { SiteSettings } from "./pages/website/SiteSettings";
 import { Attendance } from "./pages/Attendance";
+import { PageAccess } from "./pages/PageAccess";
+import type { PageId } from "./lib/pages";
 
-type Nav = { path: string; label: string; need: Action; element: JSX.Element; group: string };
+/** need: a role action, or a staff page whose access an admin can change per person (see lib/pages.ts). */
+type Nav = { path: string; label: string; need: Action | { page: PageId }; element: JSX.Element; group: string };
 const NAV: Nav[] = [
   { path: "/", label: "Home", need: "self.use", element: <Dashboard />, group: "" },
-  { path: "/attendance", label: "Attendance", need: "records.view", element: <Attendance />, group: "Team" },
-  { path: "/ledger", label: "Ledger", need: "money.view", element: <Ledger />, group: "Money" },
+  { path: "/attendance", label: "Attendance", need: { page: "attendance" }, element: <Attendance />, group: "Team" },
+  { path: "/access", label: "Page access", need: "access.manage", element: <PageAccess />, group: "Team" },
+  { path: "/ledger", label: "Ledger", need: { page: "ledger" }, element: <Ledger />, group: "Money" },
   { path: "/claims", label: "Reimbursements", need: "self.use", element: <Claims />, group: "Money" },
-  { path: "/budget", label: "Budget", need: "money.view", element: <Budgets />, group: "Money" },
+  { path: "/budget", label: "Budget", need: { page: "budget" }, element: <Budgets />, group: "Money" },
   { path: "/pay", label: "Pay the club", need: "self.use", element: <Pay />, group: "Money" },
-  { path: "/sales", label: "Square sales", need: "money.view", element: <Sales />, group: "Money" },
-  { path: "/dues", label: "Dues", need: "money.view", element: <Dues />, group: "Money" },
-  { path: "/sponsors", label: "Sponsors", need: "records.view", element: <Sponsors />, group: "Growth" },
-  { path: "/grants", label: "Grants", need: "records.view", element: <Grants />, group: "Growth" },
+  { path: "/sales", label: "Square sales", need: { page: "sales" }, element: <Sales />, group: "Money" },
+  { path: "/dues", label: "Dues", need: { page: "dues" }, element: <Dues />, group: "Money" },
+  { path: "/sponsors", label: "Sponsors", need: { page: "sponsors" }, element: <Sponsors />, group: "Growth" },
+  { path: "/grants", label: "Grants", need: { page: "grants" }, element: <Grants />, group: "Growth" },
   { path: "/waivers", label: "Waiver", need: "self.use", element: <Waivers />, group: "Safety" },
   { path: "/incidents", label: "Incidents", need: "self.use", element: <Incidents />, group: "Safety" },
-  { path: "/gear", label: "Armory", need: "records.view", element: <Gear />, group: "Safety" },
-  { path: "/compliance", label: "Deadlines", need: "records.view", element: <Compliance />, group: "Society" },
-  { path: "/calendar", label: "Calendar", need: "records.edit", element: <Calendar />, group: "Website" },
-  { path: "/team", label: "Team page", need: "records.edit", element: <TeamPage />, group: "Website" },
-  { path: "/practices", label: "Practices", need: "records.edit", element: <Practices />, group: "Website" },
-  { path: "/inquiries", label: "Inquiries", need: "records.edit", element: <Inquiries />, group: "Website" },
-  { path: "/site", label: "Site editor", need: "records.edit", element: <SiteEditor />, group: "Website" },
-  { path: "/qr", label: "QR codes", need: "records.edit", element: <Promo />, group: "Website" },
-  { path: "/site-settings", label: "Site settings", need: "records.edit", element: <SiteSettings />, group: "Website" }
+  { path: "/gear", label: "Armory", need: { page: "gear" }, element: <Gear />, group: "Safety" },
+  { path: "/compliance", label: "Deadlines", need: { page: "compliance" }, element: <Compliance />, group: "Society" },
+  { path: "/calendar", label: "Calendar", need: { page: "calendar" }, element: <Calendar />, group: "Website" },
+  { path: "/team", label: "Team page", need: { page: "team" }, element: <TeamPage />, group: "Website" },
+  { path: "/practices", label: "Practices", need: { page: "practices" }, element: <Practices />, group: "Website" },
+  { path: "/inquiries", label: "Inquiries", need: { page: "inquiries" }, element: <Inquiries />, group: "Website" },
+  { path: "/site", label: "Site editor", need: { page: "site" }, element: <SiteEditor />, group: "Website" },
+  { path: "/qr", label: "QR codes", need: { page: "qr" }, element: <Promo />, group: "Website" },
+  { path: "/site-settings", label: "Site settings", need: { page: "site-settings" }, element: <SiteSettings />, group: "Website" }
 ];
 
 type Gate =
@@ -105,7 +109,7 @@ function SignedInApp() {
 }
 
 function Shell({ store, note, onExit }: { store: Store; note?: string; onExit: () => void }) {
-  const nav = useMemo(() => NAV.filter(n => can(store.session.role, n.need)), [store]);
+  const nav = useMemo(() => NAV.filter(n => typeof n.need === "string" ? can(store.session.role, n.need) : store.session.pages[n.need.page] > 0), [store]);
   const [menu, setMenu] = useState(false);
   const groups = [...new Set(nav.map(n => n.group))];
   return (

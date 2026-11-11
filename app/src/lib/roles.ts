@@ -1,5 +1,5 @@
 export type Role = "finance" | "exec" | "member" | "none";
-export type Action = "money.view" | "money.edit" | "money.approve" | "records.view" | "records.edit" | "self.use";
+export type Action = "money.view" | "money.edit" | "money.approve" | "records.view" | "records.edit" | "self.use" | "access.manage";
 
 export function roleFrom(flags: { finance: boolean; exec: boolean; member: boolean }): Role {
   if (flags.finance) return "finance";
@@ -14,7 +14,8 @@ const NEEDS: Record<Action, Role> = {
   "records.edit": "exec",
   "money.view": "exec",
   "money.edit": "finance",
-  "money.approve": "finance"
+  "money.approve": "finance",
+  "access.manage": "finance"
 };
 
 /** What the screens show. The database enforces the same rules with row-level security; this only hides buttons. */

@@ -31,7 +31,7 @@ member items|2
 member own payments|1
 ERROR:  new row violates row-level security policy for table "reavers_app_dues"
 ERROR:  permission denied for table reavers_app_square_payments
-ERROR:  Only treasury can change a payment
+ERROR:  You can't change payments; ask treasury for edit access to Square sales
 exec payments|2
 ERROR:  duplicate key value violates unique constraint "reavers_app_dues_member_key_month_key"
 ERROR:  new row for relation "reavers_app_dues" violates check constraint "reavers_app_dues_month_check"
@@ -53,7 +53,7 @@ timer|removal|t
 mem set|t
 NOTICE:  too early refused: t
 member sees people|0
-ERROR:  Only a captain or the executive can stop a removal timer
+ERROR:  Only someone who can use the Attendance page can stop a removal timer
 bot target|123456789012345678
 ERROR:  Not the person this was sent to
 bot reply|removal
@@ -62,3 +62,26 @@ daily again|0
 expired|Hurt my knee, back in January
 removed|removed
 kept|active
+exec default pages|1|2|2
+ERROR:  Only treasury can manage page access
+ERROR:  new row violates row-level security policy for table "reavers_app_page_access"
+member default pages|0|0
+member sees sponsors before|0
+admin people|Mem Ber|member
+admin people|Member 00000000|finance
+admin people|Member 00000000|finance
+admin people|Sec Retary|exec
+ERROR:  new row for relation "reavers_app_page_access" violates check constraint "reavers_app_page_access_page_check"
+member pages now|2|1|0
+member sees sponsors after|1
+member sees ledger rows now|t
+ERROR:  new row violates row-level security policy for table "reavers_app_transactions"
+ERROR:  new row violates row-level security policy for table "reavers_app_page_access"
+member sees own access rows|2
+secretary sees sponsors|0
+secretary sees people|0
+secretary still has grants|2
+ERROR:  new row violates row-level security policy for table "reavers_app_sponsors"
+ERROR:  Only someone who can use the Attendance page can change this
+admin keeps ledger|2
+secretary sponsors back|2

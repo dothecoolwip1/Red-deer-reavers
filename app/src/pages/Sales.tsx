@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import type { SquarePaymentRow } from "../data/types";
 import { KIND_LABEL, KINDS, type Kind } from "../lib/square";
-import { Empty, Loading, Money, Page, Pill, dateLabel, downloadCsv, todayIso, useAction, useCan, useStore, useTable } from "../ui";
+import { Empty, Loading, Money, Page, Pill, dateLabel, downloadCsv, todayIso, useAction, usePage, useStore, useTable } from "../ui";
 import { publicPayUrl } from "./Pay";
 
 const monthOf = (iso: string) => iso.slice(0, 7);
@@ -24,7 +24,7 @@ export function totalsByKind(rows: SquarePaymentRow[]): Record<Kind, number> {
 export function Sales() {
   const store = useStore();
   const run = useAction();
-  const canEdit = useCan("money.edit");
+  const canEdit = usePage("sales") === 2;
   const { rows, reload } = useTable("square_payments");
   const [month, setMonth] = useState(monthOf(todayIso()));
   const [kind, setKind] = useState<"all" | Kind>("all");

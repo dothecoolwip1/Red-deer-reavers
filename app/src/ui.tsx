@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import type { Store, TableName, Tables } from "./data/types";
 import { formatMoney, parseMoney } from "./lib/money";
 import { can, type Action } from "./lib/roles";
+import type { Level, PageId } from "./lib/pages";
 
 // ------------------------------------------------------------------ store + toasts
 
@@ -13,6 +14,8 @@ export function useStore(): Store {
   return store;
 }
 export const useCan = (action: Action) => can(useStore().session.role, action);
+/** What the signed-in person can do on a staff page: 0 hidden, 1 view only, 2 full use. */
+export const usePage = (page: PageId): Level => useStore().session.pages[page] ?? 0;
 
 type Toast = { id: number; text: string; bad?: boolean };
 const ToastContext = createContext<(text: string, bad?: boolean) => void>(() => undefined);

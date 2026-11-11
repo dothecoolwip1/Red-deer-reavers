@@ -3,6 +3,8 @@ import { approvalState, canApprove } from "../lib/reimburse";
 import type { Role } from "../lib/roles";
 import { demoWebsite } from "./website";
 import { demoAttendance } from "./attendance";
+import { demoAccess } from "./access";
+import { levelsFor } from "../lib/pages";
 import { LEDGER_CATEGORY, paymentRecord, ledgerLines, type Kind, type SquarePayment, type SquareOrder } from "../lib/square";
 
 // Sample data for trying the app without signing in or before the database is set up. Nothing here reaches the database.
@@ -143,7 +145,7 @@ function load(): Db {
 export function demoStore(role: Role = "finance"): Store {
   const db = load();
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(db)); } catch { /* ignore */ } };
-  const session: Session = { mode: "demo", userId: ME, name: "Demo Treasurer", email: "demo@reddeerreavers.com", role };
+  const session: Session = { mode: "demo", userId: ME, name: "Demo Treasurer", email: "demo@reddeerreavers.com", role, pages: levelsFor(role) };
   const rows = <T extends TableName>(t: T) => db[t] as Tables[T][];
   const logSite = (row: Tables["site_content"], previous: string | null) => {
     db.site_content_history.unshift({ id: id(), page: row.page, key: row.key, kind: row.kind, value: row.value ?? null, previous, original: row.original, changed_at: new Date().toISOString() });
@@ -222,6 +224,7 @@ export function demoStore(role: Role = "finance"): Store {
     async receiptUrl() { return null; },
     website: demoWebsite(),
     attendance: demoAttendance(),
+    access: demoAccess(),
     async checkout(req) {
       // Sample mode has no Square: the payment "goes through" at once, the way the webhook would record it.
       const item = db.square_items.find(i => i.id === req.item_id);
@@ -252,6 +255,6 @@ export function demoStore(role: Role = "finance"): Store {
       for (const t of db.transactions) if (t.external_id?.startsWith(`square-${p.square_payment_id}-`) && !t.external_id.endsWith("-fee")) t.category = LEDGER_CATEGORY[kind];
       save();
     },
-    async signOut() { try { localStorage.removeItem(KEY); localStorage.removeItem("reavers-app-website-demo-v1"); localStorage.removeItem("reavers-app-attendance-demo-v1"); } catch { /* ignore */ } }
+    async signOut() { try { localStorage.removeItem(KEY); localStorage.removeItem("reavers-app-website-demo-v1"); localStorage.removeItem("reavers-app-attendance-demo-v1"); localStorage.removeItem("reavers-app-access-demo-v1"); } catch { /* ignore */ } }
   };
 }

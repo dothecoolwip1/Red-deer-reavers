@@ -5,7 +5,7 @@ import { guessMapping, parseCsv, rowsToTransactions, type ColumnMapping } from "
 import { markDuplicates } from "../lib/dedupe";
 import { isTransfer, withPayoutTransfers } from "../lib/transfers";
 import { formatMoney } from "../lib/money";
-import { Empty, Loading, Modal, Money, Page, Pill, RecordForm, dateLabel, downloadCsv, todayIso, useAction, useCan, useStore, useTable, type Field } from "../ui";
+import { Empty, Loading, Modal, Money, Page, Pill, RecordForm, dateLabel, downloadCsv, todayIso, useAction, usePage, useStore, useTable, type Field } from "../ui";
 
 const FIELDS: Field[] = [
   { key: "date", label: "Date", type: "date", required: true },
@@ -20,7 +20,7 @@ export function Ledger() {
   const { rows, reload } = useTable("transactions");
   const store = useStore();
   const run = useAction();
-  const canEdit = useCan("money.edit");
+  const canEdit = usePage("ledger") === 2;
   const [q, setQ] = useState("");
   const [category, setCategory] = useState("");
   const [month, setMonth] = useState("");
