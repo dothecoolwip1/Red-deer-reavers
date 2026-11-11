@@ -8,16 +8,22 @@ import { isTransfer } from "../lib/transfers";
 
 export function Dashboard() {
   const { session } = useStore();
-  const money = useCan("money.view");
-  const records = useCan("records.view");
+  const p = session.pages;
+  // The executive sees the club overview, made of the pages they have. A member an admin gave pages to sees those
+  // parts of it above their own things.
+  const exec = useCan("money.view");
+  const some = p.ledger > 0 || p.sponsors > 0 || p.compliance > 0 || p.gear > 0 || p.attendance > 0;
   return (
     <Page title={`Hail, ${session.name.split(" ")[0]}`} intro="What needs you today, and where the club stands.">
-      {money ? <ExecDashboard records={records} /> : <MemberHome />}
+      {exec ? <ExecDashboard /> : <>{some && <ExecDashboard />}<MemberHome /></>}
     </Page>
   );
 }
 
-function ExecDashboard({ records }: { records: boolean }) {
+function ExecDashboard() {
+  const { session } = useStore();
+  const ledger = session.pages.ledger > 0;
+  const show = { claims: useCan("money.view"), sponsors: session.pages.sponsors > 0, gear: session.pages.gear > 0, deadlines: session.pages.compliance > 0, attendance: session.pages.attendance > 0 };
   const tx = useTable("transactions");
   const claims = useTable("reimbursements");
   const deadlines = useTable("compliance");
@@ -37,16 +43,15 @@ function ExecDashboard({ records }: { records: boolean }) {
   return (
     <>
       <div className="stats">
-        <Stat label="Balance (all accounts)" value={<Money cents={balance} />} to="/ledger" />
-        <Stat label="In this month" value={<Money cents={inMonth} />} to="/ledger" />
-        <Stat label="Out this month" value={<Money cents={outMonth} />} to="/ledger" />
-        <Stat label="Claims waiting" value={openClaims.length} to="/claims" />
-        {records && <Stat label="Sponsors in the pipeline" value={pipeline.length} to="/sponsors" />}
-        {records && <Stat label="Gear on loan" value={out.length} to="/gear" />}
+        {ledger && <Stat label="Balance (all accounts)" value={<Money cents={balance} />} to="/ledger" />}
+        {ledger && <Stat label="In this month" value={<Money cents={inMonth} />} to="/ledger" />}
+        {ledger && <Stat label="Out this month" value={<Money cents={outMonth} />} to="/ledger" />}
+        {show.claims && <Stat label="Claims waiting" value={openClaims.length} to="/claims" />}
+        {show.sponsors && <Stat label="Sponsors in the pipeline" value={pipeline.length} to="/sponsors" />}
+        {show.gear && <Stat label="Gear on loan" value={out.length} to="/gear" />}
       </div>
-      {records && (
-        <div className="cards">
-          <article className="card">
+      <div className="cards">
+          {show.deadlines && <article className="card">
             <h2>Next deadlines</h2>
             {due.length === 0 ? <p className="muted">Nothing due.</p> : (
               <ul className="list">
@@ -56,23 +61,22 @@ function ExecDashboard({ records }: { records: boolean }) {
                 })}
               </ul>)}
             <Link to="/compliance">All deadlines</Link>
-          </article>
-          <article className="card">
+          </article>}
+          {show.sponsors && <article className="card">
             <h2>Sponsor follow-ups due</h2>
             {followUps.length === 0 ? <p className="muted">No follow-ups due.</p> : (
               <ul className="list">{followUps.map(s => <li key={s.id}><span>{s.name}</span><Pill tone="soon">{dateLabel(s.next_follow_up)}</Pill></li>)}</ul>)}
             <Link to="/sponsors">Sponsor pipeline</Link>
-          </article>
-          <AttendanceCard />
-          <article className="card">
+          </article>}
+          {show.attendance && <AttendanceCard />}
+          {ledger && <article className="card">
             <h2>Latest money</h2>
             <ul className="list">
               {(tx.rows || []).slice(0, 6).map(t => <li key={t.id}><span>{t.description}</span><Money cents={t.amount_cents} signed /></li>)}
             </ul>
             <Link to="/ledger">Open the ledger</Link>
-          </article>
-        </div>
-      )}
+          </article>}
+      </div>
     </>
   );
 }

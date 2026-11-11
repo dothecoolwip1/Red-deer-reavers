@@ -14,6 +14,14 @@ comes from BuhurtOS, so there is nothing new to assign:
 
 The database enforces all of this with row-level security; the screens only hide what someone can't use.
 
+**Page access.** Admins (treasury) can change this per person under Team → **Page access**: give a member a staff page
+(say Sponsors, or view-only Ledger), or take one away from an executive. Each money page can be No access, View or Edit;
+the other staff pages are No access or Use. Admins always keep every page, and everyone keeps Home, Reimbursements,
+Pay the club, Waiver and Incidents. The database applies the same choices to each page's records
+(`supabase/migrations/20261111000000_reavers_app_page_access.sql`), so a hidden page can't be read over the API either.
+The website pages that save through BuhurtOS (Calendar, Team page, Practices, Inquiries, Site settings) still need a
+Reavers captain to save; there, Page access only shows or hides them.
+
 ## Run it
 
 ```

@@ -168,3 +168,51 @@ set role authenticated;
 select set_config('test.uid', :'u3', false);
 select 'removed', status from reavers_app_mark_removed(:'mem');
 select 'kept', status from reavers_app_stop_removal(:'mem', 'Back in January');
+-- page access: admins (treasury) give or take pages per person; the tables follow, not just the menu
+reset role;
+insert into public.team_roles values ('a87fcf7c-c3a3-4fb6-b373-9c0b61676d68', :'u4', 'member', null);
+insert into public.profiles values (:'u4', 'Mem Ber'), (:'u3', 'Sec Retary');
+set role authenticated;
+select set_config('test.uid', :'u3', false);
+select 'exec default pages', reavers_app_my_pages()->>'ledger', reavers_app_my_pages()->>'sponsors', reavers_app_my_pages()->>'attendance';
+\set ON_ERROR_STOP 0
+select reavers_app_access_people();
+insert into reavers_app_page_access(user_id, page, access) values (:'u3', 'ledger', 'edit');
+\set ON_ERROR_STOP 1
+select set_config('test.uid', :'u4', false);
+select 'member default pages', reavers_app_my_pages()->>'sponsors', reavers_app_my_pages()->>'gear';
+select 'member sees sponsors before', count(*) from reavers_app_sponsors;
+select set_config('test.uid', :'u1', false);
+insert into reavers_app_sponsors(name) values ('Red Deer Brewing');
+select 'admin people', name, role from reavers_app_access_people() order by name;
+-- give the member Sponsors and view-only Ledger; take Sponsors and Attendance away from the secretary
+insert into reavers_app_page_access(user_id, page, access) values
+  (:'u4', 'sponsors', 'edit'), (:'u4', 'ledger', 'view'), (:'u3', 'sponsors', 'none'), (:'u3', 'attendance', 'none');
+\set ON_ERROR_STOP 0
+insert into reavers_app_page_access(user_id, page, access) values (:'u4', 'nonsense', 'edit');
+\set ON_ERROR_STOP 1
+select set_config('test.uid', :'u4', false);
+select 'member pages now', reavers_app_my_pages()->>'sponsors', reavers_app_my_pages()->>'ledger', reavers_app_my_pages()->>'gear';
+select 'member sees sponsors after', count(*) from reavers_app_sponsors;
+insert into reavers_app_sponsors(name) values ('Gym down the road');
+select 'member sees ledger rows now', count(*) > 0 from reavers_app_transactions;
+\set ON_ERROR_STOP 0
+insert into reavers_app_transactions(date, description, amount_cents) values (current_date, 'Not allowed', 1);
+insert into reavers_app_page_access(user_id, page, access) values (:'u4', 'gear', 'edit');
+\set ON_ERROR_STOP 1
+select 'member sees own access rows', count(*) from reavers_app_page_access;
+select set_config('test.uid', :'u3', false);
+select 'secretary sees sponsors', count(*) from reavers_app_sponsors;
+select 'secretary sees people', count(*) from reavers_app_people;
+select 'secretary still has grants', reavers_app_my_pages()->>'grants';
+\set ON_ERROR_STOP 0
+insert into reavers_app_sponsors(name) values ('Sneaky');
+select reavers_app_set_away(:'mem', true);
+\set ON_ERROR_STOP 1
+-- an admin can't be locked out, and removing the override puts the role default back
+select set_config('test.uid', :'u1', false);
+insert into reavers_app_page_access(user_id, page, access) values (:'u1', 'ledger', 'none');
+select 'admin keeps ledger', reavers_app_my_pages()->>'ledger';
+delete from reavers_app_page_access where user_id = :'u3' and page = 'sponsors';
+select set_config('test.uid', :'u3', false);
+select 'secretary sponsors back', count(*) from reavers_app_sponsors;
