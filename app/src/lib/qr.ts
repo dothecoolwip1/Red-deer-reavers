@@ -39,3 +39,13 @@ export function addLogo(svg: string, logoHref: string): string {
     + `<image x="${fmt(at + pad)}" y="${fmt(at + pad)}" width="${fmt(badge - 2 * pad)}" height="${fmt(badge - 2 * pad)}" href="${logoHref}" preserveAspectRatio="xMidYMid meet"/>`;
   return svg.replace(/<\/svg>\s*$/, `${overlay}</svg>`);
 }
+
+/**
+ * Drops the white background (and the white badge behind the crest) from a QR code SVG, for laying it over a coloured
+ * poster or a dark shirt. Only the dark modules and the crest stay; print it on something light so it still scans.
+ */
+export function makeTransparent(svg: string): string {
+  return svg
+    .replace(/<path fill="#ffffff" d="M0 0h[\d.]+v[\d.]+H0z"\/>/, "")
+    .replace(/<rect [^>]*fill="#ffffff"\/>/, "");
+}
