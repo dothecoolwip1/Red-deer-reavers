@@ -4,6 +4,7 @@ import type { Role } from "../lib/roles";
 import { demoWebsite } from "./website";
 import { demoAttendance } from "./attendance";
 import { demoAccess } from "./access";
+import { DEMO_REMINDERS_KEY, demoReminders } from "./reminders";
 import { levelsFor } from "../lib/pages";
 import { LEDGER_CATEGORY, paymentRecord, ledgerLines, type Kind, type SquarePayment, type SquareOrder } from "../lib/square";
 
@@ -228,6 +229,7 @@ export function demoStore(role: Role = "finance"): Store {
     website: demoWebsite(),
     attendance: demoAttendance(),
     access: demoAccess(),
+    reminders: demoReminders(),
     async checkout(req) {
       // Sample mode has no Square: the payment "goes through" at once, the way the webhook would record it.
       const item = db.square_items.find(i => i.id === req.item_id);
@@ -258,6 +260,6 @@ export function demoStore(role: Role = "finance"): Store {
       for (const t of db.transactions) if (t.external_id?.startsWith(`square-${p.square_payment_id}-`) && !t.external_id.endsWith("-fee")) t.category = LEDGER_CATEGORY[kind];
       save();
     },
-    async signOut() { try { localStorage.removeItem(KEY); localStorage.removeItem("reavers-app-website-demo-v1"); localStorage.removeItem("reavers-app-attendance-demo-v1"); localStorage.removeItem("reavers-app-access-demo-v1"); } catch { /* ignore */ } }
+    async signOut() { try { localStorage.removeItem(KEY); localStorage.removeItem("reavers-app-website-demo-v1"); localStorage.removeItem("reavers-app-attendance-demo-v1"); localStorage.removeItem("reavers-app-access-demo-v1"); localStorage.removeItem(DEMO_REMINDERS_KEY); } catch { /* ignore */ } }
   };
 }

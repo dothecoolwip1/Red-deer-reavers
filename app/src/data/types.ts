@@ -4,6 +4,7 @@ import type { Recurrence } from "../lib/compliance";
 import type { WebsiteApi } from "./website";
 import type { AttendanceApi } from "./attendance";
 import type { AccessApi } from "./access";
+import type { RemindersApi } from "./reminders";
 import type { PageLevels } from "../lib/pages";
 import type { Kind, PaymentItem, PaymentKind } from "../lib/square";
 
@@ -113,6 +114,8 @@ export interface Store {
   attendance: AttendanceApi;
   /** Who can see and use each staff page (treasury manages it). */
   access: AccessApi;
+  /** Automatic dues, practice, event and attendance reminders (admins change the settings). */
+  reminders: RemindersApi;
   /** Starts a Square checkout and returns the address of Square's payment page. */
   checkout(req: CheckoutRequest): Promise<string>;
   /** Treasury re-labels what a Square payment was for; its ledger lines follow. */

@@ -375,3 +375,34 @@ button.link.inline { display: inline; margin-left: 4px; }
   .access-row { flex-direction: column; align-items: stretch; }
   .access-row .segmented button { flex: 1; min-width: 0; white-space: nowrap; padding-inline: .5em; }
 }
+
+/* Reminders */
+.reminders { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 14px; margin-bottom: 14px; }
+.reminder { display: grid; gap: 10px; align-content: start; }
+.reminder p { margin: 0; }
+.reminder-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.reminder-head h2 { margin: 0; font-size: 1.15rem; }
+.reminder-fields { display: grid; gap: 10px; }
+.reminder-field { display: grid; gap: 4px; }
+.reminder-field > span { font-size: .85rem; color: var(--bone-dim); }
+.reminder-field .segmented { width: 100%; flex-wrap: nowrap; }
+.reminder-field .segmented button { flex: 1; min-width: 0; white-space: nowrap; padding-inline: .5em; }
+.reminder-next { font-size: .9rem; color: var(--gilt-hi); border-top: 1px solid var(--line); padding-top: 8px; }
+.reminder-check { display: flex; gap: 8px; align-items: flex-start; font-size: .9rem; border-top: 1px solid var(--line); padding-top: 10px; }
+.reminder-check input { margin-top: 3px; }
+.reminder-time { grid-template-columns: minmax(220px, 300px) 1fr; align-items: end; }
+.reminder-time p { margin: 0 0 8px; }
+.switch { display: inline-flex; align-items: center; gap: 8px; min-width: 76px; justify-content: flex-start; padding: 4px 10px 4px 4px; border-radius: 999px; color: var(--mute); }
+.switch span { width: 34px; height: 20px; border-radius: 999px; background: var(--iron-3); border: 1px solid var(--line); position: relative; transition: background .15s; }
+.switch span::after { content: ""; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: var(--bone-dim); transition: transform .15s; }
+.switch.on { color: var(--good); border-color: #2f6b45; }
+.switch.on span { background: #2f6b45; }
+.switch.on span::after { transform: translateX(14px); background: #fff; }
+table.reminder-log td { vertical-align: top; }
+.nowrap { white-space: nowrap; }
+@media (max-width: 820px) {
+  .reminders { grid-template-columns: 1fr; }
+  .reminder-time { grid-template-columns: 1fr; }
+  table.reminder-log th:nth-child(4), table.reminder-log td:nth-child(4) { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { .switch span, .switch span::after { transition: none; } }
