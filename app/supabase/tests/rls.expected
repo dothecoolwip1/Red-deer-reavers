@@ -85,3 +85,7 @@ ERROR:  new row violates row-level security policy for table "reavers_app_sponso
 ERROR:  Only someone who can use the Attendance page can change this
 admin keeps ledger|2
 secretary sponsors back|2
+ERROR:  new row for relation "reavers_app_qr_codes" violates check constraint "reavers_app_qr_codes_url_check"
+exec qr codes|1
+member qr codes|0
+ERROR:  new row violates row-level security policy for table "reavers_app_qr_codes"

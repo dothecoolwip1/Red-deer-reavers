@@ -216,3 +216,17 @@ select 'admin keeps ledger', reavers_app_my_pages()->>'ledger';
 delete from reavers_app_page_access where user_id = :'u3' and page = 'sponsors';
 select set_config('test.uid', :'u3', false);
 select 'secretary sponsors back', count(*) from reavers_app_sponsors;
+-- QR codes: the executive adds and reads them; members can't; only web links
+reset role;
+set role authenticated;
+select set_config('test.uid', :'u3', false);
+insert into reavers_app_qr_codes(title, url) values ('Tournament signup', 'https://app.reddeerreavers.com/#/buy');
+\set ON_ERROR_STOP 0
+insert into reavers_app_qr_codes(title, url) values ('Bad', 'javascript:alert(1)');
+\set ON_ERROR_STOP 1
+select 'exec qr codes', count(*) from reavers_app_qr_codes;
+select set_config('test.uid', :'u4', false);
+select 'member qr codes', count(*) from reavers_app_qr_codes;
+\set ON_ERROR_STOP 0
+insert into reavers_app_qr_codes(title, url) values ('Sneaky', 'https://example.com');
+\set ON_ERROR_STOP 1

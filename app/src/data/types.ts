@@ -66,6 +66,7 @@ export type Dues = {
 export type DuesExemption = {
   id: Id; member_key: string; member_name: string; reason: string | null; starts_month: string; ends_month: string | null;
 };
+export type QrCode = { id: Id; title: string; note: string | null; url: string; created_at?: string };
 export type CheckoutRequest = { item_id: Id; quantity: number; buyer_name: string; buyer_email: string; dues_month?: string | null; return_url: string };
 
 export type SiteContent = {
@@ -81,6 +82,7 @@ export type Tables = {
   compliance: Compliance; gear: Gear; gear_log: GearLog; waivers: Waiver; incidents: Incident;
   site_content: SiteContent; site_content_history: SiteHistory;
   square_items: SquareItem; square_payments: SquarePaymentRow; dues: Dues; dues_exemptions: DuesExemption;
+  qr_codes: QrCode;
 };
 export type TableName = keyof Tables;
 

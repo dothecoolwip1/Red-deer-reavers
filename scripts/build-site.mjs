@@ -80,14 +80,25 @@ const qrTargets = {
   events: new URL("events.html", siteUrl).href
 };
 
+// The club crest sits in a white badge in the middle of each code. Error correction level H keeps them scannable
+// (up to 30% may be hidden; the badge covers about 6%). The app's QR codes page does the same (app/src/lib/qr.ts addLogo).
+const qrLogo = `data:image/png;base64,${(await fs.readFile(path.join(root, "app", "src", "assets", "qr-logo.png"))).toString("base64")}`;
+function addQrLogo(svg) {
+  const size = Number(/viewBox="0 0 (\d+(?:\.\d+)?) /.exec(svg)?.[1]);
+  if (!size) return svg;
+  const badge = size * 0.24, at = (size - badge) / 2, pad = badge * 0.1, fmt = n => +n.toFixed(2);
+  return svg.replace(/<\/svg>\s*$/, `<rect x="${fmt(at)}" y="${fmt(at)}" width="${fmt(badge)}" height="${fmt(badge)}" rx="${fmt(badge * 0.18)}" fill="#ffffff"/>`
+    + `<image x="${fmt(at + pad)}" y="${fmt(at + pad)}" width="${fmt(badge - 2 * pad)}" height="${fmt(badge - 2 * pad)}" href="${qrLogo}" preserveAspectRatio="xMidYMid meet"/></svg>`);
+}
+
 for (const [name, url] of Object.entries(qrTargets)) {
   const svg = await QRCode.toString(url, {
     type: "svg",
-    errorCorrectionLevel: "M",
+    errorCorrectionLevel: "H",
     margin: 2,
     width: 720
   });
-  await fs.writeFile(path.join(generatedQr, `${name}.svg`), svg);
+  await fs.writeFile(path.join(generatedQr, `${name}.svg`), addQrLogo(svg));
 }
 await fs.writeFile(path.join(generatedQr, "links.json"), JSON.stringify(qrTargets, null, 2));
 
