@@ -26,6 +26,8 @@ export type Sponsor = {
   id: Id; name: string; contact_name: string | null; email: string | null; phone: string | null; website: string | null;
   stage: "prospect" | "contacted" | "meeting" | "proposal" | "signed" | "renewed" | "lost"; tier: string | null;
   value_cents: number | null; in_kind: boolean; next_follow_up: string | null; renews_on: string | null; notes: string | null;
+  /** Website listing (migration 20261112000000). Missing until that update is run on the database. */
+  logo_url?: string | null; blurb?: string | null; show_on_site?: boolean; source?: "app" | "website"; created_at?: string;
 };
 export type Deliverable = { id: Id; sponsor_id: Id; title: string; due: string | null; done_on: string | null };
 export type Grant = {
@@ -107,6 +109,8 @@ export interface Store {
   receiptUrl(path: string): Promise<string | null>;
   /** Uploads an image for the public website and returns its public address. */
   uploadSiteImage(file: File): Promise<string>;
+  /** Uploads a sponsor's logo for the website's Sponsors page and returns its public address. */
+  uploadSponsorLogo(file: File): Promise<string>;
   /** The public website's calendar, practices, team page, inquiries and settings (what the old /admin page managed). */
   website: WebsiteApi;
   /** Who shows up to practices, tournaments, events and fundraisers, and the 3-month no-show policy. */

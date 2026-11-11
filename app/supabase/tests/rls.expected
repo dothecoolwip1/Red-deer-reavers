@@ -89,3 +89,15 @@ ERROR:  new row for relation "reavers_app_qr_codes" violates check constraint "r
 exec qr codes|1
 member qr codes|0
 ERROR:  new row violates row-level security policy for table "reavers_app_qr_codes"
+ERROR:  new row for relation "reavers_app_sponsors" violates check constraint "reavers_app_sponsors_logo_url_check"
+
+public sponsors|2|Shown Gold|t
+public sponsors hide contacts|f
+ERROR:  permission denied for table reavers_app_sponsors
+ERROR:  Please add the name of your business or organization.
+ERROR:  Please add an email or phone number so we can reply.
+inquiry|true
+inquiry repeat ignored|true
+inquiry bot ignored|true
+website prospects|Prairie Coffee|prospect|website|Silver|jo@prairie.ca|https://prairie.ca|From the website sponsor form:
+Love the sport

@@ -137,6 +137,13 @@ export function liveStore(session: Session): Store {
       fail(error);
       return supabase().storage.from(SITE_MEDIA_BUCKET).getPublicUrl(path).data.publicUrl;
     },
+    async uploadSponsorLogo(file) {
+      const safe = file.name.replace(/[^\w.-]+/g, "-").slice(-80);
+      const path = `sponsors/${Date.now()}-${safe}`;
+      const { error } = await supabase().storage.from(SITE_MEDIA_BUCKET).upload(path, file, { contentType: file.type });
+      fail(error);
+      return supabase().storage.from(SITE_MEDIA_BUCKET).getPublicUrl(path).data.publicUrl;
+    },
     website: liveWebsite(supabase),
     attendance: liveAttendance(supabase),
     access: liveAccess(supabase),
