@@ -93,11 +93,12 @@ const monthIso = (offset: number) => {
 /** A month of sample Square activity: an event day at the card reader, online registrations and dues. */
 function squareSeed(): Pick<Db, "square_items" | "square_payments" | "dues" | "dues_exemptions"> {
   const item = (title: string, kind: Kind, price_cents: number, extra: Partial<Tables["square_items"]> = {}) =>
-    ({ id: id(), title, kind, description: null, price_cents, max_quantity: 1, public: true, active: true, sort_order: 0, ...extra });
+    ({ id: id(), title, kind, description: null, price_cents, max_quantity: 1, public: true, active: true, sort_order: 0, in_store: kind === "sticker" || kind === "trading_card", image_url: null, ...extra });
   const square_items = [
     item("Tournament registration", "tournament", 4000, { description: "One fighter, one tournament day. Bring your own kit or ask about loaners.", sort_order: 1 }),
     item("Event visitor fee", "visitor", 500, { description: "Spectator entry for a Reavers event. Kids under 12 free.", max_quantity: 10, sort_order: 2 }),
     item("Reavers sticker", "sticker", 300, { description: "Weatherproof vinyl crest sticker.", max_quantity: 20, sort_order: 3 }),
+    item("Reavers sticker 2-pack", "sticker", 500, { description: "Two crest stickers: one for you, one for a friend.", max_quantity: 20, sort_order: 3 }),
     item("Fighter trading cards (pack of 5)", "trading_card", 500, { description: "Five random Reavers fighter cards.", max_quantity: 20, sort_order: 4 }),
     item("Monthly dues", "dues", 3000, { description: "Practice, coaching and team armour for the month.", public: false, sort_order: 5 })
   ];

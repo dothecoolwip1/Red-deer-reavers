@@ -36,7 +36,7 @@ export function Pay() {
       {canEdit && (
         <details className="manage">
           <summary>Manage what the club sells</summary>
-          <p className="muted">These show above, and (if "On the open page" is ticked) on the open pay page for people without an account. For the card reader at the table, give the item the same name in the Square app so its sales are sorted the same way.</p>
+          <p className="muted">These show above, and (if "On the open page" is ticked) on the open pay page for people without an account. Stickers, cards and other merch can also go in the website store, with a photo, under Website → Merch store. For the card reader at the table, give the item the same name in the Square app so its sales are sorted the same way.</p>
           <RecordList table="square_items" noun="item" rows={items.rows} reload={items.reload} defaults={{ active: true, public: true, max_quantity: 1, sort_order: 0 }}
             fields={[
               { key: "title", label: "Name", required: true, wide: true, hint: "Use the same name as the item in the Square app" },
@@ -52,7 +52,7 @@ export function Pay() {
               { label: "Name", render: i => i.title },
               { label: "What", render: i => KIND_LABEL[i.kind] },
               { label: "Price", render: i => <Money cents={i.price_cents} />, className: "num" },
-              { label: "Shown", render: i => (!i.active ? "Hidden" : i.public ? "Everyone" : "Members") }
+              { label: "Shown", render: i => (!i.active ? "Hidden" : i.public ? (i.in_store ? "Everyone + store" : "Everyone") : "Members") }
             ]} />
         </details>)}
 

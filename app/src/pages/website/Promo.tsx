@@ -19,6 +19,7 @@ const CODES = [
 // One tap fills in a link the club often puts on posters.
 const QUICK_LINKS = [
   { label: "Open pay page", title: "Pay the Reavers", note: "Visitor fees, stickers, cards and registration", url: "https://app.reddeerreavers.com/#/buy" },
+  { label: "Merch store", title: "Reavers merch store", note: "Stickers and fighter trading cards", url: "https://reddeerreavers.com/store.html" },
   { label: "Get involved", title: "Get involved", note: "Volunteer and support the club", url: "https://reddeerreavers.com/involved.html" },
   { label: "Media", title: "Photos and video", note: "Reavers media page", url: "https://reddeerreavers.com/media.html" },
   { label: "Contact", title: "Contact the Reavers", note: "Get in touch", url: "https://reddeerreavers.com/contact.html" }

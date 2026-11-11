@@ -52,6 +52,10 @@ export type Incident = {
 
 export type SquareItem = {
   id: Id; title: string; kind: Kind; description: string | null; price_cents: number; max_quantity: number; public: boolean; active: boolean; sort_order: number;
+  /** On the website store (store.html). Undefined until migration 20261111024000 is applied. */
+  in_store?: boolean;
+  /** The item's photo in the store: a public https address (reavers-site-media). */
+  image_url?: string | null;
 };
 export type SquarePaymentRow = {
   id: Id; square_payment_id: string; square_order_id: string | null; paid_at: string; status: string; amount_cents: number; fee_cents: number;
