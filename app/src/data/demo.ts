@@ -1,7 +1,7 @@
 import type { Id, Session, Store, TableName, Tables } from "./types";
 import { approvalState, canApprove } from "../lib/reimburse";
 import type { Role } from "../lib/roles";
-import { demoWebsite } from "./website";
+import { DEMO_TOURNAMENT_ID, demoWebsite } from "./website";
 import { demoAttendance } from "./attendance";
 import { demoAccess } from "./access";
 import { levelsFor } from "../lib/pages";
@@ -81,8 +81,38 @@ function seed(): Db {
     qr_codes: [
       { id: id(), title: "Pay at the table", note: "Open pay page: visitor fees, stickers, cards", url: "https://app.reddeerreavers.com/#/buy", created_at: new Date().toISOString() }
     ],
-    ...squareSeed()
+    ...squareSeed(),
+    ...signupSeed()
   };
+}
+
+/** Sign-ups for the sample tournament: fighters paid on Square, visitors, a free volunteer and one still at Square's page. */
+function signupSeed(): Pick<Db, "event_signups" | "event_tickets" | "event_registrations"> {
+  const signup = { id: id(), event_id: DEMO_TOURNAMENT_ID, title: "Reavers Winter Brawl (sample)", event_date: day(24), start_time: "10:00", location: "Springbrook Archery Centre", intro: "Fighters: register by the Wednesday before so we can build the brackets. Bring your authorization card. Visitors are welcome all day.", open: true, closes_on: day(20), capacity: 120, ask_phone: false, ask_club: true };
+  const ticket = (title: string, kind: Tables["event_tickets"]["kind"], price_cents: number, extra: Partial<Tables["event_tickets"]> = {}): Tables["event_tickets"] =>
+    ({ id: id(), signup_id: signup.id, title, kind, description: null, price_cents, capacity: null, max_per_order: 1, active: true, sort_order: 0, ...extra });
+  const tickets = [
+    ticket("Fighter registration", "tournament", 4000, { description: "One fighter, all day. Buhurt and duels.", capacity: 32, sort_order: 1 }),
+    ticket("Visitor", "visitor", 1000, { description: "Spectator entry. Kids under 12 free at the door.", max_per_order: 6, sort_order: 2 }),
+    ticket("Volunteer (free)", "other", 0, { description: "Help with the lists, marshalling or the gate.", capacity: 10, sort_order: 3 })
+  ];
+  const [fighter, visitor, volunteer] = tickets;
+  const reg = (t: Tables["event_tickets"], name: string, status: Tables["event_registrations"]["status"], extra: Partial<Tables["event_registrations"]> = {}): Tables["event_registrations"] => ({
+    id: id(), signup_id: signup.id, ticket_id: t.id, ticket_title: t.title, kind: t.kind, quantity: 1, amount_cents: t.price_cents, name,
+    email: `${name.split(" ")[0].toLowerCase()}@example.com`, phone: null, club: null, note: null, status,
+    paid_via: status === "paid" ? "square" : null, square_order_id: null, square_payment_id: null,
+    paid_at: status === "paid" ? `${day(-2)}T18:00:00Z` : null, checked_in_at: null, created_at: `${day(-3)}T18:00:00Z`, ...extra
+  });
+  const registrations = [
+    reg(fighter, "Riley Hart (sample)", "paid", { club: "Red Deer Reavers" }),
+    reg(fighter, "Morgan Vale (sample)", "paid", { club: "Calgary Iron Wolves", note: "Duels only, please." }),
+    reg(fighter, "Jesse Kaur (sample)", "paid", { club: "Edmonton Steel" }),
+    reg(fighter, "Avery Stone (sample)", "pending", { club: "Lethbridge Longswords", created_at: new Date().toISOString() }),
+    reg(visitor, "Pat Lee (sample)", "paid", { quantity: 3, amount_cents: 3000 }),
+    reg(visitor, "Sam Ortiz (sample)", "paid", { quantity: 2, amount_cents: 2000 }),
+    reg(volunteer, "Casey (sample)", "free", { email: null })
+  ];
+  return { event_signups: [signup], event_tickets: tickets, event_registrations: registrations };
 }
 
 const monthIso = (offset: number) => {

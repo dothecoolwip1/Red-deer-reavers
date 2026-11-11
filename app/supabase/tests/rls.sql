@@ -230,3 +230,54 @@ select 'member qr codes', count(*) from reavers_app_qr_codes;
 \set ON_ERROR_STOP 0
 insert into reavers_app_qr_codes(title, url) values ('Sneaky', 'https://example.com');
 \set ON_ERROR_STOP 1
+-- Event sign-ups: the executive sets them up; the public sees spots, not names; Square payments mark registrations paid
+reset role;
+set role authenticated;
+select set_config('test.uid', :'u3', false);
+insert into reavers_app_event_signups(id, event_id, title, event_date, capacity) values
+  ('00000000-0000-0000-0000-0000000000e1', 'ev-1', 'Spring Melee', current_date + 10, 3);
+insert into reavers_app_event_tickets(id, signup_id, title, kind, price_cents, max_per_order) values
+  ('00000000-0000-0000-0000-0000000000f1', '00000000-0000-0000-0000-0000000000e1', 'Fighter registration', 'tournament', 4000, 1),
+  ('00000000-0000-0000-0000-0000000000f2', '00000000-0000-0000-0000-0000000000e1', 'Visitor', 'visitor', 0, 4);
+select set_config('test.uid', :'u4', false);
+select 'member sees signups', count(*) from reavers_app_event_signups;
+\set ON_ERROR_STOP 0
+insert into reavers_app_event_tickets(signup_id, title) values ('00000000-0000-0000-0000-0000000000e1', 'Sneaky');
+select reavers_app_event_reserve('00000000-0000-0000-0000-0000000000f1', 1, 'Me', 'me@example.com');
+\set ON_ERROR_STOP 1
+reset role;
+set role service_role;
+select 'reserve paid', status, amount_cents from reavers_app_event_reserve('00000000-0000-0000-0000-0000000000f1', 1, 'Riley Hart', 'riley@example.com');
+select 'reserve free', status, quantity from reavers_app_event_reserve('00000000-0000-0000-0000-0000000000f2', 2, 'Sam', '');
+\set ON_ERROR_STOP 0
+select reavers_app_event_reserve('00000000-0000-0000-0000-0000000000f2', 1, 'Too many', '');
+\set ON_ERROR_STOP 1
+update reavers_app_event_registrations set square_order_id = 'ord-ev-1' where name = 'Riley Hart';
+reset role;
+set role anon;
+select 'public spots', e->>'spots_left', jsonb_array_length(e->'tickets') from jsonb_array_elements(reavers_app_event_public()) e;
+\set ON_ERROR_STOP 0
+select count(*) from reavers_app_event_registrations;
+\set ON_ERROR_STOP 1
+reset role;
+insert into reavers_app_square_payments(square_payment_id, square_order_id, paid_at, status, amount_cents, kind)
+  values ('pay-ev-1', 'ord-ev-1', now(), 'COMPLETED', 4000, 'tournament');
+select 'after payment', status, paid_via from reavers_app_event_registrations where name = 'Riley Hart';
+select id as riley from reavers_app_event_registrations where name = 'Riley Hart' \gset
+set role anon;
+select 'status page', reavers_app_event_registration_status(:'riley')->>'status';
+reset role;
+update reavers_app_square_payments set refunded_cents = 4000 where square_payment_id = 'pay-ev-1';
+select 'after refund', status from reavers_app_event_registrations where name = 'Riley Hart';
+set role authenticated;
+select set_config('test.uid', :'u3', false);
+insert into reavers_app_event_registrations(signup_id, ticket_title, kind, name, status, paid_via, amount_cents)
+  values ('00000000-0000-0000-0000-0000000000e1', 'Visitor', 'visitor', 'Walk-up', 'paid', 'cash', 1000);
+\set ON_ERROR_STOP 0
+insert into reavers_app_event_registrations(signup_id, ticket_title, kind, name, status, paid_via)
+  values ('00000000-0000-0000-0000-0000000000e1', 'Visitor', 'visitor', 'Fake', 'paid', 'square');
+delete from reavers_app_event_signups where id = '00000000-0000-0000-0000-0000000000e1';
+\set ON_ERROR_STOP 1
+select 'exec sees registrations', count(*) from reavers_app_event_registrations;
+select set_config('test.uid', :'u4', false);
+select 'member sees registrations', count(*) from reavers_app_event_registrations;

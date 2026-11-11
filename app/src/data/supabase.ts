@@ -1,6 +1,6 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { RECEIPTS_BUCKET, SITE_MEDIA_BUCKET, SUPABASE_KEY, SUPABASE_URL, TABLE_PREFIX } from "./config";
-import type { CheckoutRequest, Id, Session, SquareItem, Store, TableName, Tables } from "./types";
+import type { CheckoutRequest, Id, PublicSignup, RegistrationCheck, Session, SignupForm, SquareItem, Store, TableName, Tables } from "./types";
 import { roleFrom, type Role } from "../lib/roles";
 import { liveWebsite } from "./website";
 import { liveAttendance } from "./attendance";
@@ -22,7 +22,8 @@ const ORDER: Partial<Record<TableName, [string, boolean]>> = {
   budgets: ["category", true], payment_links: ["title", true], gear_log: ["at", false], sponsor_deliverables: ["due", true],
   site_content: ["updated_at", false], site_content_history: ["changed_at", false],
   square_items: ["sort_order", true], square_payments: ["paid_at", false], dues: ["month", false], dues_exemptions: ["starts_month", false],
-  qr_codes: ["created_at", false]
+  qr_codes: ["created_at", false],
+  event_signups: ["event_date", true], event_tickets: ["sort_order", true], event_registrations: ["created_at", false]
 };
 
 /** Starts a Square checkout through the reavers-square-checkout function. Works signed in or not (the open pay page). */
@@ -43,6 +44,32 @@ export async function publicItems(): Promise<SquareItem[]> {
   const { data, error } = await supabase().from(TABLE_PREFIX + "square_items").select("*").eq("active", true).eq("public", true).order("sort_order");
   fail(error);
   return (data || []) as SquareItem[];
+}
+
+/** Events taking sign-ups (or one event's, open or closed), with tickets and spots left. No sign-in needed. */
+export async function publicSignups(eventId?: string): Promise<PublicSignup[]> {
+  const { data, error } = await supabase().rpc("reavers_app_event_public", eventId ? { p_event_id: eventId } : {});
+  fail(error);
+  return (data || []) as PublicSignup[];
+}
+
+/** Signs someone up through the reavers-event-signup function: Square's payment page for a paid ticket, or straight back. */
+export async function startSignup(req: SignupForm): Promise<{ url: string; status: "free" | "pending"; registration: string }> {
+  const { data, error } = await supabase().functions.invoke("reavers-event-signup", { body: req });
+  if (error) {
+    const ctx = (error as { context?: Response }).context;
+    const said = ctx && typeof ctx.json === "function" ? await ctx.json().then(b => b?.error as string | undefined, () => undefined) : undefined;
+    throw new Error(said || "Couldn't save your sign-up. Try again in a minute.");
+  }
+  if (!data?.url) throw new Error(data?.error || "Couldn't save your sign-up.");
+  return data;
+}
+
+/** How a registration stands after Square sends the buyer back (paid, or still waiting on Square). */
+export async function registrationStatus(id: string): Promise<RegistrationCheck | null> {
+  const { data, error } = await supabase().rpc("reavers_app_event_registration_status", { p_id: id });
+  fail(error);
+  return (data || null) as RegistrationCheck | null;
 }
 
 function fail(error: { message: string; code?: string } | null): void {

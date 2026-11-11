@@ -12,6 +12,8 @@ import { Claims } from "./pages/Claims";
 import { Budgets } from "./pages/Budgets";
 import { Pay } from "./pages/Pay";
 import { Buy } from "./pages/Buy";
+import { Events } from "./pages/Events";
+import { Signups } from "./pages/Signups";
 import { Sales } from "./pages/Sales";
 import { Dues } from "./pages/Dues";
 import { Sponsors } from "./pages/Sponsors";
@@ -50,6 +52,7 @@ const NAV: Nav[] = [
   { path: "/gear", label: "Armory", need: { page: "gear" }, element: <Gear />, group: "Safety" },
   { path: "/compliance", label: "Deadlines", need: { page: "compliance" }, element: <Compliance />, group: "Society" },
   { path: "/calendar", label: "Calendar", need: { page: "calendar" }, element: <Calendar />, group: "Website" },
+  { path: "/signups", label: "Event sign-ups", need: { page: "calendar" }, element: <Signups />, group: "Website" },
   { path: "/team", label: "Team page", need: { page: "team" }, element: <TeamPage />, group: "Website" },
   { path: "/practices", label: "Practices", need: { page: "practices" }, element: <Practices />, group: "Website" },
   { path: "/inquiries", label: "Inquiries", need: { page: "inquiries" }, element: <Inquiries />, group: "Website" },
@@ -64,17 +67,19 @@ type Gate =
   | { kind: "not-member"; session: Session }
   | { kind: "ready"; store: Store; note?: string };
 
-const isOpenPayPage = () => /^#\/buy(\?|$)/.test(window.location.hash);
+/** The open pages anyone can use without signing in: the pay page and the event sign-up pages. */
+const openPage = (): "buy" | "events" | null =>
+  /^#\/buy(\?|$)/.test(window.location.hash) ? "buy" : /^#\/events(\/|\?|$)/.test(window.location.hash) ? "events" : null;
 
 export function App() {
-  const [open, setOpen] = useState(isOpenPayPage);
+  const [open, setOpen] = useState(openPage);
   useEffect(() => {
-    const onHash = () => setOpen(isOpenPayPage());
+    const onHash = () => setOpen(openPage());
     window.addEventListener("hashchange", onHash);
     return () => window.removeEventListener("hashchange", onHash);
   }, []);
-  // The open pay page needs no sign-in, so it skips the gate entirely.
-  return open ? <ToastHost><Buy /></ToastHost> : <SignedInApp />;
+  // The open pages need no sign-in, so they skip the gate entirely.
+  return open === "buy" ? <ToastHost><Buy /></ToastHost> : open === "events" ? <ToastHost><Events /></ToastHost> : <SignedInApp />;
 }
 
 function SignedInApp() {

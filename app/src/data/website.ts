@@ -154,6 +154,8 @@ export function liveWebsite(sb: () => SupabaseClient): WebsiteApi {
 // ------------------------------------------------------------------ sample data (demo mode)
 
 const DEMO_KEY = "reavers-app-website-demo-v1";
+/** The sample tournament that has sign-ups set up in demo mode (data/demo.ts). */
+export const DEMO_TOURNAMENT_ID = "00000000-0000-4000-8000-00000000e001";
 let n = 0;
 const uid = () => `00000000-0000-4000-8000-${(Date.now() + n++).toString(16).padStart(12, "0").slice(-12)}`;
 const dayFrom = (offset: number) => { const d = new Date(); d.setDate(d.getDate() + offset); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
@@ -167,6 +169,7 @@ function demoSeed(): SiteData {
       { id: uid(), weekday: 0, label: "Sunday", start_time: "17:00:00", end_time: "20:00:00", venue: "Springbrook Archery Centre", fee: "$10", active: true, sort_order: 20 }
     ],
     events: [
+      { id: DEMO_TOURNAMENT_ID, title: "Reavers Winter Brawl (sample)", event_type: "tournament", event_date: dayFrom(24), start_time: "10:00:00", end_time: "17:00:00", location: "Springbrook Archery Centre", details: "Buhurt and duels. Fighters register ahead; visitors pay at the door or online.", href: null, is_public: true },
       { id: uid(), title: "Demo at the Westerner (sample)", event_type: "demo", event_date: dayFrom(9), start_time: "13:00:00", end_time: "15:00:00", location: "Westerner Park", details: "Two bouts and a kit show-and-tell.", href: null, is_public: true },
       { id: uid(), title: "Executive meeting (sample)", event_type: "meeting", event_date: dayFrom(4), start_time: "19:00:00", end_time: null, location: "Online", details: null, href: null, is_public: false },
       { id: uid(), title: "Fight night social (sample)", event_type: "social", event_date: dayFrom(17), start_time: "18:00:00", end_time: null, location: "Red Deer", details: null, href: null, is_public: true }
