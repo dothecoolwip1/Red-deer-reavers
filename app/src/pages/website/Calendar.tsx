@@ -104,6 +104,7 @@ function EventEditor({ event, onClose, act }: { event: Partial<SiteEvent>; onClo
   const id = event.id;
   return (
     <Modal title={id ? "Edit event" : "Add event"} onClose={onClose}>
+      {id && event.is_public && <p className="muted small">Taking registrations or selling tickets for this? Set it up under <a href="#/signups" onClick={onClose}>Event sign-ups</a>.</p>}
       <RecordForm
         fields={[
           { key: "title", label: "Event title", required: true, wide: true },

@@ -50,7 +50,9 @@ Until the migration below is applied, a signed-in person sees sample data with a
 5. **Your own QR codes.** Apply `20261111010000_reavers_app_qr_codes.sql` (home server and the cloud copy). Until then the
    QR codes page still shows the website codes and says the update is needed before admins can add their own.
 6. **Square.** See "Turn on Square" below.
-7. **Stripe (optional, older).** Deploy `supabase/functions/reavers-stripe-webhook` with `--no-verify-jwt`, set
+7. **Event sign-ups.** After Square is on, apply `20261112000000_reavers_app_event_signups.sql` and deploy
+   `reavers-event-signup`. See "Event sign-ups and tickets" below.
+8. **Stripe (optional, older).** Deploy `supabase/functions/reavers-stripe-webhook` with `--no-verify-jwt`, set
    `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET`, and add the endpoint in Stripe for `checkout.session.completed`.
    Square replaces this; existing Stripe links still show under Pay the club → Other payment links.
 
@@ -109,6 +111,38 @@ copy them into BuhurtOS too, or the next BuhurtOS deploy puts the old version ba
 
 To try it without real money first, do steps 2 to 4 with the **Sandbox** toggle instead, add `SQUARE_ENVIRONMENT=sandbox`,
 and pay with Square's test card 4111 1111 1111 1111.
+
+## Event sign-ups and tickets
+
+Website → **Event sign-ups** lets people register to fight, buy visitor tickets or volunteer for any public event in the
+calendar, with or without paying:
+
+- **Set up sign-ups** on an upcoming public event. Tournaments start with "Fighter registration" and "Visitor" tickets at
+  the club's Square prices (Tournament registration, Event visitor fee); anything else starts with "Visitor". Change
+  names and prices, set a price of 0 for free tickets (volunteers, kids), cap a ticket or the whole event, and choose a
+  closing date and whether to ask for a club or phone number.
+- **The public page** is `https://app.reddeerreavers.com/#/events/<event>` (also under `reddeerreavers.com/app/`), and
+  `#/events` lists everything open. No account needed. The website's Events page and the home page "upcoming" card show a
+  **Register** (tournaments) or **Sign up** button for those events by themselves.
+- **Paying.** Paid tickets go to Square's checkout. Square's webhook records the payment as usual (Square sales, ledger
+  under Event entry for fighters, Admissions for visitors), and a database trigger marks the registration **Paid** (or
+  **Refunded** after a full refund in the Square Dashboard). Someone who reaches Square's page but doesn't pay holds
+  their spot for 45 minutes and shows as "Waiting on payment".
+- **At the event.** Open the event's sign-ups to see everyone by ticket, **Check in** people as they arrive, mark a
+  waiting one **Paid at the door**, add walk-ups paid in cash or e-Transfer (card payments go through the card reader),
+  cancel, and **Export CSV** for brackets.
+
+Who can use it follows the **Calendar** page in Page access (anyone who can see Square sales can also read the list).
+
+One-time setup, after Square is on:
+
+1. Apply `supabase/migrations/20261112000000_reavers_app_event_signups.sql` on the home server and the cloud copy. It adds
+   three `reavers_app_event_*` tables, four functions and a trigger on `reavers_app_square_payments`; nothing existing changes.
+2. Copy `supabase/functions/_shared/events.ts` and `supabase/functions/reavers-event-signup` into the server's
+   `volumes/functions/` folder. It uses the same `SQUARE_*` values as the checkout function and, like it, keeps JWT checks
+   on (the page sends the public key when nobody is signed in). Then `docker compose up -d functions`.
+   (Cloud: `supabase functions deploy reavers-event-signup`.) Copy them into BuhurtOS too, like the Square functions.
+3. Test: set up sign-ups on an event with a $1 ticket, sign up on the public page, pay, and check it shows as Paid.
 
 ## Attendance
 

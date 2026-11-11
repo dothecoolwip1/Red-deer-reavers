@@ -6,6 +6,7 @@ import type { AttendanceApi } from "./attendance";
 import type { AccessApi } from "./access";
 import type { PageLevels } from "../lib/pages";
 import type { Kind, PaymentItem, PaymentKind } from "../lib/square";
+import type { RegistrationStatus, TicketKind } from "../lib/events";
 
 export type Id = string;
 export type Transaction = {
@@ -69,6 +70,32 @@ export type DuesExemption = {
 export type QrCode = { id: Id; title: string; note: string | null; url: string; created_at?: string };
 export type CheckoutRequest = { item_id: Id; quantity: number; buyer_name: string; buyer_email: string; dues_month?: string | null; return_url: string };
 
+/** Sign-ups for a website calendar event (the event itself lives in BuhurtOS's reavers_site; event_id is its id). */
+export type EventSignup = {
+  id: Id; event_id: string; title: string; event_date: string; start_time: string | null; location: string | null; intro: string | null;
+  open: boolean; closes_on: string | null; capacity: number | null; ask_phone: boolean; ask_club: boolean; created_at?: string;
+};
+export type EventTicket = {
+  id: Id; signup_id: Id; title: string; kind: TicketKind; description: string | null; price_cents: number; capacity: number | null;
+  max_per_order: number; active: boolean; sort_order: number;
+};
+export type EventRegistration = {
+  id: Id; signup_id: Id; ticket_id: Id | null; ticket_title: string; kind: TicketKind; quantity: number; amount_cents: number;
+  name: string; email: string | null; phone: string | null; club: string | null; note: string | null; status: RegistrationStatus;
+  paid_via: "square" | "cash" | "etransfer" | "other" | null; square_order_id: string | null; square_payment_id: string | null;
+  paid_at: string | null; checked_in_at: string | null; created_at: string;
+};
+/** What the public sign-up page gets from reavers_app_event_public(): no names, only spots left. */
+export type PublicTicket = { id: Id; title: string; kind: TicketKind; description: string | null; price_cents: number; max_per_order: number; spots_left: number | null };
+export type PublicSignup = {
+  id: Id; event_id: string; title: string; event_date: string; start_time: string | null; location: string | null; intro: string | null;
+  ask_phone: boolean; ask_club: boolean; closes_on: string; open: boolean; spots_left: number | null; tickets: PublicTicket[];
+};
+export type SignupForm = {
+  ticket_id: Id; quantity: number; name: string; email: string; phone?: string | null; club?: string | null; note?: string | null; return_url: string;
+};
+export type RegistrationCheck = { status: RegistrationStatus; ticket: string; quantity: number; first_name: string; event_id: string; title: string };
+
 export type SiteContent = {
   id: Id; page: string; key: string; kind: "text" | "image"; value: string; original: string; updated_at?: string; updated_by?: string | null;
 };
@@ -83,6 +110,7 @@ export type Tables = {
   site_content: SiteContent; site_content_history: SiteHistory;
   square_items: SquareItem; square_payments: SquarePaymentRow; dues: Dues; dues_exemptions: DuesExemption;
   qr_codes: QrCode;
+  event_signups: EventSignup; event_tickets: EventTicket; event_registrations: EventRegistration;
 };
 export type TableName = keyof Tables;
 

@@ -194,6 +194,35 @@
   };
 
   // Every event on BuhurtOS joins the team's own calendar: upcoming ones merge into one list, past ones get their own list.
+  // Events taking sign-ups in the Reavers app (tickets through Square): their cards get a Sign up button.
+  const signupsByEvent = new Map();
+  const signupsLoaded = (async () => {
+    const backend = window.REAVERS_BACKEND;
+    if (!backend || !document.querySelector("[data-event-list],[data-upcoming-event]")) return;
+    try {
+      const response = await fetch(`${backend.url}/rest/v1/rpc/reavers_app_event_public`, {
+        method: "POST", cache: "no-store",
+        headers: { apikey: backend.key, Authorization: `Bearer ${backend.key}`, "Content-Type": "application/json", Accept: "application/json" },
+        body: "{}"
+      });
+      if (!response.ok) return;
+      const list = await response.json();
+      if (Array.isArray(list)) for (const s of list) if (s && s.event_id && s.open) signupsByEvent.set(String(s.event_id), s);
+    } catch (error) { console.warn("Event sign-ups unavailable.", error); }
+  })();
+  const signupHref = id => `app/#/events/${encodeURIComponent(id)}`;
+  const signupButton = event => {
+    const s = signupsByEvent.get(String(event.id || ""));
+    if (!s) return "";
+    const tickets = Array.isArray(s.tickets) ? s.tickets : [];
+    const fighters = tickets.some(t => t.kind === "tournament");
+    const prices = tickets.map(t => Number(t.price_cents) || 0);
+    const from = prices.length ? Math.min(...prices) : 0;
+    const price = from > 0 ? ` · from $${(from / 100).toFixed(from % 100 ? 2 : 0)}` : "";
+    if (s.spots_left === 0) return `<p class="event-signup"><span class="pennant ember">Sign-ups full</span></p>`;
+    return `<p class="event-signup"><a class="btn btn-ember btn-sm" href="${escapeHtml(signupHref(s.event_id))}">${fighters ? "Register" : "Sign up"}${escapeHtml(price)}</a></p>`;
+  };
+
   let bosAll = [];
   let bosFailed = false;
   if (BOS && document.querySelector("[data-event-list],[data-upcoming-event],[data-past-events]")) {
@@ -213,9 +242,12 @@
     TEAM.upcomingEvents = merged;
   }
 
+  await signupsLoaded;
+
   function eventTeaser(event) {
     if (!event) return `<div class="hub-empty"><strong>No public event confirmed</strong><small>The next tournament or demo appears here once it is locked in.</small></div>`;
-    return `<a class="hub-live" href="${escapeHtml(safeHref(event.href || "events.html"))}"><span class="hub-kicker">${escapeHtml(event.date || "Date TBA")}</span><strong>${escapeHtml(event.title || "Upcoming event")}</strong><small>${escapeHtml(event.location || "")}</small></a>`;
+    const signup = signupsByEvent.get(String(event.id || ""));
+    return `<a class="hub-live" href="${escapeHtml(signup ? signupHref(signup.event_id) : safeHref(event.href || "events.html"))}"><span class="hub-kicker">${escapeHtml(event.date || "Date TBA")}</span><strong>${escapeHtml(event.title || "Upcoming event")}</strong><small>${escapeHtml(event.location || "")}</small></a>`;
   }
   function resultTeaser(result) {
     if (!result) return `<div class="hub-empty"><strong>No result posted yet</strong><small>Tournament placings land here from BuhurtOS after the team competes.</small></div>`;
@@ -251,6 +283,7 @@
           <p class="event-meta"><span>${icon("clock")}${escapeHtml(event.date)}${event.startTime ? ` · ${escapeHtml(event.startTime)}${event.endTime ? ` to ${escapeHtml(event.endTime)}` : ""}` : ""}</span>${event.location ? `<span>${icon("pin")}${escapeHtml(event.location)}</span>` : ""}</p>
           ${event.details ? `<p class="details">${escapeHtml(event.details)}</p>` : ""}
           ${event.source === "buhurtos" ? `<p class="details"><a class="text-link" href="${escapeHtml(safeHref(event.href))}" target="_blank" rel="noopener">Details on BuhurtOS ${icon("external")}</a></p>` : ""}
+          ${event.source === "buhurtos" ? "" : signupButton(event)}
           ${calendar}
         </div>
       </article>`;

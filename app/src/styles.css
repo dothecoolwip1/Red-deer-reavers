@@ -375,3 +375,18 @@ button.link.inline { display: inline; margin-left: 4px; }
   .access-row { flex-direction: column; align-items: stretch; }
   .access-row .segmented button { flex: 1; min-width: 0; white-space: nowrap; padding-inline: .5em; }
 }
+
+/* Event sign-ups: the public pages and the admin list */
+.public-nav { margin-left: auto; display: flex; gap: 14px; }
+.public-nav a { color: var(--bone-dim); text-decoration: none; }
+.public-nav a:hover { color: var(--gilt-hi); }
+a.card.event-tile { color: var(--bone); text-decoration: none; }
+a.card.event-tile:hover { border-color: var(--gilt); }
+a.card.event-tile .button { justify-self: start; }
+.event-head .kicker { margin-bottom: 4px; }
+.event-intro { max-width: 70ch; color: var(--bone); white-space: pre-line; margin: 0 0 14px; }
+.card.share { display: flex; gap: 16px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+.card.share > div:first-child { min-width: 0; flex: 1; }
+.card.share h2 { margin: 0 0 4px; }
+.card.share .row-actions { display: flex; gap: 8px; }
+tr.checked td { background: rgba(108, 196, 138, .06); }
