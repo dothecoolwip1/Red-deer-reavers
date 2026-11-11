@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { addLogo, cleanLink, makeTransparent, qrFileName, shortLink } from "./qr";
+import { cleanLink, qrFileName, shortLink } from "./qr";
+import { makeTransparent, qrSvg } from "./qr-svg";
 
 describe("cleanLink", () => {
   it("keeps full web links", () => {
@@ -32,25 +33,26 @@ describe("shortLink", () => {
   });
 });
 
-describe("addLogo", () => {
-  it("adds a centred badge and the logo before the end of the SVG", () => {
-    const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 37 37"><path d="M0 0h1"/></svg>\n';
-    const out = addLogo(svg, "data:image/png;base64,AAAA");
-    expect(out).toContain('<rect x="14.06" y="14.06" width="8.88" height="8.88"');
-    expect(out).toContain('href="data:image/png;base64,AAAA"');
-    expect(out.trim().endsWith("</svg>")).toBe(true);
+describe("qrSvg", () => {
+  const svg = qrSvg("https://reddeerreavers.com/", { logo: "data:image/png;base64,AAAA" });
+  it("has a fixed size and a square viewBox, so editors resize it evenly", () => {
+    expect(svg).toMatch(/^<svg [^>]*width="720" height="720" viewBox="0 0 (\d+) \1"/);
   });
-  it("leaves an SVG without a viewBox alone", () => {
-    expect(addLogo("<svg></svg>", "x")).toBe("<svg></svg>");
+  it("draws modules as filled shapes, not strokes", () => {
+    expect(svg).toContain('fill="#000000"');
+    expect(svg).not.toContain("stroke");
+  });
+  it("adds the crest in a white badge", () => {
+    expect(svg).toContain('href="data:image/png;base64,AAAA"');
+    expect(svg.match(/<rect /g)).toHaveLength(2);
   });
 });
 
 describe("makeTransparent", () => {
-  it("removes the white background and the crest badge, keeping the code and the crest", () => {
-    const svg = addLogo('<svg viewBox="0 0 25 25"><path fill="#ffffff" d="M0 0h25v25H0z"/><path stroke="#000000" d="M2 2.5h7"/></svg>', "logo");
-    const out = makeTransparent(svg);
+  it("removes the white background and badge, keeping the code and the crest", () => {
+    const out = makeTransparent(qrSvg("hi", { logo: "logo" }));
     expect(out).not.toContain('fill="#ffffff"');
-    expect(out).toContain('<path stroke="#000000" d="M2 2.5h7"/>');
+    expect(out).toContain('fill="#000000"');
     expect(out).toContain('href="logo"');
   });
 });
