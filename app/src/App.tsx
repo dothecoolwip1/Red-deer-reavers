@@ -29,6 +29,7 @@ import { Promo } from "./pages/website/Promo";
 import { SiteSettings } from "./pages/website/SiteSettings";
 import { Attendance } from "./pages/Attendance";
 import { PageAccess } from "./pages/PageAccess";
+import { FighterProfiles } from "./pages/FighterProfiles";
 import type { PageId } from "./lib/pages";
 
 /** need: a role action, or a staff page whose access an admin can change per person (see lib/pages.ts). */
@@ -36,6 +37,7 @@ type Nav = { path: string; label: string; need: Action | { page: PageId }; eleme
 const NAV: Nav[] = [
   { path: "/", label: "Home", need: "self.use", element: <Dashboard />, group: "" },
   { path: "/attendance", label: "Attendance", need: { page: "attendance" }, element: <Attendance />, group: "Team" },
+  { path: "/fighters", label: "Fighter profiles", need: "self.use", element: <FighterProfiles />, group: "Team" },
   { path: "/access", label: "Page access", need: "access.manage", element: <PageAccess />, group: "Team" },
   { path: "/ledger", label: "Ledger", need: { page: "ledger" }, element: <Ledger />, group: "Money" },
   { path: "/claims", label: "Reimbursements", need: "self.use", element: <Claims />, group: "Money" },

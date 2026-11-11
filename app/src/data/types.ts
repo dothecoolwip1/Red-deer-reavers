@@ -4,6 +4,7 @@ import type { Recurrence } from "../lib/compliance";
 import type { WebsiteApi } from "./website";
 import type { AttendanceApi } from "./attendance";
 import type { AccessApi } from "./access";
+import type { FighterProfilesApi } from "./fighterProfiles";
 import type { PageLevels } from "../lib/pages";
 import type { Kind, PaymentItem, PaymentKind } from "../lib/square";
 
@@ -113,6 +114,8 @@ export interface Store {
   attendance: AttendanceApi;
   /** Who can see and use each staff page (treasury manages it). */
   access: AccessApi;
+  /** The Reavers extras on fighter profiles (weight class, role, action photo, sponsors), shown on the public site. */
+  fighterProfiles: FighterProfilesApi;
   /** Starts a Square checkout and returns the address of Square's payment page. */
   checkout(req: CheckoutRequest): Promise<string>;
   /** Treasury re-labels what a Square payment was for; its ledger lines follow. */

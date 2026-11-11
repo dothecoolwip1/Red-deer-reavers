@@ -230,3 +230,42 @@ select 'member qr codes', count(*) from reavers_app_qr_codes;
 \set ON_ERROR_STOP 0
 insert into reavers_app_qr_codes(title, url) values ('Sneaky', 'https://example.com');
 \set ON_ERROR_STOP 1
+-- Fighter profiles: a fighter edits their own; the Team page edits any; visitors see only profiles turned on, never updated_by
+reset role;
+insert into public.fighters(id, display_name) values ('11111111-1111-1111-1111-111111111111', 'Member Fighter'), ('22222222-2222-2222-2222-222222222222', 'Other Fighter');
+insert into public.fighter_accounts(fighter_id, user_id) values ('11111111-1111-1111-1111-111111111111', :'u4'), ('22222222-2222-2222-2222-222222222222', :'u5');
+set role authenticated;
+select set_config('test.uid', :'u4', false);
+select 'member my fighters', count(*) from reavers_app_my_fighters();
+insert into reavers_app_fighter_profiles(fighter_id, nickname, weight_class) values ('11111111-1111-1111-1111-111111111111', 'The Anvil', 'Heavyweight');
+\set ON_ERROR_STOP 0
+insert into reavers_app_fighter_profiles(fighter_id, nickname) values ('22222222-2222-2222-2222-222222222222', 'Not mine');
+insert into reavers_app_fighter_profiles(fighter_id, photo_url) values ('11111111-1111-1111-1111-111111111111', 'javascript:alert(1)');
+\set ON_ERROR_STOP 1
+update reavers_app_fighter_profiles set photo_url = 'https://example.com/a.jpg' where fighter_id = '11111111-1111-1111-1111-111111111111';
+select 'member stamped', updated_by = :'u4' from reavers_app_fighter_profiles;
+insert into storage.objects(bucket_id, name) values ('reavers-site-media', 'fighters/11111111-1111-1111-1111-111111111111/action.jpg');
+\set ON_ERROR_STOP 0
+insert into storage.objects(bucket_id, name) values ('reavers-site-media', 'fighters/22222222-2222-2222-2222-222222222222/action.jpg');
+insert into storage.objects(bucket_id, name) values ('reavers-site-media', 'fighters/not-a-fighter/action.jpg');
+\set ON_ERROR_STOP 1
+-- an outsider linked to a fighter is not on the team, so can't add a profile
+select set_config('test.uid', :'u5', false);
+select 'outsider my fighters', count(*) from reavers_app_my_fighters();
+\set ON_ERROR_STOP 0
+insert into reavers_app_fighter_profiles(fighter_id, nickname) values ('22222222-2222-2222-2222-222222222222', 'Outsider');
+\set ON_ERROR_STOP 1
+select 'outsider sees hidden profiles', count(*) from reavers_app_fighter_profiles;
+-- the executive (Team page) edits anyone's
+select set_config('test.uid', :'u3', false);
+select 'exec sees profiles', count(*) from reavers_app_fighter_profiles;
+insert into reavers_app_fighter_profiles(fighter_id, team_role) values ('22222222-2222-2222-2222-222222222222', 'Line fighter');
+update reavers_app_fighter_profiles set show_on_site = true where fighter_id = '11111111-1111-1111-1111-111111111111';
+insert into storage.objects(bucket_id, name) values ('reavers-site-media', 'fighters/22222222-2222-2222-2222-222222222222/action.jpg');
+reset role;
+set role anon;
+select 'visitor sees shown profiles', count(*) from reavers_app_fighter_profiles;
+select 'visitor reads extras', nickname, weight_class from reavers_app_fighter_profiles;
+\set ON_ERROR_STOP 0
+select updated_by from reavers_app_fighter_profiles;
+\set ON_ERROR_STOP 1

@@ -5,6 +5,7 @@ import { NO_SHOW_MONTHS, ago, isNoShow, timerState } from "../lib/attendance";
 import { Money, Page, Pill, dateLabel, todayIso, useCan, useStore, useTable } from "../ui";
 import { deadlineStatus } from "../lib/compliance";
 import { isTransfer } from "../lib/transfers";
+import { missing } from "../lib/fighterProfile";
 
 export function Dashboard() {
   const { session } = useStore();
@@ -15,7 +16,7 @@ export function Dashboard() {
   const some = p.ledger > 0 || p.sponsors > 0 || p.compliance > 0 || p.gear > 0 || p.attendance > 0;
   return (
     <Page title={`Hail, ${session.name.split(" ")[0]}`} intro="What needs you today, and where the club stands.">
-      {exec ? <ExecDashboard /> : <>{some && <ExecDashboard />}<MemberHome /></>}
+      {exec ? <><ExecDashboard /><div className="cards"><FighterProfileCard /></div></> : <>{some && <ExecDashboard />}<MemberHome /></>}
     </Page>
   );
 }
@@ -106,6 +107,27 @@ function Stat({ label, value, to }: { label: string; value: React.ReactNode; to:
   return <Link className="stat" to={to}><span>{label}</span><strong>{value}</strong></Link>;
 }
 
+/** Nudges a fighter to fill in and turn on their Reavers profile (weight class, role, action photo, sponsors). */
+function FighterProfileCard() {
+  const store = useStore();
+  const [state, setState] = useState<{ mine: number; shown: boolean; todo: string[] } | null>(null);
+  useEffect(() => {
+    Promise.all([store.fighterProfiles.mine(), store.fighterProfiles.list()]).then(([mine, list]) => {
+      const p = mine.length ? list.find(x => x.fighter_id.toLowerCase() === mine[0].fighter_id.toLowerCase()) : undefined;
+      setState({ mine: mine.length, shown: Boolean(p?.show_on_site), todo: missing(p) });
+    }, () => setState(null));
+  }, [store]);
+  if (!state || !state.mine) return null;
+  return (
+    <article className="card">
+      <h2>Your fighter profile</h2>
+      {state.shown ? <p><Pill tone="done">On the website</Pill> {state.todo.length ? `Still missing: ${state.todo.join(", ")}.` : "Sponsors can find you."}</p>
+        : <p><Pill tone="soon">Not on the website</Pill> Add your weight class, role and an action photo so sponsors can find you.</p>}
+      <Link to="/fighters">{state.shown ? "Edit your profile" : "Fill in your profile"}</Link>
+    </article>
+  );
+}
+
 function MemberHome() {
   const waivers = useTable("waivers");
   const claims = useTable("reimbursements");
@@ -133,6 +155,7 @@ function MemberHome() {
         <h2>Pay dues or buy</h2>
         <Link to="/pay">Payment options</Link>
       </article>
+      <FighterProfileCard />
     </div>
   );
 }
