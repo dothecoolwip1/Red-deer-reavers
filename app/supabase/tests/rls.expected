@@ -62,3 +62,7 @@ daily again|0
 expired|Hurt my knee, back in January
 removed|removed
 kept|active
+ERROR:  new row for relation "reavers_app_qr_codes" violates check constraint "reavers_app_qr_codes_url_check"
+exec qr codes|1
+member qr codes|0
+ERROR:  new row violates row-level security policy for table "reavers_app_qr_codes"

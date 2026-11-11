@@ -76,6 +76,9 @@ function seed(): Db {
     incidents: [],
     site_content: [],
     site_content_history: [],
+    qr_codes: [
+      { id: id(), title: "Pay at the table", note: "Open pay page: visitor fees, stickers, cards", url: "https://app.reddeerreavers.com/#/buy", created_at: new Date().toISOString() }
+    ],
     ...squareSeed()
   };
 }

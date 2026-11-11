@@ -39,8 +39,10 @@ Until the migration below is applied, a signed-in person sees sample data with a
    `https://reddeerreavers.com/**`), so Google and Discord sign-in return to the app.
 4. **Attendance bot (optional).** Apply `20261110010000_reavers_app_attendance.sql`, then follow
    `docs/attendance-discord-bot.md`.
-5. **Square.** See "Turn on Square" below.
-6. **Stripe (optional, older).** Deploy `supabase/functions/reavers-stripe-webhook` with `--no-verify-jwt`, set
+5. **Your own QR codes.** Apply `20261111000000_reavers_app_qr_codes.sql` (home server and the cloud copy). Until then the
+   QR codes page still shows the website codes and says the update is needed before admins can add their own.
+6. **Square.** See "Turn on Square" below.
+7. **Stripe (optional, older).** Deploy `supabase/functions/reavers-stripe-webhook` with `--no-verify-jwt`, set
    `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET`, and add the endpoint in Stripe for `checkout.session.completed`.
    Square replaces this; existing Stripe links still show under Pay the club → Other payment links.
 

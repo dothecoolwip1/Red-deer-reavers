@@ -168,3 +168,17 @@ set role authenticated;
 select set_config('test.uid', :'u3', false);
 select 'removed', status from reavers_app_mark_removed(:'mem');
 select 'kept', status from reavers_app_stop_removal(:'mem', 'Back in January');
+-- QR codes: the executive adds and reads them; members can't; only web links
+reset role;
+set role authenticated;
+select set_config('test.uid', :'u3', false);
+insert into reavers_app_qr_codes(title, url) values ('Tournament signup', 'https://app.reddeerreavers.com/#/buy');
+\set ON_ERROR_STOP 0
+insert into reavers_app_qr_codes(title, url) values ('Bad', 'javascript:alert(1)');
+\set ON_ERROR_STOP 1
+select 'exec qr codes', count(*) from reavers_app_qr_codes;
+select set_config('test.uid', :'u4', false);
+select 'member qr codes', count(*) from reavers_app_qr_codes;
+\set ON_ERROR_STOP 0
+insert into reavers_app_qr_codes(title, url) values ('Sneaky', 'https://example.com');
+\set ON_ERROR_STOP 1
