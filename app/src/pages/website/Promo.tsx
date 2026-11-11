@@ -1,18 +1,19 @@
-import { useEffect, useMemo, useState } from "react";
-import QRCode from "qrcode";
-import { siteOrigin } from "../../data/config";
+import { useEffect, useState } from "react";
+import { SITE_URL } from "../../data/config";
 import { isMissingSetup } from "../../data/supabase";
 import type { QrCode } from "../../data/types";
-import { addLogo, cleanLink, makeTransparent, qrFileName, shortLink } from "../../lib/qr";
+import { cleanLink, qrFileName, shortLink } from "../../lib/qr";
+import { makeTransparent, qrSvg } from "../../lib/qr-svg";
+import { qrPdf } from "../../lib/qrPdf";
 import crestUrl from "../../assets/qr-logo.png";
 import { Empty, Loading, Modal, Page, errorText, usePage, useStore, useToast } from "../../ui";
 
-// Generated on every site build (scripts/build-site.mjs), so they always point at the live pages.
+// The same four links scripts/build-site.mjs publishes as assets/generated/qr/*.svg; drawn here the same way.
 const CODES = [
-  { file: "home", title: "Reavers website", note: "Main team website", download: "reavers-website-qr.svg" },
-  { file: "join", title: "Join the team", note: "Training and newcomer page", download: "reavers-join-qr.svg" },
-  { file: "community", title: "Book the Reavers", note: "Community inquiry form", download: "reavers-community-qr.svg" },
-  { file: "events", title: "Events", note: "Upcoming public schedule", download: "reavers-events-qr.svg" }
+  { file: "website", title: "Reavers website", note: "Main team website", url: SITE_URL },
+  { file: "join", title: "Join the team", note: "Training and newcomer page", url: new URL("training.html#start", SITE_URL).href },
+  { file: "community", title: "Book the Reavers", note: "Community inquiry form", url: new URL("community.html#book", SITE_URL).href },
+  { file: "events", title: "Events", note: "Upcoming public schedule", url: new URL("events.html", SITE_URL).href }
 ];
 
 // One tap fills in a link the club often puts on posters.
@@ -23,8 +24,6 @@ const QUICK_LINKS = [
   { label: "Contact", title: "Contact the Reavers", note: "Get in touch", url: "https://reddeerreavers.com/contact.html" }
 ];
 
-// Level H so the code still scans with the crest covering its middle (same as scripts/build-site.mjs).
-const SVG_OPTIONS = { type: "svg", errorCorrectionLevel: "H", margin: 2, width: 720 } as const;
 
 function download(href: string, name: string) {
   const a = document.createElement("a");
@@ -51,7 +50,7 @@ function useQrSvg(url: string | null) {
   useEffect(() => {
     let live = true;
     if (!url) { setSvg(null); return; }
-    Promise.all([QRCode.toString(url, SVG_OPTIONS), crest()]).then(([s, logo]) => { if (live) setSvg(addLogo(s, logo)); }, () => { if (live) setSvg(null); });
+    crest().then(logo => { if (live) setSvg(qrSvg(url, { logo })); }, () => { if (live) setSvg(null); });
     return () => { live = false; };
   }, [url]);
   return svg;
@@ -79,37 +78,16 @@ export function Promo() {
   const store = useStore();
   const toast = useToast();
   const canEdit = usePage("qr") === 2;
-  const origin = useMemo(siteOrigin, []);
-  const src = (file: string) => `${origin}/assets/generated/qr/${file}.svg`;
   const [mine, setMine] = useState<QrCode[] | null>(null);
   const [notSetUp, setNotSetUp] = useState(false);
   const [editing, setEditing] = useState<Partial<QrCode> | null>(null);
   const [clear, setClear] = useState(() => { try { return localStorage.getItem("reavers-qr-transparent") === "1"; } catch { return false; } });
   const setTransparent = (on: boolean) => { setClear(on); try { localStorage.setItem("reavers-qr-transparent", on ? "1" : "0"); } catch { /* ignore */ } };
-  // The website codes' SVG text, so they can be shown and saved without their background too.
-  const [siteSvgs, setSiteSvgs] = useState<Record<string, string>>({});
-  useEffect(() => {
-    let live = true;
-    for (const c of CODES) void fetch(src(c.file)).then(r => (r.ok ? r.text() : null)).then(t => { if (live && t) setSiteSvgs(m => ({ ...m, [c.file]: t })); }, () => undefined);
-    return () => { live = false; };
-  }, [origin]); // eslint-disable-line react-hooks/exhaustive-deps
-
   async function reload() {
     try { setMine(await store.list("qr_codes")); setNotSetUp(false); }
     catch (e) { if (isMissingSetup(e)) setNotSetUp(true); else toast(errorText(e), true); setMine([]); }
   }
   useEffect(() => { void reload(); }, [store]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const siteSvg = (file: string) => { const t = siteSvgs[file]; return t && clear ? makeTransparent(t) : t; };
-  async function save(file: string, name: string, png = false) {
-    try {
-      const svg = siteSvg(file);
-      if (!svg) throw new Error("Couldn't load that QR code. Check the connection and try again.");
-      download(png ? await svgToPng(svg, 1200, clear) : svgSrc(svg), png ? name.replace(/\.svg$/, ".png") : name);
-    } catch (e) {
-      toast(errorText(e), true);
-    }
-  }
 
   async function remove(code: QrCode) {
     if (!confirm(`Delete the "${code.title}" QR code? Printed copies keep working, since they only hold the link.`)) return false;
@@ -118,7 +96,7 @@ export function Promo() {
   }
 
   return (
-    <Page title="QR codes" intro="For posters, tables at demos and flyers. Add your own for any link, like a tournament signup or a sponsor's page, then download it or print the sheet."
+    <Page title="QR codes" intro="For posters, tables at demos and flyers. Add your own for any link, like a tournament signup or a sponsor's page, then download it or print the sheet. PDF is best for Illustrator and print shops."
       actions={<>
         <label className="qr-toggle no-print"><input type="checkbox" checked={clear} onChange={e => setTransparent(e.target.checked)} /> Transparent background</label>
         {canEdit && !notSetUp && <button onClick={() => setEditing({})}>Add QR code</button>}
@@ -131,24 +109,13 @@ export function Promo() {
         {notSetUp ? <p className="banner no-print">Adding your own QR codes needs one database update first (the <code>reavers_app_qr_codes</code> table). The website codes below still work.</p>
           : mine === null ? <Loading />
           : mine.length === 0 ? <Empty>No codes of your own yet. Use <strong>Add QR code</strong> to make one for any link.</Empty>
-          : <div className="qr-grid">{mine.map(c => <CustomCard key={c.id} code={c} clear={clear} canEdit={canEdit} onEdit={() => setEditing(c)} />)}</div>}
+          : <div className="qr-grid">{mine.map(c => <QrCard key={c.id} title={c.title} note={c.note} url={c.url} file={qrFileName(c.title)} clear={clear} onEdit={canEdit ? () => setEditing(c) : undefined} />)}</div>}
       </div>
 
       <div className="section qr-section">
         <div className="section-head"><h2>Website codes <small className="muted">rebuilt every time the site is published</small></h2></div>
         <div className="qr-grid">
-          {CODES.map(c => (
-            <article key={c.file} className="card qr">
-              <img className={clear ? "clear" : undefined} src={siteSvg(c.file) ? svgSrc(siteSvg(c.file)!) : src(c.file)} alt={`QR code: ${c.title}`} width="220" height="220" />
-              <div>
-                <strong>{c.title}</strong>
-                <small className="muted block">{c.note}</small>
-              </div>
-              <div className="qr-actions no-print">
-                <button onClick={() => void save(c.file, c.download)}>SVG</button>
-                <button onClick={() => void save(c.file, c.download, true)}>PNG</button>
-              </div>
-            </article>))}
+          {CODES.map(c => <QrCard key={c.file} title={c.title} note={c.note} url={c.url} file={`reavers-${c.file}-qr`} clear={clear} showLink={false} />)}
         </div>
       </div>
 
@@ -162,26 +129,37 @@ export function Promo() {
   );
 }
 
-function CustomCard({ code, clear, canEdit, onEdit }: { code: QrCode; clear: boolean; canEdit: boolean; onEdit: () => void }) {
+function QrCard({ title, note, url, file, clear, showLink = true, onEdit }: {
+  title: string; note: string | null; url: string; file: string; clear: boolean; showLink?: boolean; onEdit?: () => void;
+}) {
   const toast = useToast();
-  const full = useQrSvg(code.url);
+  const full = useQrSvg(url);
   const svg = full && clear ? makeTransparent(full) : full;
-  async function png() {
-    try { if (svg) download(await svgToPng(svg, 1200, clear), `${qrFileName(code.title)}.png`); }
-    catch (e) { toast(errorText(e), true); }
+  async function save(kind: "svg" | "png" | "pdf") {
+    try {
+      if (!svg) return;
+      if (kind === "svg") download(svgSrc(svg), `${file}.svg`);
+      else if (kind === "png") download(await svgToPng(svg, 1200, clear), `${file}.png`);
+      else {
+        const href = URL.createObjectURL(await qrPdf(url, { logo: await crest(), transparent: clear }));
+        download(href, `${file}.pdf`);
+        setTimeout(() => URL.revokeObjectURL(href), 1000);
+      }
+    } catch (e) { toast(errorText(e), true); }
   }
   return (
     <article className="card qr">
-      {svg ? <img className={clear ? "clear" : undefined} src={svgSrc(svg)} alt={`QR code: ${code.title}`} width="220" height="220" /> : <div className="qr-blank" aria-busy="true" />}
+      {svg ? <img className={clear ? "clear" : undefined} src={svgSrc(svg)} alt={`QR code: ${title}`} width="220" height="220" /> : <div className="qr-blank" aria-busy="true" />}
       <div>
-        <strong>{code.title}</strong>
-        {code.note && <small className="muted block">{code.note}</small>}
-        <a className="qr-link" href={code.url} target="_blank" rel="noreferrer">{shortLink(code.url)}</a>
+        <strong>{title}</strong>
+        {note && <small className="muted block">{note}</small>}
+        {showLink && <a className="qr-link" href={url} target="_blank" rel="noreferrer">{shortLink(url)}</a>}
       </div>
       <div className="qr-actions no-print">
-        <button disabled={!svg} onClick={() => svg && download(svgSrc(svg), `${qrFileName(code.title)}.svg`)}>SVG</button>
-        <button disabled={!svg} onClick={() => void png()}>PNG</button>
-        {canEdit && <button className="ghost" onClick={onEdit}>Edit</button>}
+        <button disabled={!svg} title="Vector, for Illustrator and print shops" onClick={() => void save("pdf")}>PDF</button>
+        <button disabled={!svg} onClick={() => void save("svg")}>SVG</button>
+        <button disabled={!svg} onClick={() => void save("png")}>PNG</button>
+        {onEdit && <button className="ghost" onClick={onEdit}>Edit</button>}
       </div>
     </article>
   );
