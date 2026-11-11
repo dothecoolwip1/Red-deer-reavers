@@ -50,7 +50,8 @@ Until the migration below is applied, a signed-in person sees sample data with a
 5. **Your own QR codes.** Apply `20261111010000_reavers_app_qr_codes.sql` (home server and the cloud copy). Until then the
    QR codes page still shows the website codes and says the update is needed before admins can add their own.
 6. **Square.** See "Turn on Square" below.
-7. **Stripe (optional, older).** Deploy `supabase/functions/reavers-stripe-webhook` with `--no-verify-jwt`, set
+7. **Reminders (optional).** Apply `20261112000000_reavers_app_reminders.sql`, then follow `docs/reminders.md`.
+8. **Stripe (optional, older).** Deploy `supabase/functions/reavers-stripe-webhook` with `--no-verify-jwt`, set
    `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET`, and add the endpoint in Stripe for `checkout.session.completed`.
    Square replaces this; existing Stripe links still show under Pay the club → Other payment links.
 
@@ -119,6 +120,14 @@ once the bot is set up, in the leadership channel). A captain or executive can m
 them, or start a **removal timer** (14, 30 or 60 days); the Discord bot then messages them asking why, and their answer
 shows on their record. When the timer runs out, the executive keeps them or marks them removed. Nothing kicks anyone
 automatically. Executive only; the database enforces it. Bot setup: `docs/attendance-discord-bot.md`.
+
+## Reminders
+
+Team → **Reminders** (admins change it, the executive can look) sends automatic reminders by Discord and/or email:
+monthly dues to anyone who hasn't paid (exempt months skipped), practices and public calendar events to the members'
+channel, a friendly warning to a member getting close to 3 months without coming out, and the existing daily leadership
+no-show post, now with an on/off switch. Each goes out once; the page keeps a history. Everything new starts off.
+The wording lives in `supabase/functions/_shared/reminders.ts`, shared with the app. Setup: `docs/reminders.md`.
 
 ## How money flows
 

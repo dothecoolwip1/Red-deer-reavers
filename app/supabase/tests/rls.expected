@@ -89,3 +89,20 @@ ERROR:  new row for relation "reavers_app_qr_codes" violates check constraint "r
 exec qr codes|1
 member qr codes|0
 ERROR:  new row violates row-level security policy for table "reavers_app_qr_codes"
+member sees reminder settings|0
+exec sees reminder settings|1
+exec could not turn on dues|f
+ERROR:  permission denied for function reavers_app_reminders_due
+admin turned them on|t|t|t
+due sat 10am dues|["Owes Dues"]
+due sat 10am discord|123456789012345678
+due sat 10am events|["Demo day"]
+due sat 10am practices|0
+due sat 7am dues|0
+due sat 530pm practice|2026-12-06
+recorded|2
+recorded twice|0
+dues after send|0
+followup dec 8|dues_followup
+exec sees log|2
+member sees log|0

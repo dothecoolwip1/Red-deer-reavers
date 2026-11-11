@@ -230,3 +230,52 @@ select 'member qr codes', count(*) from reavers_app_qr_codes;
 \set ON_ERROR_STOP 0
 insert into reavers_app_qr_codes(title, url) values ('Sneaky', 'https://example.com');
 \set ON_ERROR_STOP 1
+-- Reminders: the executive reads the settings, only admins change them; members see nothing
+reset role;
+update auth.users set email = 'u' || right(id::text, 1) || '@example.com';
+insert into public.club_memberships(id, user_id, team_id, membership_year, status, full_name) values
+ ('30000000-0000-0000-0000-000000000002', :'u2', 'a87fcf7c-c3a3-4fb6-b373-9c0b61676d68', 2026, 'active', 'Paid Up'),
+ ('30000000-0000-0000-0000-000000000003', :'u3', 'a87fcf7c-c3a3-4fb6-b373-9c0b61676d68', 2026, 'active', 'Exempt Coach'),
+ ('30000000-0000-0000-0000-000000000004', :'u4', 'a87fcf7c-c3a3-4fb6-b373-9c0b61676d68', 2026, 'active', 'Owes Dues'),
+ ('30000000-0000-0000-0000-000000000005', :'u5', 'a87fcf7c-c3a3-4fb6-b373-9c0b61676d68', 2026, 'removed', 'Gone Now');
+insert into reavers_app_dues(member_key, member_name, month, amount_cents, method) values ('membership:30000000-0000-0000-0000-000000000002', 'Paid Up', '2026-12-01', 2500, 'cash');
+insert into reavers_app_dues_exemptions(member_key, member_name, starts_month) values ('membership:30000000-0000-0000-0000-000000000003', 'Exempt Coach', '2026-09-01');
+insert into private.reavers_practices(weekday, label, start_time, end_time, venue) values (0, 'Sunday', '17:00', '20:00', 'Springbrook');
+insert into private.reavers_events(title, event_type, event_date, is_public) values ('Demo day', 'demo', '2026-12-07', true), ('Exec meeting', 'meeting', '2026-12-06', false);
+set role authenticated;
+select set_config('test.uid', :'u4', false);
+select 'member sees reminder settings', count(*) from reavers_app_reminder_settings;
+select set_config('test.uid', :'u3', false);
+select 'exec sees reminder settings', count(*) from reavers_app_reminder_settings;
+update reavers_app_reminder_settings set dues_enabled = true;
+select 'exec could not turn on dues', dues_enabled from reavers_app_reminder_settings;
+\set ON_ERROR_STOP 0
+select reavers_app_reminders_due();
+\set ON_ERROR_STOP 1
+select set_config('test.uid', :'u1', false);
+update reavers_app_reminder_settings set dues_enabled = true, practice_enabled = true, events_enabled = true, noshow_warn_enabled = true;
+select 'admin turned them on', dues_enabled, practice_enabled, updated_by = :'u1' from reavers_app_reminder_settings;
+reset role;
+set role service_role;
+-- Saturday Dec 5 2026, 10 AM in Red Deer: dues (only the member who owes), the demo 2 days out, no practice yet (31 h away)
+select 'due sat 10am dues', jsonb_agg(x->>'name') from jsonb_array_elements(reavers_app_reminders_due('2026-12-05 17:00+00')->'dues') x;
+select 'due sat 10am discord', reavers_app_reminders_due('2026-12-05 17:00+00')->'dues'->0->>'discord_id';
+select 'due sat 10am events', jsonb_agg(x->>'title') from jsonb_array_elements(reavers_app_reminders_due('2026-12-05 17:00+00')->'events') x;
+select 'due sat 10am practices', jsonb_array_length(reavers_app_reminders_due('2026-12-05 17:00+00')->'practices');
+-- before the send hour nothing daily goes out
+select 'due sat 7am dues', jsonb_array_length(reavers_app_reminders_due('2026-12-05 14:00+00')->'dues');
+-- Saturday 5:30 PM: Sunday's practice is under 24 h away
+select 'due sat 530pm practice', reavers_app_reminders_due('2026-12-06 00:30+00')->'practices'->0->>'day';
+-- once recorded, it isn't due again; a failure doesn't count as sent
+select 'recorded', reavers_app_reminders_record('[{"kind":"dues","ref":"dues:2026-12-01:membership:30000000-0000-0000-0000-000000000004","via":"discord","recipient":"Owes Dues","status":"sent"},
+  {"kind":"event","ref":"event:x","via":"email","status":"failed","error":"no key"}]'::jsonb);
+select 'recorded twice', reavers_app_reminders_record('[{"kind":"dues","ref":"dues:2026-12-01:membership:30000000-0000-0000-0000-000000000004","via":"discord","status":"sent"}]'::jsonb);
+select 'dues after send', jsonb_array_length(reavers_app_reminders_due('2026-12-05 17:00+00')->'dues');
+-- a week later the follow-up is due for them again
+select 'followup dec 8', reavers_app_reminders_due('2026-12-08 17:00+00')->'dues'->0->>'kind';
+reset role;
+set role authenticated;
+select set_config('test.uid', :'u3', false);
+select 'exec sees log', count(*) from reavers_app_reminder_log;
+select set_config('test.uid', :'u4', false);
+select 'member sees log', count(*) from reavers_app_reminder_log;
