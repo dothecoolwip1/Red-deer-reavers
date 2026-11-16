@@ -49,10 +49,49 @@ Until the migration below is applied, a signed-in person sees sample data with a
    `docs/attendance-discord-bot.md`.
 5. **Your own QR codes.** Apply `20261111010000_reavers_app_qr_codes.sql` (home server and the cloud copy). Until then the
    QR codes page still shows the website codes and says the update is needed before admins can add their own.
-6. **Square.** See "Turn on Square" below.
-7. **Stripe (optional, older).** Deploy `supabase/functions/reavers-stripe-webhook` with `--no-verify-jwt`, set
+6. **Sponsors on the website.** Apply `20261112000000_reavers_app_sponsors_public.sql` (home server and the cloud copy).
+   It lets the website's Sponsors page (`sponsors.html`) list signed sponsors switched on under Sponsors → Website, and
+   sends its "Become a sponsor" form into the Sponsors pipeline and the Inquiries page. Until then the page shows an
+   open "Your logo here" wall and the form says to email instead.
+7. **Fighter profiles.** Apply `20261111020000_reavers_app_fighter_profiles.sql` (home server and the cloud copy). It adds
+   `reavers_app_fighter_profiles`, two helper functions and an upload rule for `fighters/<fighter id>/` in the
+   `reavers-site-media` bucket. Until then Team → Fighter profiles shows an error and the website simply leaves the extras off.
+8. **Reminders (optional).** Apply `20261112000000_reavers_app_reminders.sql`, then follow `docs/reminders.md`.
+9. **Square.** See "Turn on Square" below.
+   **Merch store.** Apply `20261111024000_reavers_app_merch_store.sql` (home server and the cloud copy). It adds "in the
+   store" and a photo to each Square item and puts the existing sticker and trading card items in the store. Then
+   Website → **Merch store** shows or hides items on https://reddeerreavers.com/store.html and takes their photos. Until it's
+   applied, the store page still sells every sticker and trading card that's for sale, just without photos.
+10. **Event sign-ups.** After Square is on, apply `20261112000000_reavers_app_event_signups.sql` and deploy
+   `reavers-event-signup`. See "Event sign-ups and tickets" below.
+11. **Tournaments.** Apply `20261116000000_reavers_app_tournaments.sql`, then `20261116010000_reavers_app_tournaments_rumble_2026.sql`
+   (home server and the cloud copy). It adds Money → **Tournaments** and its page-access switch, and RUMBLE-2026 with its stats.
+   The Rumble 2026 fighter list isn't in this public repository: run `tournaments/rumble-2026-fighters.sql` from the project
+   files after it. See "Tournaments" below.
+12. **Stripe (optional, older).** Deploy `supabase/functions/reavers-stripe-webhook` with `--no-verify-jwt`, set
    `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET`, and add the endpoint in Stripe for `checkout.session.completed`.
    Square replaces this; existing Stripe links still show under Pay the club → Other payment links.
+
+## Tournaments
+
+Money → **Tournaments** tracks every tournament the Reavers host, one edition per year (Red Deer Rumble 2026 is
+`RUMBLE-2026`, 2027 is `RUMBLE-2027`). Treasury edits; the executive views it; members don't see it unless an admin gives
+it to them on Page access.
+
+- **Edition summary**: expected and collected money by payment method (cash, e-transfer, debit, credit, other), who still
+  owes (red), who paid (green) and who didn't have to (grey), merch sold, total in, total out, net and the stats.
+- **Fighters, sales, expenses, cash boxes and stats**, each with its own Export button; **Export edition** and
+  **Export everything** download it all as one CSV.
+- **Square**: *Add from Square sales* brings in the Square payments taken on the event days (registrations and dues stay
+  out); *Import a Square export* reads Square's Item details CSV (plus the Transactions CSV for cash or card) when Square
+  wasn't connected yet; *Match Square registrations* ticks off fighters who paid online.
+- **Cash boxes**: one per box (door, merch table). Count the opening float and the closing cash by note and coin; the page
+  shows cash taken, compares it with the cash sales and cash fees (less anything paid out of the box) as over or short, and
+  says which notes and coins to keep for next time's float and how much to deposit.
+- **All tournaments**: every edition side by side, with the change from the year before.
+- **Ledger**: *Post to ledger* books an edition's fees, sales and expenses by payment method (source `tournament`). Anything
+  that came through the app's Square sales is already in the ledger and is left out; posting again replaces the earlier lines.
+  The newest edition's in, out, net and what's owing also show on Home's "Latest money" card.
 
 ## Turn on Square
 
@@ -110,6 +149,38 @@ copy them into BuhurtOS too, or the next BuhurtOS deploy puts the old version ba
 To try it without real money first, do steps 2 to 4 with the **Sandbox** toggle instead, add `SQUARE_ENVIRONMENT=sandbox`,
 and pay with Square's test card 4111 1111 1111 1111.
 
+## Event sign-ups and tickets
+
+Website → **Event sign-ups** lets people register to fight, buy visitor tickets or volunteer for any public event in the
+calendar, with or without paying:
+
+- **Set up sign-ups** on an upcoming public event. Tournaments start with "Fighter registration" and "Visitor" tickets at
+  the club's Square prices (Tournament registration, Event visitor fee); anything else starts with "Visitor". Change
+  names and prices, set a price of 0 for free tickets (volunteers, kids), cap a ticket or the whole event, and choose a
+  closing date and whether to ask for a club or phone number.
+- **The public page** is `https://app.reddeerreavers.com/#/events/<event>` (also under `reddeerreavers.com/app/`), and
+  `#/events` lists everything open. No account needed. The website's Events page and the home page "upcoming" card show a
+  **Register** (tournaments) or **Sign up** button for those events by themselves.
+- **Paying.** Paid tickets go to Square's checkout. Square's webhook records the payment as usual (Square sales, ledger
+  under Event entry for fighters, Admissions for visitors), and a database trigger marks the registration **Paid** (or
+  **Refunded** after a full refund in the Square Dashboard). Someone who reaches Square's page but doesn't pay holds
+  their spot for 45 minutes and shows as "Waiting on payment".
+- **At the event.** Open the event's sign-ups to see everyone by ticket, **Check in** people as they arrive, mark a
+  waiting one **Paid at the door**, add walk-ups paid in cash or e-Transfer (card payments go through the card reader),
+  cancel, and **Export CSV** for brackets.
+
+Who can use it follows the **Calendar** page in Page access (anyone who can see Square sales can also read the list).
+
+One-time setup, after Square is on:
+
+1. Apply `supabase/migrations/20261112000000_reavers_app_event_signups.sql` on the home server and the cloud copy. It adds
+   three `reavers_app_event_*` tables, four functions and a trigger on `reavers_app_square_payments`; nothing existing changes.
+2. Copy `supabase/functions/_shared/events.ts` and `supabase/functions/reavers-event-signup` into the server's
+   `volumes/functions/` folder. It uses the same `SQUARE_*` values as the checkout function and, like it, keeps JWT checks
+   on (the page sends the public key when nobody is signed in). Then `docker compose up -d functions`.
+   (Cloud: `supabase functions deploy reavers-event-signup`.) Copy them into BuhurtOS too, like the Square functions.
+3. Test: set up sign-ups on an event with a $1 ticket, sign up on the public page, pay, and check it shows as Paid.
+
 ## Attendance
 
 Team → Attendance tracks who comes to practices, tournaments, events and fundraisers: how often each member shows up,
@@ -119,6 +190,14 @@ once the bot is set up, in the leadership channel). A captain or executive can m
 them, or start a **removal timer** (14, 30 or 60 days); the Discord bot then messages them asking why, and their answer
 shows on their record. When the timer runs out, the executive keeps them or marks them removed. Nothing kicks anyone
 automatically. Executive only; the database enforces it. Bot setup: `docs/attendance-discord-bot.md`.
+
+## Reminders
+
+Team → **Reminders** (admins change it, the executive can look) sends automatic reminders by Discord and/or email:
+monthly dues to anyone who hasn't paid (exempt months skipped), practices and public calendar events to the members'
+channel, a friendly warning to a member getting close to 3 months without coming out, and the existing daily leadership
+no-show post, now with an on/off switch. Each goes out once; the page keeps a history. Everything new starts off.
+The wording lives in `supabase/functions/_shared/reminders.ts`, shared with the app. Setup: `docs/reminders.md`.
 
 ## How money flows
 

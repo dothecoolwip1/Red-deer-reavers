@@ -1,5 +1,5 @@
 // Shared page chrome for the Reavers site. `npm run pages` writes the root HTML files from scripts/pages/*.page.mjs.
-export const V = "27";
+export const V = "28";
 
 /** BuhurtOS is served from GitHub Pages. (buhurtos.ca is NOT a working address.) */
 export const BOS_SITE = "https://buhurt-os.app";
@@ -58,6 +58,7 @@ const NAV = [
   ["community", "community.html", "Community"],
   ["media", "media.html", "Media", "nav-wide"],
   ["social", "social.html", "Social"],
+  ["store", "store.html", "Store"],
   ["members", "members.html", "Members"]
 ];
 
@@ -116,7 +117,9 @@ export const footer = () => `
           <a href="events.html">Events</a>
           <a href="events.html#results">Results</a>
           <a href="community.html">Book the Reavers</a>
+          <a href="sponsors.html">Sponsors</a>
           <a href="media.html">Media</a>
+          <a href="store.html">Merch store</a>
         </div>
         <div>
           <h2 class="footer-h">Follow</h2>

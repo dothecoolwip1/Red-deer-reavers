@@ -194,6 +194,35 @@
   };
 
   // Every event on BuhurtOS joins the team's own calendar: upcoming ones merge into one list, past ones get their own list.
+  // Events taking sign-ups in the Reavers app (tickets through Square): their cards get a Sign up button.
+  const signupsByEvent = new Map();
+  const signupsLoaded = (async () => {
+    const backend = window.REAVERS_BACKEND;
+    if (!backend || !document.querySelector("[data-event-list],[data-upcoming-event]")) return;
+    try {
+      const response = await fetch(`${backend.url}/rest/v1/rpc/reavers_app_event_public`, {
+        method: "POST", cache: "no-store",
+        headers: { apikey: backend.key, Authorization: `Bearer ${backend.key}`, "Content-Type": "application/json", Accept: "application/json" },
+        body: "{}"
+      });
+      if (!response.ok) return;
+      const list = await response.json();
+      if (Array.isArray(list)) for (const s of list) if (s && s.event_id && s.open) signupsByEvent.set(String(s.event_id), s);
+    } catch (error) { console.warn("Event sign-ups unavailable.", error); }
+  })();
+  const signupHref = id => `app/#/events/${encodeURIComponent(id)}`;
+  const signupButton = event => {
+    const s = signupsByEvent.get(String(event.id || ""));
+    if (!s) return "";
+    const tickets = Array.isArray(s.tickets) ? s.tickets : [];
+    const fighters = tickets.some(t => t.kind === "tournament");
+    const prices = tickets.map(t => Number(t.price_cents) || 0);
+    const from = prices.length ? Math.min(...prices) : 0;
+    const price = from > 0 ? ` · from $${(from / 100).toFixed(from % 100 ? 2 : 0)}` : "";
+    if (s.spots_left === 0) return `<p class="event-signup"><span class="pennant ember">Sign-ups full</span></p>`;
+    return `<p class="event-signup"><a class="btn btn-ember btn-sm" href="${escapeHtml(signupHref(s.event_id))}">${fighters ? "Register" : "Sign up"}${escapeHtml(price)}</a></p>`;
+  };
+
   let bosAll = [];
   let bosFailed = false;
   if (BOS && document.querySelector("[data-event-list],[data-upcoming-event],[data-past-events]")) {
@@ -213,9 +242,12 @@
     TEAM.upcomingEvents = merged;
   }
 
+  await signupsLoaded;
+
   function eventTeaser(event) {
     if (!event) return `<div class="hub-empty"><strong>No public event confirmed</strong><small>The next tournament or demo appears here once it is locked in.</small></div>`;
-    return `<a class="hub-live" href="${escapeHtml(safeHref(event.href || "events.html"))}"><span class="hub-kicker">${escapeHtml(event.date || "Date TBA")}</span><strong>${escapeHtml(event.title || "Upcoming event")}</strong><small>${escapeHtml(event.location || "")}</small></a>`;
+    const signup = signupsByEvent.get(String(event.id || ""));
+    return `<a class="hub-live" href="${escapeHtml(signup ? signupHref(signup.event_id) : safeHref(event.href || "events.html"))}"><span class="hub-kicker">${escapeHtml(event.date || "Date TBA")}</span><strong>${escapeHtml(event.title || "Upcoming event")}</strong><small>${escapeHtml(event.location || "")}</small></a>`;
   }
   function resultTeaser(result) {
     if (!result) return `<div class="hub-empty"><strong>No result posted yet</strong><small>Tournament placings land here from BuhurtOS after the team competes.</small></div>`;
@@ -251,6 +283,7 @@
           <p class="event-meta"><span>${icon("clock")}${escapeHtml(event.date)}${event.startTime ? ` · ${escapeHtml(event.startTime)}${event.endTime ? ` to ${escapeHtml(event.endTime)}` : ""}` : ""}</span>${event.location ? `<span>${icon("pin")}${escapeHtml(event.location)}</span>` : ""}</p>
           ${event.details ? `<p class="details">${escapeHtml(event.details)}</p>` : ""}
           ${event.source === "buhurtos" ? `<p class="details"><a class="text-link" href="${escapeHtml(safeHref(event.href))}" target="_blank" rel="noopener">Details on BuhurtOS ${icon("external")}</a></p>` : ""}
+          ${event.source === "buhurtos" ? "" : signupButton(event)}
           ${calendar}
         </div>
       </article>`;
@@ -308,11 +341,14 @@
   }
   function fighterCard(f, i) {
     const disciplines = f.disciplines.slice(0, 3).map(code => `<span class="chip">${escapeHtml(BOS ? BOS.categoryName(code) : code)}</span>`).join("");
-    const roleLine = [f.siteRole && norm(f.siteRole) !== "fighter" ? f.siteRole : "", f.where].filter(Boolean).join(" · ");
+    const x = f.extras || null;
+    const role = (x && x.teamRole) || (f.siteRole && norm(f.siteRole) !== "fighter" ? f.siteRole : "");
+    const roleLine = [x && x.weightClass, role, f.where].filter(Boolean).join(" · ");
     return `<a class="plate fighter-card" href="${escapeHtml(f.profileUrl)}" data-reveal data-delay="${i % 4}">
       ${f.captain ? `<span class="pennant ember">Captain</span>` : f.mercenary ? `<span class="pennant steel">Mercenary</span>` : ""}
       ${shieldHtml(f.name, f.avatar || f.sitePhoto)}
       <h3>${escapeHtml(f.name)}</h3>
+      ${x && x.nickname ? `<p class="nickname">“${escapeHtml(x.nickname)}”</p>` : ""}
       ${roleLine ? `<p class="where">${escapeHtml(roleLine)}</p>` : ""}
       ${disciplines ? `<div class="chip-row">${disciplines}</div>` : ""}
       <span class="text-link go">View profile ${icon("arrow")}</span>
@@ -347,6 +383,11 @@
     const match = siteByName.get(norm(f.name));
     return match ? { ...f, siteRole: match.role || "", sitePhoto: match.photo || "" } : f;
   });
+  // Reavers extras (weight class, team role, nickname) for fighters who turned on their profile in the app.
+  if (fighters.length && BOS && BOS.reaversProfiles && fighterTargets.length) {
+    const extras = await BOS.reaversProfiles(fighters.map(f => f.id));
+    fighters.forEach(f => { f.extras = extras.get(String(f.id).toLowerCase()) || null; });
+  }
   const fighterNames = new Set(fighters.map(f => norm(f.name)));
   const crew = siteRoster.filter(m => !fighterNames.has(norm(m.name)));
 
@@ -425,6 +466,17 @@
 
   // ---------- community inquiry (goes to the team admin) ----------
   const communityForm = document.querySelector("[data-community-form]");
+  // "Sponsor this fighter" on a fighter profile links here with ?interest=sponsor&fighter=<name>: start the form for them.
+  if (communityForm) {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("interest") === "sponsor") {
+      const type = communityForm.querySelector('select[name="event_type"]');
+      if (type) type.value = "sponsor";
+      const fighterName = String(params.get("fighter") || "").replace(/\s+/g, " ").trim().slice(0, 80);
+      const details = communityForm.querySelector('textarea[name="details"]');
+      if (details && !details.value) details.value = fighterName ? `We're interested in sponsoring ${fighterName}.` : "We're interested in sponsoring the Reavers.";
+    }
+  }
   communityForm?.addEventListener("submit", async event => {
     event.preventDefault();
     const status = document.querySelector("[data-community-form-status]");

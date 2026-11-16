@@ -12,8 +12,11 @@ import { Claims } from "./pages/Claims";
 import { Budgets } from "./pages/Budgets";
 import { Pay } from "./pages/Pay";
 import { Buy } from "./pages/Buy";
+import { Events } from "./pages/Events";
+import { Signups } from "./pages/Signups";
 import { Sales } from "./pages/Sales";
 import { Dues } from "./pages/Dues";
+import { Tournaments } from "./pages/Tournaments";
 import { Sponsors } from "./pages/Sponsors";
 import { Grants } from "./pages/Grants";
 import { Compliance } from "./pages/Compliance";
@@ -25,10 +28,13 @@ import { Calendar } from "./pages/website/Calendar";
 import { TeamPage } from "./pages/website/TeamPage";
 import { Practices } from "./pages/website/Practices";
 import { Inquiries } from "./pages/website/Inquiries";
+import { MerchStore } from "./pages/website/MerchStore";
 import { Promo } from "./pages/website/Promo";
 import { SiteSettings } from "./pages/website/SiteSettings";
 import { Attendance } from "./pages/Attendance";
 import { PageAccess } from "./pages/PageAccess";
+import { FighterProfiles } from "./pages/FighterProfiles";
+import { Reminders } from "./pages/Reminders";
 import type { PageId } from "./lib/pages";
 
 /** need: a role action, or a staff page whose access an admin can change per person (see lib/pages.ts). */
@@ -36,6 +42,8 @@ type Nav = { path: string; label: string; need: Action | { page: PageId }; eleme
 const NAV: Nav[] = [
   { path: "/", label: "Home", need: "self.use", element: <Dashboard />, group: "" },
   { path: "/attendance", label: "Attendance", need: { page: "attendance" }, element: <Attendance />, group: "Team" },
+  { path: "/fighters", label: "Fighter profiles", need: "self.use", element: <FighterProfiles />, group: "Team" },
+  { path: "/reminders", label: "Reminders", need: "records.view", element: <Reminders />, group: "Team" },
   { path: "/access", label: "Page access", need: "access.manage", element: <PageAccess />, group: "Team" },
   { path: "/ledger", label: "Ledger", need: { page: "ledger" }, element: <Ledger />, group: "Money" },
   { path: "/claims", label: "Reimbursements", need: "self.use", element: <Claims />, group: "Money" },
@@ -43,6 +51,7 @@ const NAV: Nav[] = [
   { path: "/pay", label: "Pay the club", need: "self.use", element: <Pay />, group: "Money" },
   { path: "/sales", label: "Square sales", need: { page: "sales" }, element: <Sales />, group: "Money" },
   { path: "/dues", label: "Dues", need: { page: "dues" }, element: <Dues />, group: "Money" },
+  { path: "/tournaments", label: "Tournaments", need: { page: "tournaments" }, element: <Tournaments />, group: "Money" },
   { path: "/sponsors", label: "Sponsors", need: { page: "sponsors" }, element: <Sponsors />, group: "Growth" },
   { path: "/grants", label: "Grants", need: { page: "grants" }, element: <Grants />, group: "Growth" },
   { path: "/waivers", label: "Waiver", need: "self.use", element: <Waivers />, group: "Safety" },
@@ -50,10 +59,12 @@ const NAV: Nav[] = [
   { path: "/gear", label: "Armory", need: { page: "gear" }, element: <Gear />, group: "Safety" },
   { path: "/compliance", label: "Deadlines", need: { page: "compliance" }, element: <Compliance />, group: "Society" },
   { path: "/calendar", label: "Calendar", need: { page: "calendar" }, element: <Calendar />, group: "Website" },
+  { path: "/signups", label: "Event sign-ups", need: { page: "calendar" }, element: <Signups />, group: "Website" },
   { path: "/team", label: "Team page", need: { page: "team" }, element: <TeamPage />, group: "Website" },
   { path: "/practices", label: "Practices", need: { page: "practices" }, element: <Practices />, group: "Website" },
   { path: "/inquiries", label: "Inquiries", need: { page: "inquiries" }, element: <Inquiries />, group: "Website" },
   { path: "/site", label: "Site editor", need: { page: "site" }, element: <SiteEditor />, group: "Website" },
+  { path: "/store", label: "Merch store", need: "money.edit", element: <MerchStore />, group: "Website" },
   { path: "/qr", label: "QR codes", need: { page: "qr" }, element: <Promo />, group: "Website" },
   { path: "/site-settings", label: "Site settings", need: { page: "site-settings" }, element: <SiteSettings />, group: "Website" }
 ];
@@ -64,17 +75,19 @@ type Gate =
   | { kind: "not-member"; session: Session }
   | { kind: "ready"; store: Store; note?: string };
 
-const isOpenPayPage = () => /^#\/buy(\?|$)/.test(window.location.hash);
+/** The open pages anyone can use without signing in: the pay page and the event sign-up pages. */
+const openPage = (): "buy" | "events" | null =>
+  /^#\/buy(\?|$)/.test(window.location.hash) ? "buy" : /^#\/events(\/|\?|$)/.test(window.location.hash) ? "events" : null;
 
 export function App() {
-  const [open, setOpen] = useState(isOpenPayPage);
+  const [open, setOpen] = useState(openPage);
   useEffect(() => {
-    const onHash = () => setOpen(isOpenPayPage());
+    const onHash = () => setOpen(openPage());
     window.addEventListener("hashchange", onHash);
     return () => window.removeEventListener("hashchange", onHash);
   }, []);
-  // The open pay page needs no sign-in, so it skips the gate entirely.
-  return open ? <ToastHost><Buy /></ToastHost> : <SignedInApp />;
+  // The open pages need no sign-in, so they skip the gate entirely.
+  return open === "buy" ? <ToastHost><Buy /></ToastHost> : open === "events" ? <ToastHost><Events /></ToastHost> : <SignedInApp />;
 }
 
 function SignedInApp() {

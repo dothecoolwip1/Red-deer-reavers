@@ -1,0 +1,45 @@
+/* Sponsors page (sponsors.html). Kept out of styles.css so it only loads here. */
+
+/* ---------- sponsor wall ---------- */
+.sponsor-wall{display:grid;gap:34px}
+.sponsor-loading{text-align:center}
+.sponsor-tier .label{margin:0 0 12px;text-align:center}
+.sponsor-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,230px));justify-content:center;gap:12px}
+.sponsor-tier-gold .sponsor-grid{grid-template-columns:repeat(auto-fit,minmax(240px,340px))}
+.sponsor-card{display:grid;place-items:center;align-content:center;gap:10px;min-height:130px;padding:18px;text-align:center;text-decoration:none;
+  background:linear-gradient(180deg,rgba(52,43,58,.45),rgba(20,16,23,.9)),var(--iron-850);border:1px solid rgba(214,168,76,.22);
+  transition:border-color var(--dur-1) var(--ease),transform var(--dur-1) var(--ease)}
+a.sponsor-card:hover,a.sponsor-card:focus-visible{border-color:var(--gilt-hi);transform:translateY(-2px)}
+.sponsor-tier-gold .sponsor-card{min-height:170px;border-color:rgba(243,207,122,.55);box-shadow:inset 0 0 0 1px rgba(243,207,122,.12)}
+.sponsor-card img{max-width:100%;max-height:90px;object-fit:contain}
+.sponsor-tier-gold .sponsor-card img{max-height:120px}
+.sponsor-name{font-family:var(--font-caps);font-weight:800;font-size:1.05rem;letter-spacing:.06em;color:var(--bone)}
+.sponsor-card small{color:var(--bone-dim);font-size:.9rem;line-height:1.35}
+.sponsor-empty{max-width:560px;margin:0 auto}
+.sponsor-empty .btn{margin-top:16px}
+
+/* ---------- tiers ---------- */
+.tier-grid{display:grid;gap:14px}
+.tier{display:grid;grid-template-rows:auto auto 1fr auto;gap:8px;padding:22px 20px;background:rgba(255,250,236,.55);border:1px solid rgba(110,75,30,.25);border-top:4px solid var(--tier,var(--royal))}
+.tier .label{margin:0;color:var(--ink-soft)}
+.tier h3{margin:0;font-family:var(--font-display);font-size:2.2rem;font-weight:800;line-height:1}
+.tier ul{margin:6px 0 10px;padding-left:1.1em;color:var(--ink-soft);line-height:1.45}
+.tier li+li{margin-top:4px}
+.tier .btn{justify-self:start}
+.tier-gold{--tier:#c9962f}
+.tier-silver{--tier:#8d8c94}
+.tier-bronze{--tier:#a5652e}
+.tier-kind{--tier:var(--royal)}
+
+/* ---------- form ---------- */
+.sponsor-crest{display:none;width:220px;height:auto;margin-top:10px;filter:drop-shadow(0 10px 30px rgba(0,0,0,.5))}
+
+@media (min-width:760px){
+  .tier-grid{grid-template-columns:repeat(2,1fr)}
+  .option-grid.three{grid-template-columns:repeat(3,1fr)}
+  .sponsor-crest{display:block}
+}
+@media (min-width:1024px){
+  .tier-grid{grid-template-columns:repeat(4,1fr)}
+}
+@media (prefers-reduced-motion:reduce){a.sponsor-card:hover{transform:none}}

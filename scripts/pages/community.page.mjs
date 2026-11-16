@@ -49,7 +49,7 @@ export default () => `${head({
         <article data-reveal data-delay="2"><strong>Festivals &amp; fairs</strong><span>Public demonstrations, scheduled appearances and crowd-friendly explanations.</span></article>
         <article data-reveal><strong>Markets &amp; community days</strong><span>Meet the team, armour displays, recruitment, photos and short demos where suitable.</span></article>
         <article data-reveal data-delay="1"><strong>Birthdays &amp; private groups</strong><span>A memorable introduction to real armoured combat, built around the age group and space.</span></article>
-        <article data-reveal data-delay="2"><strong>Local partners</strong><span>Sponsorship, event partnerships, venues, fundraising and community collaboration.</span></article>
+        <article data-reveal data-delay="2"><strong>Local partners</strong><span>Sponsorship, event partnerships, venues, fundraising and community collaboration. <a href="sponsors.html">See sponsorship tiers</a>.</span></article>
       </div>
     </div>
   </section>

@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { CATEGORIES } from "../data/categories";
 import type { Transaction } from "../data/types";
 import { guessMapping, parseCsv, rowsToTransactions, type ColumnMapping } from "../lib/csv";
@@ -40,7 +41,7 @@ export function Ledger() {
   return (
     <Page
       title="Ledger"
-      intro="Every dollar in and out. Import your bank's CSV export each month, then give each line a category and a receipt."
+      intro={<>Every dollar in and out. Import your bank's CSV export each month, then give each line a category and a receipt. Tournament cash and e-transfers come in from <Link to="/tournaments">Tournaments</Link> (Post to ledger).</>}
       actions={<>
         <button onClick={() => downloadCsv(`reavers-ledger-${todayIso()}.csv`, [["Date", "Description", "Category", "Account", "Amount", "Source", "Notes"], ...shown.map(r => [r.date, r.description, r.category, r.account, (r.amount_cents / 100).toFixed(2), r.source, r.notes])])}>Export CSV</button>
         {canEdit && <button onClick={() => setImporting(true)}>Import bank CSV</button>}

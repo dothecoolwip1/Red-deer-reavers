@@ -31,3 +31,8 @@ create table public.team_roles(team_id uuid, user_id uuid, role text, title text
 create table public.team_memberships(id uuid default gen_random_uuid(), fighter_id uuid, team_id uuid, to_date date);
 create table public.fighters(id uuid primary key, display_name text, team_id uuid);
 create table public.profiles(id uuid primary key, display_name text);
+-- BuhurtOS pieces the reminders read: club membership details, account emails, the website's practices and calendar
+alter table public.club_memberships add column team_id uuid, add column membership_year int, add column status text, add column full_name text;
+alter table auth.users add column email text;
+create table private.reavers_practices(id uuid primary key default gen_random_uuid(), weekday smallint, label text, start_time time, end_time time, venue text, fee text, active boolean default true, sort_order int default 0);
+create table private.reavers_events(id uuid primary key default gen_random_uuid(), title text, event_type text, event_date date, start_time time, end_time time, location text, details text, href text, is_public boolean default true);

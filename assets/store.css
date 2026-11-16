@@ -1,0 +1,27 @@
+/* Merch store (store.html). Builds on the Forged theme in styles.css. */
+.store-grid{display:grid;gap:20px;grid-template-columns:repeat(auto-fill,minmax(min(100%,280px),1fr));align-items:start}
+.store-loading{color:var(--bone-dim);margin:0}
+.store-item{display:grid;padding:0;overflow:hidden}
+.store-art{position:relative;overflow:hidden;aspect-ratio:4/3;background:#0b090d;display:grid;place-items:center;border-bottom:1px solid rgba(214,168,76,.22)}
+.store-art img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.store-art.placeholder{background:radial-gradient(circle at 50% 45%,rgba(116,66,180,.35),transparent 65%),#0b090d}
+.store-art.placeholder img{position:static;width:42%;height:auto;object-fit:contain;opacity:.9}
+.store-body{display:grid;gap:10px;padding:20px}
+.store-body .eyebrow{margin:0}
+.store-body h3{margin:0;font-size:1.25rem}
+.store-desc{margin:0;color:var(--bone-dim)}
+.store-price{margin:0;font-family:var(--font-caps);font-weight:800;font-size:1.5rem;color:var(--gilt-hi)}
+.store-price small{font-size:.8rem;color:var(--bone-dim);font-weight:700}
+.store-form{padding:0;gap:12px}
+.store-who{display:grid;gap:12px}
+.store-who[hidden]{display:none}
+.store-banner,.store-empty{display:flex;gap:12px;align-items:flex-start;padding:18px 20px;margin:0 0 24px}
+.store-banner .icon{flex:none;width:1.4em;height:1.4em;color:var(--gilt-hi)}
+.store-banner.good{border-color:rgba(214,168,76,.5)}
+.store-empty{display:block;color:var(--bone-dim)}
+.store-empty[hidden],.store-banner[hidden]{display:none}
+.store-steps{list-style:none;margin:0 0 18px;padding:0;display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));counter-reset:step}
+.store-steps li{display:grid;gap:6px;padding:18px 20px 18px 62px;position:relative;counter-increment:step}
+.store-steps li::before{content:counter(step);position:absolute;left:18px;top:16px;width:30px;height:30px;display:grid;place-items:center;font-family:var(--font-caps);font-weight:800;color:var(--iron-950);background:var(--gilt);clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
+.store-steps strong{font-family:var(--font-caps);letter-spacing:.04em}
+.store-steps span{color:var(--bone-dim)}

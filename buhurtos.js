@@ -240,5 +240,37 @@
     };
   }
 
-  window.BUHURTOS = { config: CONFIG, links, team, teamRoster, teamStats, teamResults, allEvents, fighter, categoryName, avatarUrl, isId: id => UUID.test(String(id || "")) };
+  // ---------- Reavers profile extras (reavers_app_fighter_profiles) ----------
+  // What the club adds on top of BuhurtOS: weight class, team role, nickname, action photo, highlight video, sponsors.
+  // Only the profiles a fighter (or the Team page) turned on are readable. Fails soft: no extras, never an error.
+  const EXTRA_COLUMNS = "fighter_id,nickname,weight_class,team_role,tagline,about,photo_url,video_url,sponsors,open_to_sponsors";
+  const safeLink = v => (/^https:\/\/[^\s"'<>]+$/i.test(String(v || "")) ? String(v) : "");
+  const safePhoto = v => (/^(https:\/\/[^\s"'<>]+|\/(?!\/)[^\s"'<>]*)$/i.test(String(v || "")) ? String(v) : "");
+  const clip = (v, n) => String(v || "").trim().slice(0, n);
+  const toExtras = r => ({
+    nickname: clip(r.nickname, 40), weightClass: clip(r.weight_class, 40), teamRole: clip(r.team_role, 60),
+    tagline: clip(r.tagline, 140), about: clip(r.about, 1500), photo: safePhoto(r.photo_url), video: safeLink(r.video_url),
+    sponsors: String(r.sponsors || "").split(/\s*[,;]\s*/).map(x => x.trim()).filter(Boolean).slice(0, 8),
+    openToSponsors: Boolean(r.open_to_sponsors)
+  });
+
+  /** Reavers extras for these fighters, as a Map of lower-case fighter id to extras. */
+  async function reaversProfiles(ids) {
+    const wanted = ids.filter(id => UUID.test(String(id || "")));
+    if (!wanted.length) return new Map();
+    const key = `extras:${wanted.slice().sort().join(",")}`;
+    const cached = cacheGet(key);
+    if (cached) return new Map(cached);
+    try {
+      const rows = await rest(`reavers_app_fighter_profiles?select=${EXTRA_COLUMNS}&show_on_site=eq.true&fighter_id=in.${inList(wanted)}`);
+      const entries = rows.map(r => [String(r.fighter_id).toLowerCase(), toExtras(r)]);
+      cacheSet(key, entries);
+      return new Map(entries);
+    } catch (error) {
+      console.warn("Reavers profile extras unavailable.", error);
+      return new Map();
+    }
+  }
+
+  window.BUHURTOS = { config: CONFIG, links, team, teamRoster, teamStats, teamResults, allEvents, fighter, reaversProfiles, categoryName, avatarUrl, isId: id => UUID.test(String(id || "")) };
 })();

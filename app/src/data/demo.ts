@@ -1,10 +1,13 @@
 import type { Id, Session, Store, TableName, Tables } from "./types";
 import { approvalState, canApprove } from "../lib/reimburse";
 import type { Role } from "../lib/roles";
-import { demoWebsite } from "./website";
+import { DEMO_TOURNAMENT_ID, demoWebsite } from "./website";
 import { demoAttendance } from "./attendance";
 import { demoAccess } from "./access";
+import { demoFighterProfiles } from "./fighterProfiles";
+import { DEMO_REMINDERS_KEY, demoReminders } from "./reminders";
 import { levelsFor } from "../lib/pages";
+import type { Counts, Method, TournamentFighter } from "../lib/tournaments";
 import { LEDGER_CATEGORY, paymentRecord, ledgerLines, type Kind, type SquarePayment, type SquareOrder } from "../lib/square";
 
 // Sample data for trying the app without signing in or before the database is set up. Nothing here reaches the database.
@@ -55,8 +58,9 @@ function seed(): Db {
     ],
     reimbursement_approvals: [],
     sponsors: [
-      { id: id(), name: "Prairie Iron Works (sample)", contact_name: "Dana", email: null, phone: null, website: null, stage: "signed", tier: "Knight", value_cents: 150000, in_kind: false, next_follow_up: day(45), renews_on: day(300), notes: "Logo on tabards" },
-      { id: id(), name: "Gaetz Ave Gym (sample)", contact_name: null, email: null, phone: null, website: null, stage: "proposal", tier: "Squire", value_cents: 50000, in_kind: true, next_follow_up: day(3), renews_on: null, notes: "Offering free mat time" },
+      { id: id(), name: "Prairie Iron Works (sample)", contact_name: "Dana", email: null, phone: null, website: null, stage: "signed", tier: "Gold", value_cents: 150000, in_kind: false, next_follow_up: day(45), renews_on: day(300), notes: "Logo on tabards", logo_url: null, blurb: "Custom steel and fabrication in Red Deer.", show_on_site: true, source: "app" },
+      { id: id(), name: "Gaetz Ave Gym (sample)", contact_name: null, email: null, phone: null, website: null, stage: "proposal", tier: "In-kind", value_cents: 50000, in_kind: true, next_follow_up: day(3), renews_on: null, notes: "Offering free mat time", show_on_site: false, source: "app" },
+      { id: id(), name: "Sylvan Lake Coffee Co. (sample)", contact_name: "Jo", email: "jo@example.com", phone: null, website: "https://example.com", stage: "prospect", tier: "Silver", value_cents: null, in_kind: false, next_follow_up: day(2), renews_on: null, notes: "From the website sponsor form:\nWe'd love our logo at your spring tournament.", show_on_site: false, source: "website", created_at: new Date().toISOString() },
       { id: id(), name: "Central Alberta Welding (sample)", contact_name: null, email: null, phone: null, website: null, stage: "contacted", tier: null, value_cents: null, in_kind: false, next_follow_up: day(-1), renews_on: null, notes: null }
     ],
     sponsor_deliverables: [],
@@ -81,8 +85,99 @@ function seed(): Db {
     qr_codes: [
       { id: id(), title: "Pay at the table", note: "Open pay page: visitor fees, stickers, cards", url: "https://app.reddeerreavers.com/#/buy", created_at: new Date().toISOString() }
     ],
-    ...squareSeed()
+    ...squareSeed(),
+    ...signupSeed(),
+    ...tournamentSeed()
   };
+}
+
+/** Sign-ups for the sample tournament: fighters paid on Square, visitors, a free volunteer and one still at Square's page. */
+function signupSeed(): Pick<Db, "event_signups" | "event_tickets" | "event_registrations"> {
+  const signup = { id: id(), event_id: DEMO_TOURNAMENT_ID, title: "Reavers Winter Brawl (sample)", event_date: day(24), start_time: "10:00", location: "Springbrook Archery Centre", intro: "Fighters: register by the Wednesday before so we can build the brackets. Bring your authorization card. Visitors are welcome all day.", open: true, closes_on: day(20), capacity: 120, ask_phone: false, ask_club: true };
+  const ticket = (title: string, kind: Tables["event_tickets"]["kind"], price_cents: number, extra: Partial<Tables["event_tickets"]> = {}): Tables["event_tickets"] =>
+    ({ id: id(), signup_id: signup.id, title, kind, description: null, price_cents, capacity: null, max_per_order: 1, active: true, sort_order: 0, ...extra });
+  const tickets = [
+    ticket("Fighter registration", "tournament", 4000, { description: "One fighter, all day. Buhurt and duels.", capacity: 32, sort_order: 1 }),
+    ticket("Visitor", "visitor", 1000, { description: "Spectator entry. Kids under 12 free at the door.", max_per_order: 6, sort_order: 2 }),
+    ticket("Volunteer (free)", "other", 0, { description: "Help with the lists, marshalling or the gate.", capacity: 10, sort_order: 3 })
+  ];
+  const [fighter, visitor, volunteer] = tickets;
+  const reg = (t: Tables["event_tickets"], name: string, status: Tables["event_registrations"]["status"], extra: Partial<Tables["event_registrations"]> = {}): Tables["event_registrations"] => ({
+    id: id(), signup_id: signup.id, ticket_id: t.id, ticket_title: t.title, kind: t.kind, quantity: 1, amount_cents: t.price_cents, name,
+    email: `${name.split(" ")[0].toLowerCase()}@example.com`, phone: null, club: null, note: null, status,
+    paid_via: status === "paid" ? "square" : null, square_order_id: null, square_payment_id: null,
+    paid_at: status === "paid" ? `${day(-2)}T18:00:00Z` : null, checked_in_at: null, created_at: `${day(-3)}T18:00:00Z`, ...extra
+  });
+  const registrations = [
+    reg(fighter, "Riley Hart (sample)", "paid", { club: "Red Deer Reavers" }),
+    reg(fighter, "Morgan Vale (sample)", "paid", { club: "Calgary Iron Wolves", note: "Duels only, please." }),
+    reg(fighter, "Jesse Kaur (sample)", "paid", { club: "Edmonton Steel" }),
+    reg(fighter, "Avery Stone (sample)", "pending", { club: "Lethbridge Longswords", created_at: new Date().toISOString() }),
+    reg(visitor, "Pat Lee (sample)", "paid", { quantity: 3, amount_cents: 3000 }),
+    reg(visitor, "Sam Ortiz (sample)", "paid", { quantity: 2, amount_cents: 2000 }),
+    reg(volunteer, "Casey (sample)", "free", { email: null })
+  ];
+  return { event_signups: [signup], event_tickets: tickets, event_registrations: registrations };
+}
+
+/**
+ * Two editions of the Red Deer Rumble with sample names. 2026 has RUMBLE-2026's real totals (37 fighters, 16 divisions,
+ * 159 fights, $1,000 in fees expected and $840 received, 94 visitors) so the screens show true numbers; 2025 is made up
+ * for the year-over-year view.
+ */
+function tournamentSeed(): Pick<Db, "tournaments" | "tournament_fighters" | "tournament_sales" | "tournament_expenses" | "tournament_cash_boxes"> {
+  const firsts = ["Astrid", "Bjorn", "Cora", "Dag", "Elin", "Finn", "Greta", "Hakon", "Ingrid", "Jarl", "Kari", "Leif", "Maja", "Nils", "Oda", "Per", "Runa", "Sven", "Tove", "Ulf"];
+  const lasts = ["Berg", "Dahl", "Eklund", "Falk", "Hagen", "Lund", "Moen", "Nyberg", "Rask", "Strand"];
+  const clubs = ["Red Deer Reavers", "Calgary Iron", "Edmonton Wardens", "Lethbridge Blackguard", "Winnipeg Fury"];
+  const divisions = ["Men's 1v1 longsword", "Women's 1v1", "Sword and shield", "Polearm", "5v5", "Duel"];
+  let i = 0;
+  const person = () => { const p = i++; return `${firsts[p % firsts.length]} ${lasts[(p + Math.floor(p / firsts.length)) % lasts.length]} (sample)`; };
+  const fighters = (tid: string, groups: [TournamentFighter["status"], Method | null, number, number][]): TournamentFighter[] =>
+    groups.flatMap(([status, method, count, fee]) => Array.from({ length: count }, (_, n) => {
+      const pay = status === "paid" || status === "owes";
+      return { id: id(), tournament_id: tid, name: person(), club: clubs[(i + n) % clubs.length], divisions: divisions[i % divisions.length],
+        fee_cents: pay ? fee : 0, method, paid_cents: status === "paid" ? fee : 0, status, square_payment_id: null, note: null };
+    }));
+  const t26 = id(), t25 = id();
+  const base = { venue: "Westerner Park (sample)", fighter_fee_cents: 4000, notes: null, rounds: null, clubs_attending: null };
+  const tournaments: Tables["tournaments"][] = [
+    { ...base, id: t26, code: "RUMBLE-2026", name: "Red Deer Rumble", year: 2026, starts_on: "2026-11-14", ends_on: "2026-11-15",
+      fighters_count: 37, divisions: 16, fights: 159, rounds: 412, clubs_attending: 9,
+      spectators: [{ day: "Saturday", count: 52 }, { day: "Sunday", count: 42 }], stream_viewers: 189, stream_minutes: 21 * 60 + 50,
+      podiums: [{ division: "Men's 1v1 longsword", first: "Bjorn Dahl (sample)", second: "Finn Rask (sample)", third: "Ulf Moen (sample)" }] },
+    { ...base, id: t25, code: "RUMBLE-2025", name: "Red Deer Rumble", year: 2025, starts_on: "2025-11-15", ends_on: "2025-11-16",
+      fighters_count: 28, divisions: 11, fights: 112, rounds: 290, clubs_attending: 6, fighter_fee_cents: 3500,
+      spectators: [{ day: "Saturday", count: 40 }, { day: "Sunday", count: 31 }], stream_viewers: 120, stream_minutes: 14 * 60, podiums: [] }
+  ];
+  const tournament_fighters = [
+    ...fighters(t26, [["paid", "etransfer", 15, 4000], ["owes", "etransfer", 3, 4000], ["paid", "cash", 6, 4000], ["owes", "cash", 1, 4000], ["not_needed", null, 22, 0], ["waived", null, 9, 0]]),
+    ...fighters(t25, [["paid", "etransfer", 12, 3500], ["paid", "cash", 6, 3500], ["owes", "cash", 2, 3500], ["not_needed", null, 8, 0]])
+  ];
+  const sale = (tid: string, item: string, quantity: number, price_cents: number, method: Method, sold_on: string): Tables["tournament_sales"] =>
+    ({ id: id(), tournament_id: tid, item, quantity, price_cents, method, sold_on, square_item_id: null, square_payment_id: null, note: null });
+  const tournament_sales = [
+    sale(t26, "Event visitor fee", 40, 1000, "cash", "2026-11-14"), sale(t26, "Event visitor fee", 12, 1000, "credit", "2026-11-14"),
+    sale(t26, "Event visitor fee", 30, 1000, "cash", "2026-11-15"), sale(t26, "Event visitor fee", 12, 1000, "credit", "2026-11-15"),
+    sale(t26, "Under 10 visitor", 9, 0, "cash", "2026-11-14"),
+    sale(t26, "Fighter trading cards", 12, 200, "cash", "2026-11-14"), sale(t26, "Complete set of cards", 3, 1000, "credit", "2026-11-15"),
+    sale(t26, "Small sticker", 8, 100, "cash", "2026-11-14"), sale(t26, "Medium sticker", 5, 200, "cash", "2026-11-15"),
+    sale(t26, "Large sticker", 5, 300, "cash", "2026-11-15"), sale(t26, "Reavers stickers 2-pack", 4, 500, "credit", "2026-11-14"),
+    sale(t25, "Event visitor fee", 71, 1000, "cash", "2025-11-15"), sale(t25, "Small sticker", 20, 100, "cash", "2025-11-15")
+  ];
+  const cost = (tid: string, category: Tables["tournament_expenses"]["category"], description: string, amount_cents: number, method: Method, from_cash_box = false): Tables["tournament_expenses"] =>
+    ({ id: id(), tournament_id: tid, category, description, amount_cents, method, spent_on: null, from_cash_box });
+  const tournament_expenses = [
+    cost(t26, "venue", "Hall rental (sample)", 60000, "etransfer"), cost(t26, "prizes", "Medals (sample)", 18000, "etransfer"),
+    cost(t26, "printing", "Brackets and posters (sample)", 4500, "debit"), cost(t26, "food", "Pizza for volunteers (sample)", 6500, "cash", true),
+    cost(t25, "venue", "Hall rental (sample)", 55000, "etransfer"), cost(t25, "prizes", "Medals (sample)", 15000, "etransfer")
+  ];
+  const box = (tid: string, name: string, opening: Counts, closing: Counts): Tables["tournament_cash_boxes"] =>
+    ({ id: id(), tournament_id: tid, name, opening, closing, counted: true, keep_float_cents: null, counted_by: "Sample counter", note: null });
+  const tournament_cash_boxes = [
+    box(t26, "Door", { "2000": 2, "1000": 4, "500": 4, "200": 5, "100": 10 }, { "10000": 2, "5000": 3, "2000": 21, "1000": 14, "500": 9, "200": 7, "100": 12 }),
+    box(t26, "Merch table", { "500": 4, "200": 5, "100": 10, "25": 20 }, { "2000": 1, "1000": 2, "500": 6, "200": 9, "100": 14, "25": 24 })
+  ];
+  return { tournaments, tournament_fighters, tournament_sales, tournament_expenses, tournament_cash_boxes };
 }
 
 const monthIso = (offset: number) => {
@@ -93,11 +188,12 @@ const monthIso = (offset: number) => {
 /** A month of sample Square activity: an event day at the card reader, online registrations and dues. */
 function squareSeed(): Pick<Db, "square_items" | "square_payments" | "dues" | "dues_exemptions"> {
   const item = (title: string, kind: Kind, price_cents: number, extra: Partial<Tables["square_items"]> = {}) =>
-    ({ id: id(), title, kind, description: null, price_cents, max_quantity: 1, public: true, active: true, sort_order: 0, ...extra });
+    ({ id: id(), title, kind, description: null, price_cents, max_quantity: 1, public: true, active: true, sort_order: 0, in_store: kind === "sticker" || kind === "trading_card", image_url: null, ...extra });
   const square_items = [
     item("Tournament registration", "tournament", 4000, { description: "One fighter, one tournament day. Bring your own kit or ask about loaners.", sort_order: 1 }),
     item("Event visitor fee", "visitor", 500, { description: "Spectator entry for a Reavers event. Kids under 12 free.", max_quantity: 10, sort_order: 2 }),
     item("Reavers sticker", "sticker", 300, { description: "Weatherproof vinyl crest sticker.", max_quantity: 20, sort_order: 3 }),
+    item("Reavers sticker 2-pack", "sticker", 500, { description: "Two crest stickers: one for you, one for a friend.", max_quantity: 20, sort_order: 3 }),
     item("Fighter trading cards (pack of 5)", "trading_card", 500, { description: "Five random Reavers fighter cards.", max_quantity: 20, sort_order: 4 }),
     item("Monthly dues", "dues", 3000, { description: "Practice, coaching and team armour for the month.", public: false, sort_order: 5 })
   ];
@@ -224,10 +320,20 @@ export function demoStore(role: Role = "finance"): Store {
         reader.readAsDataURL(file);
       });
     },
+    async uploadSponsorLogo(file) {
+      return await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result));
+        reader.onerror = () => reject(new Error("Could not read the image"));
+        reader.readAsDataURL(file);
+      });
+    },
     async receiptUrl() { return null; },
     website: demoWebsite(),
     attendance: demoAttendance(),
     access: demoAccess(),
+    fighterProfiles: demoFighterProfiles(),
+    reminders: demoReminders(),
     async checkout(req) {
       // Sample mode has no Square: the payment "goes through" at once, the way the webhook would record it.
       const item = db.square_items.find(i => i.id === req.item_id);
@@ -258,6 +364,6 @@ export function demoStore(role: Role = "finance"): Store {
       for (const t of db.transactions) if (t.external_id?.startsWith(`square-${p.square_payment_id}-`) && !t.external_id.endsWith("-fee")) t.category = LEDGER_CATEGORY[kind];
       save();
     },
-    async signOut() { try { localStorage.removeItem(KEY); localStorage.removeItem("reavers-app-website-demo-v1"); localStorage.removeItem("reavers-app-attendance-demo-v1"); localStorage.removeItem("reavers-app-access-demo-v1"); } catch { /* ignore */ } }
+    async signOut() { try { localStorage.removeItem(KEY); localStorage.removeItem("reavers-app-website-demo-v1"); localStorage.removeItem("reavers-app-attendance-demo-v1"); localStorage.removeItem("reavers-app-access-demo-v1"); localStorage.removeItem("reavers-app-fighter-profiles-demo-v1"); localStorage.removeItem(DEMO_REMINDERS_KEY); } catch { /* ignore */ } }
   };
 }

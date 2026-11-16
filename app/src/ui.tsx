@@ -110,6 +110,8 @@ export function Modal({ title, onClose, children }: { title: string; onClose: ()
 export type Field = {
   key: string; label: string; type?: "text" | "textarea" | "date" | "money" | "number" | "select" | "checkbox" | "email" | "url" | "time";
   options?: string[]; required?: boolean; hint?: string; wide?: boolean;
+  /** Shown in place of a select option's saved value, e.g. { etransfer: "E-transfer" }. */
+  labels?: Record<string, string>;
 };
 
 const toInput = (f: Field, v: unknown) =>
@@ -156,7 +158,7 @@ export function RecordForm({ fields, initial, onSubmit, submitLabel = "Save", on
                   {f.type === "textarea" ? <textarea rows={3} value={String(values[f.key] ?? "")} onChange={e => set(f.key, e.target.value)} />
                     : f.type === "select" ? (
                       <select value={String(values[f.key] ?? "")} onChange={e => set(f.key, e.target.value)}>
-                        {f.options?.map(o => <option key={o} value={o}>{o}</option>)}
+                        {f.options?.map(o => <option key={o} value={o}>{f.labels?.[o] ?? o}</option>)}
                       </select>)
                     : <input
                         type={f.type === "money" ? "text" : f.type === "number" ? "number" : f.type || "text"}

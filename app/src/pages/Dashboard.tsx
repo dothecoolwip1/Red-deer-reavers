@@ -5,6 +5,8 @@ import { NO_SHOW_MONTHS, ago, isNoShow, timerState } from "../lib/attendance";
 import { Money, Page, Pill, dateLabel, todayIso, useCan, useStore, useTable } from "../ui";
 import { deadlineStatus } from "../lib/compliance";
 import { isTransfer } from "../lib/transfers";
+import { missing } from "../lib/fighterProfile";
+import { summarize } from "../lib/tournaments";
 
 export function Dashboard() {
   const { session } = useStore();
@@ -15,7 +17,7 @@ export function Dashboard() {
   const some = p.ledger > 0 || p.sponsors > 0 || p.compliance > 0 || p.gear > 0 || p.attendance > 0;
   return (
     <Page title={`Hail, ${session.name.split(" ")[0]}`} intro="What needs you today, and where the club stands.">
-      {exec ? <ExecDashboard /> : <>{some && <ExecDashboard />}<MemberHome /></>}
+      {exec ? <><ExecDashboard /><div className="cards"><FighterProfileCard /></div></> : <>{some && <ExecDashboard />}<MemberHome /></>}
     </Page>
   );
 }
@@ -23,6 +25,7 @@ export function Dashboard() {
 function ExecDashboard() {
   const { session } = useStore();
   const ledger = session.pages.ledger > 0;
+  const tournaments = session.pages.tournaments > 0;
   const show = { claims: useCan("money.view"), sponsors: session.pages.sponsors > 0, gear: session.pages.gear > 0, deadlines: session.pages.compliance > 0, attendance: session.pages.attendance > 0 };
   const tx = useTable("transactions");
   const claims = useTable("reimbursements");
@@ -69,15 +72,39 @@ function ExecDashboard() {
             <Link to="/sponsors">Sponsor pipeline</Link>
           </article>}
           {show.attendance && <AttendanceCard />}
-          {ledger && <article className="card">
+          {(ledger || tournaments) && <article className="card">
             <h2>Latest money</h2>
-            <ul className="list">
+            {tournaments && <TournamentMoney />}
+            {ledger && <ul className="list">
               {(tx.rows || []).slice(0, 6).map(t => <li key={t.id}><span>{t.description}</span><Money cents={t.amount_cents} signed /></li>)}
-            </ul>
-            <Link to="/ledger">Open the ledger</Link>
+            </ul>}
+            {ledger && <Link to="/ledger">Open the ledger</Link>}
           </article>}
       </div>
     </>
+  );
+}
+
+/** The latest tournament's money on the Home "Latest money" card: in, out, net and who still owes. */
+function TournamentMoney() {
+  const editions = useTable("tournaments");
+  const fighters = useTable("tournament_fighters");
+  const sales = useTable("tournament_sales");
+  const expenses = useTable("tournament_expenses");
+  const boxes = useTable("tournament_cash_boxes");
+  const t = [...(editions.rows || [])].sort((a, b) => b.year - a.year || (b.starts_on || "").localeCompare(a.starts_on || ""))[0];
+  if (!t) return null;
+  const mine = <R extends { tournament_id: string }>(rows: R[] | null) => (rows || []).filter(r => r.tournament_id === t.id);
+  const s = summarize(mine(fighters.rows), mine(sales.rows), mine(expenses.rows), mine(boxes.rows));
+  return (
+    <div className="tour-money">
+      <ul className="list">
+        <li><span><Link to="/tournaments">{t.code}</Link> in</span><Money cents={s.totalIn} signed /></li>
+        <li><span>{t.code} out</span><Money cents={-s.totalOut} signed /></li>
+        <li><span>{t.code} net</span><b className={s.net < 0 ? "money short" : "money in"}><Money cents={s.net} /></b></li>
+        {s.fees.owing > 0 && <li><span>Fighter fees still owing ({s.fighters.owing.length})</span><span className="money short"><Money cents={s.fees.owing} /></span></li>}
+      </ul>
+    </div>
   );
 }
 
@@ -104,6 +131,27 @@ function AttendanceCard() {
 
 function Stat({ label, value, to }: { label: string; value: React.ReactNode; to: string }) {
   return <Link className="stat" to={to}><span>{label}</span><strong>{value}</strong></Link>;
+}
+
+/** Nudges a fighter to fill in and turn on their Reavers profile (weight class, role, action photo, sponsors). */
+function FighterProfileCard() {
+  const store = useStore();
+  const [state, setState] = useState<{ mine: number; shown: boolean; todo: string[] } | null>(null);
+  useEffect(() => {
+    Promise.all([store.fighterProfiles.mine(), store.fighterProfiles.list()]).then(([mine, list]) => {
+      const p = mine.length ? list.find(x => x.fighter_id.toLowerCase() === mine[0].fighter_id.toLowerCase()) : undefined;
+      setState({ mine: mine.length, shown: Boolean(p?.show_on_site), todo: missing(p) });
+    }, () => setState(null));
+  }, [store]);
+  if (!state || !state.mine) return null;
+  return (
+    <article className="card">
+      <h2>Your fighter profile</h2>
+      {state.shown ? <p><Pill tone="done">On the website</Pill> {state.todo.length ? `Still missing: ${state.todo.join(", ")}.` : "Sponsors can find you."}</p>
+        : <p><Pill tone="soon">Not on the website</Pill> Add your weight class, role and an action photo so sponsors can find you.</p>}
+      <Link to="/fighters">{state.shown ? "Edit your profile" : "Fill in your profile"}</Link>
+    </article>
+  );
 }
 
 function MemberHome() {
@@ -133,6 +181,7 @@ function MemberHome() {
         <h2>Pay dues or buy</h2>
         <Link to="/pay">Payment options</Link>
       </article>
+      <FighterProfileCard />
     </div>
   );
 }
