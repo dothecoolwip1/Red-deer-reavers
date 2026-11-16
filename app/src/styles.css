@@ -489,3 +489,94 @@ button.link { padding: 0; min-height: 0; color: var(--gilt-hi); text-decoration:
 .tour-money .money.in, .tour-money .money.short { font-weight: 700; }
 .tour-title .row-actions, .tour-head .row-actions { display: flex; flex-wrap: wrap; gap: 6px; white-space: normal; }
 .tour-title .row-actions button { margin: 0; }
+
+/* Tournaments: the edition banner and its charts. */
+.tour-hero { position: relative; overflow: hidden; margin: 6px 0 16px; padding: 22px 24px 20px; border: 1px solid #4a3a5e; border-radius: 14px;
+  background: radial-gradient(120% 140% at 0% 0%, #34205a 0%, #231a33 45%, var(--iron-2) 100%); box-shadow: inset 0 1px 0 rgba(243, 207, 122, .12); }
+.tour-hero::after { content: ""; position: absolute; inset: auto 0 0 0; height: 3px; background: linear-gradient(90deg, var(--gilt), var(--ember) 60%, transparent); }
+.tour-hero-year { position: absolute; right: -6px; top: -34px; font-family: "Cinzel", Georgia, serif; font-weight: 700; font-size: 10.5rem; line-height: 1;
+  color: transparent; -webkit-text-stroke: 1.5px rgba(214, 168, 76, .2); pointer-events: none; user-select: none; }
+.tour-hero > * { position: relative; }
+.tour-hero > .tour-hero-year { position: absolute; }
+.tour-hero-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
+.tour-hero h2 { margin: 0 0 12px; font-size: 1.85rem; color: var(--gilt-hi); letter-spacing: .03em; }
+.tour-hero-facts { display: flex; flex-wrap: wrap; gap: 8px 26px; margin: 0; }
+.tour-hero-facts dt { font-size: .82rem; color: var(--mute); }
+.tour-hero-facts dd { margin: 0; color: var(--bone); }
+.tour-hero-facts .tour-code { font-family: "Cinzel", Georgia, serif; font-weight: 700; color: var(--gilt); letter-spacing: .06em; }
+.tour-hero .row-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.tour-hero .row-actions button { margin: 0; background: rgba(22, 18, 28, .55); }
+.tour-purse { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 20px 0 14px; padding-top: 16px; border-top: 1px solid rgba(214, 168, 76, .22); }
+.tour-purse > div > span { display: block; color: var(--bone-dim); font-size: .9rem; }
+.tour-purse strong { display: block; font-size: 1.6rem; color: var(--bone); font-variant-numeric: tabular-nums; }
+.tour-purse .tour-net strong { font-family: "Cinzel", Georgia, serif; font-size: 2.1rem; line-height: 1.15; }
+.tour-meter-label { display: flex; justify-content: space-between; gap: 10px; font-size: .9rem; color: var(--bone-dim); margin-bottom: 6px; }
+.tour-meter-label b { color: var(--bone); font-variant-numeric: tabular-nums; }
+.tour-meter-track { height: 10px; border-radius: 99px; background: rgba(10, 8, 14, .6); border: 1px solid var(--line); overflow: hidden; }
+.tour-meter-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--gilt), var(--gilt-hi)); transition: width .5s ease; }
+.tour-meter-fill.done { background: var(--good); }
+@media (prefers-reduced-motion: reduce) { .tour-meter-fill { transition: none; } }
+
+.tour-glance { display: grid; grid-template-columns: minmax(0, 2fr) repeat(3, minmax(0, 1fr)); gap: 12px; margin-bottom: 8px; }
+.tour-glance .stat:hover { border-color: var(--line); }
+.tour-stack { display: flex; gap: 2px; height: 12px; margin: 4px 0 2px; }
+.tour-stack .seg { min-width: 4px; border-radius: 3px; }
+.seg.paid, .dot.paid { background: var(--good); }
+.seg.owes, .dot.owes { background: var(--bad); }
+.seg.waived, .dot.waived { background: #847a8f; }
+.seg.free, .dot.free { background: #4f4759; }
+.tour-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; list-style: none; margin: 0; padding: 0; font-size: .85rem; }
+.tour-legend b { color: var(--bone); font-variant-numeric: tabular-nums; }
+.tour-legend .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; }
+.tour-minibar { display: block; height: 4px; margin: 6px 0 0 auto; max-width: 160px; border-radius: 99px; background: var(--iron-3); overflow: hidden; }
+.tour-minibar > span { display: block; height: 100%; border-radius: 99px; background: var(--gilt); }
+.tour-minibar > span.done { background: var(--good); }
+
+.tour-section > .tour-head { padding-bottom: 8px; border-bottom: 1px solid var(--line); }
+.tour-bars { list-style: none; margin: 0 0 14px; padding: 0; display: grid; gap: 8px; }
+.tour-bars li { display: grid; grid-template-columns: minmax(70px, 120px) minmax(0, 1fr) minmax(48px, max-content); gap: 12px; align-items: center; font-variant-numeric: tabular-nums; }
+.tour-bars .bar { height: 10px; border-radius: 99px; background: var(--iron-3); overflow: hidden; }
+.tour-bars .bar > span { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--gilt), var(--gilt-hi)); }
+
+.tour-box { border-top: 3px solid var(--line); }
+.tour-box.counted { border-top-color: var(--good); }
+.tour-box h2 .pill { vertical-align: middle; margin-left: 6px; font-family: "Alegreya Sans", system-ui, sans-serif; letter-spacing: 0; font-weight: 400; }
+
+.tour-board { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); margin: 0 0 12px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--iron-2); overflow: hidden; }
+.tour-board > div { padding: 14px 16px; border-right: 1px solid var(--line); }
+.tour-board > div:last-child { border-right: 0; }
+.tour-board dt { color: var(--bone-dim); font-size: .9rem; }
+.tour-board dd { margin: 2px 0 0; font-family: "Cinzel", Georgia, serif; font-weight: 700; font-size: 2rem; color: var(--gilt-hi); font-variant-numeric: tabular-nums; }
+.tour-crowd { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 12px; margin-bottom: 12px; }
+.tour-crowd h3 { font-size: 1rem; color: var(--gilt); margin: 0 0 12px; }
+.tour-crowd h3 b { color: var(--bone); margin-left: 6px; }
+.tour-crowd .tour-bars { margin: 0; }
+.tour-stream { display: grid; gap: 10px; margin: 0; }
+.tour-stream dt { color: var(--bone-dim); font-size: .9rem; }
+.tour-stream dd { margin: 0; font-size: 1.5rem; color: var(--bone); font-variant-numeric: tabular-nums; }
+.podiums th.gold { color: #e9c46a; } .podiums th.silver { color: #cdd2db; } .podiums th.bronze { color: #d4925e; }
+.podiums td.gold { box-shadow: inset 3px 0 0 #e9c46a; } .podiums td.silver { box-shadow: inset 3px 0 0 #cdd2db; } .podiums td.bronze { box-shadow: inset 3px 0 0 #d4925e; }
+
+.tour-years { display: flex; gap: 8px; align-items: flex-end; overflow-x: auto; margin: 0 0 14px; padding: 4px 0; }
+.tour-year { display: grid; justify-items: center; gap: 6px; min-width: 88px; padding: 8px; background: none; border: 1px solid transparent; border-radius: var(--radius); color: var(--bone-dim); cursor: pointer; font: inherit; }
+.tour-year:hover, .tour-year:focus-visible { border-color: var(--gilt); }
+.tour-year .money { font-size: .85rem; font-variant-numeric: tabular-nums; }
+.tour-year .col { display: flex; align-items: flex-end; height: 90px; width: 34px; }
+.tour-year .col > span { width: 100%; border-radius: 4px 4px 0 0; }
+.tour-year .col .pos { background: linear-gradient(180deg, var(--gilt-hi), var(--gilt)); }
+.tour-year .col .neg { background: var(--bad); }
+.tour-year b { font-family: "Cinzel", Georgia, serif; color: var(--bone); }
+
+@media (max-width: 1000px) { .tour-glance { grid-template-columns: repeat(2, minmax(0, 1fr)); } .tour-glance .tour-fighterbar { grid-column: 1 / -1; } }
+@media (max-width: 700px) {
+  .tour-hero { padding: 18px 16px; }
+  .tour-hero h2 { font-size: 1.45rem; }
+  .tour-hero-year { font-size: 6.5rem; top: -18px; }
+  .tour-hero .row-actions { width: 100%; } .tour-hero .row-actions button { flex: 1 1 auto; }
+  .tour-purse strong { font-size: 1.15rem; } .tour-purse .tour-net strong { font-size: 1.45rem; }
+  .tour-crowd { grid-template-columns: 1fr; }
+  .tour-board dd { font-size: 1.5rem; }
+  .tour-board > div { border-bottom: 1px solid var(--line); }
+}
+.tour-bars li > :last-child { text-align: right; min-width: 6ch; }
+.tour-year .col { border-bottom: 1px solid var(--line); }

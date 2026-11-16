@@ -25,6 +25,45 @@ const METHOD_LABELS: Record<string, string> = { "": "-", ...METHOD_LABEL };
 const OverShort = ({ cents }: { cents: number }) =>
   <strong className={cents < 0 ? "money short" : "money in"}>{cents === 0 ? "Even" : `${formatMoney(Math.abs(cents))} ${cents > 0 ? "over" : "short"}`}</strong>;
 
+const pct = (value: number, of: number) => (of > 0 ? Math.max(0, Math.min(100, (value / of) * 100)) : 0);
+
+/** Collected against expected: a gilt bar, green once it's all in. */
+function Meter({ value, of, label }: { value: number; of: number; label: ReactNode }) {
+  const p = pct(value, of);
+  return (
+    <div className="tour-meter">
+      <div className="tour-meter-label"><span>{label}</span><b>{of > 0 ? `${Math.round((value / of) * 100)}%` : "-"}</b></div>
+      <div className="tour-meter-track" role="meter" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(p)} aria-label="Collected of expected">
+        <div className={`tour-meter-fill${value >= of && of > 0 ? " done" : ""}`} style={{ width: `${p}%` }} />
+      </div>
+    </div>
+  );
+}
+
+const MiniBar = ({ value, of }: { value: number; of: number }) =>
+  <span className="tour-minibar" aria-hidden="true"><span style={{ width: `${pct(value, of)}%` }} className={value >= of ? "done" : ""} /></span>;
+
+/** Who paid, who owes and who didn't have to: one bar split by status. */
+function FighterBar({ s }: { s: Summary }) {
+  const parts = [
+    { key: "paid", label: "Paid", n: s.fighters.paid },
+    { key: "owes", label: "Owe", n: s.fighters.owing.length },
+    { key: "waived", label: "Waived", n: s.fighters.waived },
+    { key: "free", label: "Not needed", n: s.fighters.notNeeded }
+  ];
+  const total = parts.reduce((a, p) => a + p.n, 0);
+  return (
+    <div className="stat tour-fighterbar">
+      <span>Fighters</span>
+      <strong>{total}</strong>
+      <div className="tour-stack" role="img" aria-label={parts.map(p => `${p.n} ${p.label.toLowerCase()}`).join(", ")}>
+        {parts.filter(p => p.n).map(p => <span key={p.key} className={`seg ${p.key}`} style={{ flexGrow: p.n }} title={`${p.label}: ${p.n}`} />)}
+      </div>
+      <ul className="tour-legend">{parts.map(p => <li key={p.key}><i className={`dot ${p.key}`} />{p.label} <b>{p.n}</b></li>)}</ul>
+    </div>
+  );
+}
+
 function Section({ title, actions, children }: { title: string; actions?: ReactNode; children: ReactNode }) {
   return (
     <section className="tour-section">
@@ -117,24 +156,35 @@ function Edition({ t, data, canEdit, canPost, onEdit, reload }: { t: Tournament;
 
   return (
     <>
-      <div className="tour-title">
-        <div>
-          <h2>{t.name} {t.year} <Pill tone="later">{t.code}</Pill></h2>
-          <p className="muted">{[days, t.venue, `Fighter fee ${formatMoney(t.fighter_fee_cents)}`].filter(Boolean).join(" · ")}</p>
+      <section className="tour-hero" aria-labelledby="tour-hero-name">
+        <span className="tour-hero-year" aria-hidden="true">{t.year}</span>
+        <div className="tour-hero-top">
+          <div>
+            <h2 id="tour-hero-name">{t.name} {t.year}</h2>
+            <dl className="tour-hero-facts">
+              {days && <div><dt>Dates</dt><dd>{days}</dd></div>}
+              {t.venue && <div><dt>Venue</dt><dd>{t.venue}</dd></div>}
+              <div><dt>Fighter fee</dt><dd>{formatMoney(t.fighter_fee_cents)}</dd></div>
+              <div><dt>Short ID</dt><dd className="tour-code">{t.code}</dd></div>
+            </dl>
+          </div>
+          <div className="row-actions">
+            <button onClick={() => save("all", editionSheets(t, data, today))}>Export edition</button>
+            {canPost && <button onClick={postToLedger}>Post to ledger</button>}
+            {canEdit && <button onClick={onEdit}>Edit edition and stats</button>}
+          </div>
         </div>
-        <div className="row-actions">
-          <button onClick={() => save("all", editionSheets(t, data, today))}>Export edition</button>
-          {canPost && <button onClick={postToLedger}>Post to ledger</button>}
-          {canEdit && <button onClick={onEdit}>Edit edition and stats</button>}
+        <div className="tour-purse">
+          <div><span>Money in</span><strong><Money cents={s.totalIn} /></strong></div>
+          <div><span>Money out</span><strong><Money cents={s.totalOut} /></strong></div>
+          <div className="tour-net"><span>Net</span><strong className={s.net < 0 ? "money short" : "money in"}>{formatMoney(s.net)}</strong></div>
         </div>
-      </div>
+        <Meter value={s.totalIn} of={s.expectedIn} label={<>Collected <Money cents={s.totalIn} /> of <Money cents={s.expectedIn} /> expected</>} />
+      </section>
 
-      <div className="stats">
-        <div className="stat"><span>Total in</span><strong><Money cents={s.totalIn} /></strong><small>of <Money cents={s.expectedIn} /> expected</small></div>
-        <div className="stat"><span>Total out</span><strong><Money cents={s.totalOut} /></strong><small>{data.expenses.length} expenses</small></div>
-        <div className="stat"><span>Net</span><strong><span className={s.net < 0 ? "money short" : "money in"}>{formatMoney(s.net)}</span></strong></div>
-        <div className="stat"><span>Still owing</span><strong><span className={s.fees.owing ? "money short" : "money"}>{formatMoney(s.fees.owing)}</span></strong><small>{s.fighters.owing.length} {s.fighters.owing.length === 1 ? "fighter" : "fighters"}</small></div>
-        <div className="stat"><span>Didn't have to pay</span><strong className="free-text">{s.fighters.free}</strong><small>{s.fighters.notNeeded} not needed · {s.fighters.waived} waived</small></div>
+      <div className="tour-glance">
+        <FighterBar s={s} />
+        <div className="stat"><span>Still owing</span><strong><span className={s.fees.owing ? "money short" : "money in"}>{formatMoney(s.fees.owing)}</span></strong><small>{s.fighters.owing.length ? `${s.fighters.owing.length} ${s.fighters.owing.length === 1 ? "fighter" : "fighters"}` : "Everyone's paid up"}</small></div>
         <div className="stat"><span>Merch sold</span><strong><Money cents={s.sales.merch} /></strong><small>{s.sales.merchQty} items</small></div>
         <div className="stat"><span>Through Square</span><strong><Money cents={s.sales.card} /></strong><small><Link to="/sales">Square sales</Link></small></div>
       </div>
@@ -146,7 +196,7 @@ function Edition({ t, data, canEdit, canPost, onEdit, reload }: { t: Tournament;
             <tbody>
               {s.byMethod.filter(m => m.expected || m.collected).map(m => (
                 <tr key={m.method}><td data-label="Method">{METHOD_LABEL[m.method]}</td><td data-label="Expected" className="num"><Money cents={m.expected} /></td>
-                  <td data-label="Collected" className="num"><Money cents={m.collected} /></td>
+                  <td data-label="Collected" className="num"><Money cents={m.collected} /><MiniBar value={m.collected} of={Math.max(m.expected, m.collected)} /></td>
                   <td data-label="Difference" className="num"><span className={m.collected < m.expected ? "money short" : "money in"}>{formatMoney(m.collected - m.expected)}</span></td></tr>))}
               <tr className="total"><td data-label="Method">Total</td><td data-label="Expected" className="num"><Money cents={s.expectedIn} /></td><td data-label="Collected" className="num"><Money cents={s.totalIn} /></td>
                 <td data-label="Difference" className="num"><span className={s.totalIn < s.expectedIn ? "money short" : "money in"}>{formatMoney(s.totalIn - s.expectedIn)}</span></td></tr>
@@ -425,7 +475,8 @@ function Expenses({ t, rows, canEdit, reload, onExport }: { t: Tournament; rows:
       <button onClick={onExport}>Export</button>
       {canEdit && <button className="primary" onClick={() => setEditing("new")}>Add expense</button>}
     </>}>
-      {rows.length === 0 ? <Empty>No expenses yet.</Empty> : (
+      {rows.length === 0 ? <Empty>No expenses yet.</Empty> : (<>
+        <ExpenseBars rows={rows} />
         <div className="table-wrap">
           <table>
             <thead><tr><th>Category</th><th>What for</th><th>Method</th><th className="num">Amount</th>{canEdit && <th aria-label="Actions" />}</tr></thead>
@@ -440,7 +491,7 @@ function Expenses({ t, rows, canEdit, reload, onExport }: { t: Tournament; rows:
                 </tr>))}
             </tbody>
           </table>
-        </div>)}
+        </div></>)}
       {editing && (
         <Modal title={editing === "new" ? "Add expense" : "Edit expense"} onClose={() => setEditing(null)}>
           <RecordForm fields={EXPENSE_FIELDS} initial={(editing === "new" ? { method: "etransfer", spent_on: t.starts_on } : editing) as Record<string, unknown>}
@@ -454,6 +505,16 @@ function Expenses({ t, rows, canEdit, reload, onExport }: { t: Tournament; rows:
             }} />
         </Modal>)}
     </Section>
+  );
+}
+
+function ExpenseBars({ rows }: { rows: TournamentExpense[] }) {
+  const cats = EXPENSE_CATEGORIES.map(c => ({ c, cents: sum(rows.filter(e => e.category === c), e => e.amount_cents) })).filter(x => x.cents).sort((a, b) => b.cents - a.cents);
+  const top = cats[0]?.cents || 0;
+  return (
+    <ul className="tour-bars" aria-label="Expenses by category">
+      {cats.map(x => <li key={x.c}><span>{EXPENSE_LABEL[x.c]}</span><span className="bar"><span style={{ width: `${pct(x.cents, top)}%` }} /></span><Money cents={x.cents} /></li>)}
+    </ul>
   );
 }
 
@@ -480,8 +541,8 @@ function CashBoxes({ t, rows, summary, canEdit, reload, onExport }: { t: Tournam
             const plan = floatPlan(b.closing, b.opening, b.keep_float_cents);
             const open = countTotal(b.opening), close = countTotal(b.closing);
             return (
-              <article key={b.id} className="card">
-                <header className="tour-head"><h2>{b.name}</h2>{canEdit && <button className="ghost" onClick={() => setEditing(b)}>Count</button>}</header>
+              <article key={b.id} className={`card tour-box ${b.counted ? "counted" : "waiting"}`}>
+                <header className="tour-head"><h2>{b.name} {b.counted ? <Pill tone="done">Counted</Pill> : <Pill>Not counted</Pill>}</h2>{canEdit && <button className="ghost" onClick={() => setEditing(b)}>Count</button>}</header>
                 <div className="table-wrap">
                   <table className="count-table">
                     <thead><tr><th></th><th className="num">Float</th><th className="num">Closing</th><th className="num">Keep</th><th className="num">Deposit</th></tr></thead>
@@ -570,20 +631,30 @@ function CashBoxForm({ initial, onClose, onSave, onDelete }: { t: Tournament; in
 
 function Stats({ t, data, onExport }: { t: Tournament; data: Data; onExport: () => void }) {
   const clubs = [...new Set(data.fighters.map(f => f.club?.trim()).filter(Boolean))];
-  const items: [string, ReactNode][] = [
+  const board: [string, ReactNode][] = [
     ["Fighters", t.fighters_count ?? data.fighters.length], ["Divisions", t.divisions ?? "-"], ["Fights", t.fights ?? "-"], ["Rounds", t.rounds ?? "-"],
-    ...(t.spectators || []).map(s => [`Spectators ${s.day}`, s.count] as [string, ReactNode]),
-    ["Spectators total", visitors(t)], ["Stream viewers", t.stream_viewers ?? "-"], ["Stream time", formatMinutes(t.stream_minutes) || "-"],
-    ["Clubs attending", t.clubs_attending ?? (clubs.length || "-")]
+    ["Clubs", t.clubs_attending ?? (clubs.length || "-")]
   ];
+  const days = t.spectators || [];
+  const most = Math.max(0, ...days.map(d => d.count));
   return (
     <Section title="Stats" actions={<button onClick={onExport}>Export</button>}>
-      <div className="stats">{items.map(([k, v]) => <div key={k} className="stat"><span>{k}</span><strong>{v}</strong></div>)}</div>
+      <dl className="tour-board">{board.map(([k, v]) => <div key={k}><dt>{k}</dt><dd>{v}</dd></div>)}</dl>
+      <div className="tour-crowd">
+        <div className="card">
+          <h3>Spectators <b>{visitors(t)}</b></h3>
+          {days.length ? <ul className="tour-bars">{days.map(d => <li key={d.day}><span>{d.day}</span><span className="bar"><span style={{ width: `${pct(d.count, most)}%` }} /></span><b>{d.count}</b></li>)}</ul> : <p className="muted">Not recorded.</p>}
+        </div>
+        <div className="card">
+          <h3>Stream</h3>
+          <dl className="tour-stream"><div><dt>Viewers</dt><dd>{t.stream_viewers ?? "-"}</dd></div><div><dt>Time live</dt><dd>{formatMinutes(t.stream_minutes) || "-"}</dd></div></dl>
+        </div>
+      </div>
       {(t.podiums || []).length > 0 && (
         <div className="table-wrap">
-          <table>
-            <thead><tr><th>Division</th><th>🥇 First</th><th>🥈 Second</th><th>🥉 Third</th></tr></thead>
-            <tbody>{t.podiums.map((p, i) => <tr key={i}><td data-label="Division">{p.division}</td><td data-label="First">{p.first}</td><td data-label="Second">{p.second}</td><td data-label="Third">{p.third}</td></tr>)}</tbody>
+          <table className="podiums">
+            <thead><tr><th>Division</th><th className="gold">First</th><th className="silver">Second</th><th className="bronze">Third</th></tr></thead>
+            <tbody>{t.podiums.map((p, i) => <tr key={i}><td data-label="Division">{p.division}</td><td data-label="First" className="gold">{p.first}</td><td data-label="Second" className="silver">{p.second}</td><td data-label="Third" className="bronze">{p.third}</td></tr>)}</tbody>
           </table>
         </div>)}
       {t.notes && <p className="muted">{t.notes}</p>}
@@ -648,6 +719,21 @@ function EditionForm({ initial, onSave, onDelete }: { initial: Tournament | null
 
 // ------------------------------------------------------------------ all tournaments
 
+/** One column per edition, net above or below the line. */
+function NetByYear({ rows, onPick }: { rows: { t: Tournament; s: Summary }[]; onPick: (id: string) => void }) {
+  const top = Math.max(1, ...rows.map(r => Math.abs(r.s.net)));
+  return (
+    <div className="tour-years" aria-label="Net by year">
+      {rows.map(r => (
+        <button key={r.t.id} className="tour-year" onClick={() => onPick(r.t.id)} title={`${r.t.code}: net ${formatMoney(r.s.net)}`}>
+          <span className={`money ${r.s.net < 0 ? "short" : "in"}`}>{formatMoney(r.s.net)}</span>
+          <span className="col"><span className={r.s.net < 0 ? "neg" : "pos"} style={{ height: `${Math.max(4, pct(Math.abs(r.s.net), top))}%` }} /></span>
+          <b>{r.t.year}</b>
+        </button>))}
+    </div>
+  );
+}
+
 function AllTournaments({ rows, onPick }: { rows: { t: Tournament; s: Summary; d: Data }[]; onPick: (id: string) => void }) {
   const groups = byEvent(rows.map(r => ({ ...r, name: r.t.name, year: r.t.year })));
   const Delta = ({ now, before, money }: { now: number; before?: number | null; money?: boolean }) => {
@@ -660,6 +746,7 @@ function AllTournaments({ rows, onPick }: { rows: { t: Tournament; s: Summary; d
       <div className="toolbar"><button onClick={() => xlsx("reavers-tournaments-compare", [overviewSheet(rows, todayIso())], "Reavers tournaments")}>Export comparison</button></div>
       {groups.map(g => (
         <Section key={g.name} title={g.name}>
+          <NetByYear rows={g.editions} onPick={onPick} />
           <div className="table-wrap">
             <table className="compare">
               <thead><tr><th>Edition</th><th className="num">Fighters</th><th className="num">Fights</th><th className="num">Spectators</th><th className="num">Stream</th><th className="num">Fees in</th><th className="num">Owing</th><th className="num">Sales</th><th className="num">Total in</th><th className="num">Total out</th><th className="num">Net</th></tr></thead>
