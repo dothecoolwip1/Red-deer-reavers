@@ -84,7 +84,7 @@
       qty.name = "quantity";
       for (let i = 1; i <= Math.min(item.max_quantity, 50); i++) { const o = el("option", "", String(i)); o.value = String(i); qty.append(o); }
     }
-    const name = el("input"); name.name = "name"; name.autocomplete = "name"; name.maxLength = 120; name.id = `store-name-${n}`;
+    const name = el("input"); name.type = "text"; name.name = "name"; name.autocomplete = "name"; name.maxLength = 120; name.id = `store-name-${n}`;
     const email = el("input"); email.type = "email"; email.name = "email"; email.autocomplete = "email"; email.maxLength = 200;
     const who = el("div", "store-who");
     who.hidden = true;
