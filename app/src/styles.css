@@ -439,3 +439,17 @@ table.reminder-log td { vertical-align: top; }
   table.reminder-log th:nth-child(4), table.reminder-log td:nth-child(4) { display: none; }
 }
 @media (prefers-reduced-motion: reduce) { .switch span, .switch span::after { transition: none; } }
+/* Event sign-ups: the public pages and the admin list */
+.public-nav { margin-left: auto; display: flex; gap: 14px; }
+.public-nav a { color: var(--bone-dim); text-decoration: none; }
+.public-nav a:hover { color: var(--gilt-hi); }
+a.card.event-tile { color: var(--bone); text-decoration: none; }
+a.card.event-tile:hover { border-color: var(--gilt); }
+a.card.event-tile .button { justify-self: start; }
+.event-head .kicker { margin-bottom: 4px; }
+.event-intro { max-width: 70ch; color: var(--bone); white-space: pre-line; margin: 0 0 14px; }
+.card.share { display: flex; gap: 16px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+.card.share > div:first-child { min-width: 0; flex: 1; }
+.card.share h2 { margin: 0 0 4px; }
+.card.share .row-actions { display: flex; gap: 8px; }
+tr.checked td { background: rgba(108, 196, 138, .06); }

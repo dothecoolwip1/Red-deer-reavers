@@ -134,3 +134,19 @@ dues after send|0
 followup dec 8|dues_followup
 exec sees log|2
 member sees log|0
+member sees signups|0
+ERROR:  new row violates row-level security policy for table "reavers_app_event_tickets"
+ERROR:  permission denied for function reavers_app_event_reserve
+reserve paid|pending|4000
+reserve free|free|2
+ERROR:  This event is full.
+public spots|0|2
+ERROR:  permission denied for table reavers_app_event_registrations
+after payment|paid|square
+status page|paid
+after refund|refunded
+ERROR:  new row violates row-level security policy for table "reavers_app_event_registrations"
+ERROR:  update or delete on table "reavers_app_event_signups" violates foreign key constraint "reavers_app_event_registrations_signup_id_fkey" on table "reavers_app_event_registrations"
+DETAIL:  Key is still referenced from table "reavers_app_event_registrations".
+exec sees registrations|3
+member sees registrations|0

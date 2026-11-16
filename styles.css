@@ -535,6 +535,7 @@ a.plate:active{transform:translateY(-1px);transition-duration:60ms}
 .event-meta .icon{color:var(--gilt);width:16px;height:16px}
 .event-card p.details{margin:6px 0 0;color:var(--bone-mute)}
 .event-calendar{margin-top:12px}
+.event-signup{margin:14px 0 2px}
 .event-type{color:var(--ember-hi)}
 .empty{padding:28px 22px;text-align:center}
 .empty strong{display:block;margin-bottom:6px;font-family:var(--font-display);font-size:1.8rem;font-weight:800}
