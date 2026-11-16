@@ -9,11 +9,12 @@ import type { RemindersApi } from "./reminders";
 import type { PageLevels } from "../lib/pages";
 import type { Kind, PaymentItem, PaymentKind } from "../lib/square";
 import type { RegistrationStatus, TicketKind } from "../lib/events";
+import type { CashBox, Tournament, TournamentExpense, TournamentFighter, TournamentSale } from "../lib/tournaments";
 
 export type Id = string;
 export type Transaction = {
   id: Id; date: string; description: string; amount_cents: number; category: string | null; account: string;
-  notes: string | null; receipt_path: string | null; source: "manual" | "csv" | "stripe" | "square" | "reimbursement"; external_id?: string | null; created_at?: string;
+  notes: string | null; receipt_path: string | null; source: "manual" | "csv" | "stripe" | "square" | "reimbursement" | "tournament"; external_id?: string | null; created_at?: string;
 };
 export type Budget = { id: Id; year: number; category: string; kind: "income" | "expense"; amount_cents: number };
 export type PaymentLink = {
@@ -119,6 +120,8 @@ export type Tables = {
   square_items: SquareItem; square_payments: SquarePaymentRow; dues: Dues; dues_exemptions: DuesExemption;
   qr_codes: QrCode;
   event_signups: EventSignup; event_tickets: EventTicket; event_registrations: EventRegistration;
+  tournaments: Tournament; tournament_fighters: TournamentFighter; tournament_sales: TournamentSale;
+  tournament_expenses: TournamentExpense; tournament_cash_boxes: CashBox;
 };
 export type TableName = keyof Tables;
 

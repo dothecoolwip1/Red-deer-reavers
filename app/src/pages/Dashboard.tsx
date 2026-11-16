@@ -6,6 +6,7 @@ import { Money, Page, Pill, dateLabel, todayIso, useCan, useStore, useTable } fr
 import { deadlineStatus } from "../lib/compliance";
 import { isTransfer } from "../lib/transfers";
 import { missing } from "../lib/fighterProfile";
+import { summarize } from "../lib/tournaments";
 
 export function Dashboard() {
   const { session } = useStore();
@@ -24,6 +25,7 @@ export function Dashboard() {
 function ExecDashboard() {
   const { session } = useStore();
   const ledger = session.pages.ledger > 0;
+  const tournaments = session.pages.tournaments > 0;
   const show = { claims: useCan("money.view"), sponsors: session.pages.sponsors > 0, gear: session.pages.gear > 0, deadlines: session.pages.compliance > 0, attendance: session.pages.attendance > 0 };
   const tx = useTable("transactions");
   const claims = useTable("reimbursements");
@@ -70,15 +72,39 @@ function ExecDashboard() {
             <Link to="/sponsors">Sponsor pipeline</Link>
           </article>}
           {show.attendance && <AttendanceCard />}
-          {ledger && <article className="card">
+          {(ledger || tournaments) && <article className="card">
             <h2>Latest money</h2>
-            <ul className="list">
+            {tournaments && <TournamentMoney />}
+            {ledger && <ul className="list">
               {(tx.rows || []).slice(0, 6).map(t => <li key={t.id}><span>{t.description}</span><Money cents={t.amount_cents} signed /></li>)}
-            </ul>
-            <Link to="/ledger">Open the ledger</Link>
+            </ul>}
+            {ledger && <Link to="/ledger">Open the ledger</Link>}
           </article>}
       </div>
     </>
+  );
+}
+
+/** The latest tournament's money on the Home "Latest money" card: in, out, net and who still owes. */
+function TournamentMoney() {
+  const editions = useTable("tournaments");
+  const fighters = useTable("tournament_fighters");
+  const sales = useTable("tournament_sales");
+  const expenses = useTable("tournament_expenses");
+  const boxes = useTable("tournament_cash_boxes");
+  const t = [...(editions.rows || [])].sort((a, b) => b.year - a.year || (b.starts_on || "").localeCompare(a.starts_on || ""))[0];
+  if (!t) return null;
+  const mine = <R extends { tournament_id: string }>(rows: R[] | null) => (rows || []).filter(r => r.tournament_id === t.id);
+  const s = summarize(mine(fighters.rows), mine(sales.rows), mine(expenses.rows), mine(boxes.rows));
+  return (
+    <div className="tour-money">
+      <ul className="list">
+        <li><span><Link to="/tournaments">{t.code}</Link> in</span><Money cents={s.totalIn} signed /></li>
+        <li><span>{t.code} out</span><Money cents={-s.totalOut} signed /></li>
+        <li><span>{t.code} net</span><b className={s.net < 0 ? "money short" : "money in"}><Money cents={s.net} /></b></li>
+        {s.fees.owing > 0 && <li><span>Fighter fees still owing ({s.fighters.owing.length})</span><span className="money short"><Money cents={s.fees.owing} /></span></li>}
+      </ul>
+    </div>
   );
 }
 

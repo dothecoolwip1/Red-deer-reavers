@@ -453,3 +453,39 @@ a.card.event-tile .button { justify-self: start; }
 .card.share h2 { margin: 0 0 4px; }
 .card.share .row-actions { display: flex; gap: 8px; }
 tr.checked td { background: rgba(108, 196, 138, .06); }
+
+/* Money → Tournaments: paid green, owing red, free grey */
+.money.short { color: var(--bad); }
+.pill.free { color: var(--mute); border-color: var(--line); background: #221d29; }
+.free-text { color: var(--mute); }
+.tour-title { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+.tour-title h2 { margin: 0; font-size: 1.3rem; }
+.tour-title p { margin: 4px 0 0; }
+.tour-section { margin: 26px 0 0; }
+.tour-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+.tour-head h2 { margin: 0; }
+.tour-head .row-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.tour-head .row-actions button { margin: 0; }
+.table-wrap.tall { max-height: 520px; }
+tr.st-paid td:first-child { box-shadow: inset 3px 0 0 var(--good); }
+tr.st-owes td:first-child { box-shadow: inset 3px 0 0 var(--bad); }
+tr.st-waived td:first-child, tr.st-not_needed td:first-child { box-shadow: inset 3px 0 0 var(--mute); }
+tr.st-waived td, tr.st-not_needed td { color: var(--bone-dim); }
+tr.total td { font-weight: 700; border-top: 1px solid var(--line); }
+.owe-card { margin-top: 18px; border-color: #7a2d27; }
+.owe-card h2 { color: var(--bad); }
+.stat.good { border-color: #2f6b45; }
+.stat.bad { border-color: #7a2d27; }
+.stat > strong.money.in, .stat > strong.money.short { font-size: 1.5rem; }
+.count-table td, .count-table th { padding: 4px 8px; }
+.count-table input { min-height: 34px; padding: .25em .5em; text-align: right; }
+.box-cards { margin-top: 0; }
+.delta { display: block; font-size: .75rem; color: var(--mute); }
+.delta.up { color: var(--good); }
+.delta.down { color: var(--bad); }
+button.link { padding: 0; min-height: 0; color: var(--gilt-hi); text-decoration: underline; }
+@media (max-width: 700px) { .tour-head .row-actions { width: 100%; } .tour-head .row-actions button { flex: 1 1 auto; } }
+.tour-money { padding-bottom: 8px; margin-bottom: 4px; border-bottom: 1px solid var(--line); }
+.tour-money .money.in, .tour-money .money.short { font-weight: 700; }
+.tour-title .row-actions, .tour-head .row-actions { display: flex; flex-wrap: wrap; gap: 6px; white-space: normal; }
+.tour-title .row-actions button { margin: 0; }

@@ -7,6 +7,7 @@ import { demoAccess } from "./access";
 import { demoFighterProfiles } from "./fighterProfiles";
 import { DEMO_REMINDERS_KEY, demoReminders } from "./reminders";
 import { levelsFor } from "../lib/pages";
+import type { Counts, Method, TournamentFighter } from "../lib/tournaments";
 import { LEDGER_CATEGORY, paymentRecord, ledgerLines, type Kind, type SquarePayment, type SquareOrder } from "../lib/square";
 
 // Sample data for trying the app without signing in or before the database is set up. Nothing here reaches the database.
@@ -85,7 +86,8 @@ function seed(): Db {
       { id: id(), title: "Pay at the table", note: "Open pay page: visitor fees, stickers, cards", url: "https://app.reddeerreavers.com/#/buy", created_at: new Date().toISOString() }
     ],
     ...squareSeed(),
-    ...signupSeed()
+    ...signupSeed(),
+    ...tournamentSeed()
   };
 }
 
@@ -116,6 +118,66 @@ function signupSeed(): Pick<Db, "event_signups" | "event_tickets" | "event_regis
     reg(volunteer, "Casey (sample)", "free", { email: null })
   ];
   return { event_signups: [signup], event_tickets: tickets, event_registrations: registrations };
+}
+
+/**
+ * Two editions of the Red Deer Rumble with sample names. 2026 has RUMBLE-2026's real totals (37 fighters, 16 divisions,
+ * 159 fights, $1,000 in fees expected and $840 received, 94 visitors) so the screens show true numbers; 2025 is made up
+ * for the year-over-year view.
+ */
+function tournamentSeed(): Pick<Db, "tournaments" | "tournament_fighters" | "tournament_sales" | "tournament_expenses" | "tournament_cash_boxes"> {
+  const firsts = ["Astrid", "Bjorn", "Cora", "Dag", "Elin", "Finn", "Greta", "Hakon", "Ingrid", "Jarl", "Kari", "Leif", "Maja", "Nils", "Oda", "Per", "Runa", "Sven", "Tove", "Ulf"];
+  const lasts = ["Berg", "Dahl", "Eklund", "Falk", "Hagen", "Lund", "Moen", "Nyberg", "Rask", "Strand"];
+  const clubs = ["Red Deer Reavers", "Calgary Iron", "Edmonton Wardens", "Lethbridge Blackguard", "Winnipeg Fury"];
+  const divisions = ["Men's 1v1 longsword", "Women's 1v1", "Sword and shield", "Polearm", "5v5", "Duel"];
+  let i = 0;
+  const person = () => { const p = i++; return `${firsts[p % firsts.length]} ${lasts[(p + Math.floor(p / firsts.length)) % lasts.length]} (sample)`; };
+  const fighters = (tid: string, groups: [TournamentFighter["status"], Method | null, number, number][]): TournamentFighter[] =>
+    groups.flatMap(([status, method, count, fee]) => Array.from({ length: count }, (_, n) => {
+      const pay = status === "paid" || status === "owes";
+      return { id: id(), tournament_id: tid, name: person(), club: clubs[(i + n) % clubs.length], divisions: divisions[i % divisions.length],
+        fee_cents: pay ? fee : 0, method, paid_cents: status === "paid" ? fee : 0, status, square_payment_id: null, note: null };
+    }));
+  const t26 = id(), t25 = id();
+  const base = { venue: "Westerner Park (sample)", fighter_fee_cents: 4000, notes: null, rounds: null, clubs_attending: null };
+  const tournaments: Tables["tournaments"][] = [
+    { ...base, id: t26, code: "RUMBLE-2026", name: "Red Deer Rumble", year: 2026, starts_on: "2026-11-14", ends_on: "2026-11-15",
+      fighters_count: 37, divisions: 16, fights: 159, rounds: 412, clubs_attending: 9,
+      spectators: [{ day: "Saturday", count: 52 }, { day: "Sunday", count: 42 }], stream_viewers: 189, stream_minutes: 21 * 60 + 50,
+      podiums: [{ division: "Men's 1v1 longsword", first: "Bjorn Dahl (sample)", second: "Finn Rask (sample)", third: "Ulf Moen (sample)" }] },
+    { ...base, id: t25, code: "RUMBLE-2025", name: "Red Deer Rumble", year: 2025, starts_on: "2025-11-15", ends_on: "2025-11-16",
+      fighters_count: 28, divisions: 11, fights: 112, rounds: 290, clubs_attending: 6, fighter_fee_cents: 3500,
+      spectators: [{ day: "Saturday", count: 40 }, { day: "Sunday", count: 31 }], stream_viewers: 120, stream_minutes: 14 * 60, podiums: [] }
+  ];
+  const tournament_fighters = [
+    ...fighters(t26, [["paid", "etransfer", 15, 4000], ["owes", "etransfer", 3, 4000], ["paid", "cash", 6, 4000], ["owes", "cash", 1, 4000], ["not_needed", null, 22, 0], ["waived", null, 9, 0]]),
+    ...fighters(t25, [["paid", "etransfer", 12, 3500], ["paid", "cash", 6, 3500], ["owes", "cash", 2, 3500], ["not_needed", null, 8, 0]])
+  ];
+  const sale = (tid: string, item: string, quantity: number, price_cents: number, method: Method, sold_on: string): Tables["tournament_sales"] =>
+    ({ id: id(), tournament_id: tid, item, quantity, price_cents, method, sold_on, square_item_id: null, square_payment_id: null, note: null });
+  const tournament_sales = [
+    sale(t26, "Event visitor fee", 40, 1000, "cash", "2026-11-14"), sale(t26, "Event visitor fee", 12, 1000, "credit", "2026-11-14"),
+    sale(t26, "Event visitor fee", 30, 1000, "cash", "2026-11-15"), sale(t26, "Event visitor fee", 12, 1000, "credit", "2026-11-15"),
+    sale(t26, "Under 10 visitor", 9, 0, "cash", "2026-11-14"),
+    sale(t26, "Fighter trading cards", 12, 200, "cash", "2026-11-14"), sale(t26, "Complete set of cards", 3, 1000, "credit", "2026-11-15"),
+    sale(t26, "Small sticker", 8, 100, "cash", "2026-11-14"), sale(t26, "Medium sticker", 5, 200, "cash", "2026-11-15"),
+    sale(t26, "Large sticker", 5, 300, "cash", "2026-11-15"), sale(t26, "Reavers stickers 2-pack", 4, 500, "credit", "2026-11-14"),
+    sale(t25, "Event visitor fee", 71, 1000, "cash", "2025-11-15"), sale(t25, "Small sticker", 20, 100, "cash", "2025-11-15")
+  ];
+  const cost = (tid: string, category: Tables["tournament_expenses"]["category"], description: string, amount_cents: number, method: Method, from_cash_box = false): Tables["tournament_expenses"] =>
+    ({ id: id(), tournament_id: tid, category, description, amount_cents, method, spent_on: null, from_cash_box });
+  const tournament_expenses = [
+    cost(t26, "venue", "Hall rental (sample)", 60000, "etransfer"), cost(t26, "prizes", "Medals (sample)", 18000, "etransfer"),
+    cost(t26, "printing", "Brackets and posters (sample)", 4500, "debit"), cost(t26, "food", "Pizza for volunteers (sample)", 6500, "cash", true),
+    cost(t25, "venue", "Hall rental (sample)", 55000, "etransfer"), cost(t25, "prizes", "Medals (sample)", 15000, "etransfer")
+  ];
+  const box = (tid: string, name: string, opening: Counts, closing: Counts): Tables["tournament_cash_boxes"] =>
+    ({ id: id(), tournament_id: tid, name, opening, closing, counted: true, keep_float_cents: null, counted_by: "Sample counter", note: null });
+  const tournament_cash_boxes = [
+    box(t26, "Door", { "2000": 2, "1000": 4, "500": 4, "200": 5, "100": 10 }, { "10000": 2, "5000": 3, "2000": 21, "1000": 14, "500": 9, "200": 7, "100": 12 }),
+    box(t26, "Merch table", { "500": 4, "200": 5, "100": 10, "25": 20 }, { "2000": 1, "1000": 2, "500": 6, "200": 9, "100": 14, "25": 24 })
+  ];
+  return { tournaments, tournament_fighters, tournament_sales, tournament_expenses, tournament_cash_boxes };
 }
 
 const monthIso = (offset: number) => {

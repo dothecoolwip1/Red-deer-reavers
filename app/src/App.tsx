@@ -16,6 +16,7 @@ import { Events } from "./pages/Events";
 import { Signups } from "./pages/Signups";
 import { Sales } from "./pages/Sales";
 import { Dues } from "./pages/Dues";
+import { Tournaments } from "./pages/Tournaments";
 import { Sponsors } from "./pages/Sponsors";
 import { Grants } from "./pages/Grants";
 import { Compliance } from "./pages/Compliance";
@@ -50,6 +51,7 @@ const NAV: Nav[] = [
   { path: "/pay", label: "Pay the club", need: "self.use", element: <Pay />, group: "Money" },
   { path: "/sales", label: "Square sales", need: { page: "sales" }, element: <Sales />, group: "Money" },
   { path: "/dues", label: "Dues", need: { page: "dues" }, element: <Dues />, group: "Money" },
+  { path: "/tournaments", label: "Tournaments", need: { page: "tournaments" }, element: <Tournaments />, group: "Money" },
   { path: "/sponsors", label: "Sponsors", need: { page: "sponsors" }, element: <Sponsors />, group: "Growth" },
   { path: "/grants", label: "Grants", need: { page: "grants" }, element: <Grants />, group: "Growth" },
   { path: "/waivers", label: "Waiver", need: "self.use", element: <Waivers />, group: "Safety" },

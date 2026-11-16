@@ -1,8 +1,8 @@
 import type { Role } from "./roles";
 
-/** The staff pages an admin can give or take away per person. Kept in step with migration 20261111000000. */
+/** The staff pages an admin can give or take away per person. Kept in step with migrations 20261111000000 and 20261116000000. */
 export type PageId =
-  | "attendance" | "ledger" | "budget" | "sales" | "dues" | "sponsors" | "grants" | "gear" | "compliance"
+  | "attendance" | "ledger" | "budget" | "sales" | "dues" | "tournaments" | "sponsors" | "grants" | "gear" | "compliance"
   | "site" | "calendar" | "team" | "practices" | "inquiries" | "site-settings" | "qr";
 /** 0 = hidden, 1 = view only, 2 = full use. */
 export type Level = 0 | 1 | 2;
@@ -24,6 +24,7 @@ export const PAGES: PageInfo[] = [
   { id: "budget", label: "Budget", group: "Money", viewOnly: true },
   { id: "sales", label: "Square sales", group: "Money", viewOnly: true },
   { id: "dues", label: "Dues", group: "Money", viewOnly: true },
+  { id: "tournaments", label: "Tournaments", group: "Money", viewOnly: true },
   { id: "sponsors", label: "Sponsors", group: "Growth", viewOnly: false },
   { id: "grants", label: "Grants", group: "Growth", viewOnly: false },
   { id: "gear", label: "Armory", group: "Safety", viewOnly: false },
@@ -37,7 +38,7 @@ export const PAGES: PageInfo[] = [
   { id: "site-settings", label: "Site settings", group: "Website", viewOnly: false, note: CAPTAIN }
 ];
 export const PAGE_IDS = PAGES.map(p => p.id);
-const MONEY: PageId[] = ["ledger", "budget", "sales", "dues"];
+const MONEY: PageId[] = ["ledger", "budget", "sales", "dues", "tournaments"];
 
 export const toLevel = (a: Access): Level => (a === "edit" ? 2 : a === "view" ? 1 : 0);
 export const toAccess = (l: Level): Access => (l === 2 ? "edit" : l === 1 ? "view" : "none");

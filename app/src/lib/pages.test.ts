@@ -7,6 +7,9 @@ describe("page access", () => {
     expect(levelFor("exec", "sponsors")).toBe(2);
     expect(levelFor("member", "sponsors")).toBe(0);
     expect(levelFor("finance", "dues")).toBe(2);
+    expect(levelFor("exec", "tournaments")).toBe(1);
+    expect(levelFor("member", "tournaments")).toBe(0);
+    expect(levelFor("finance", "tournaments")).toBe(2);
   });
   it("lets an admin give or take a page", () => {
     expect(levelFor("member", "sponsors", "edit")).toBe(2);

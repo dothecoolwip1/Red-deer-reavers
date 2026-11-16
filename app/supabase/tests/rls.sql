@@ -413,3 +413,36 @@ delete from reavers_app_event_signups where id = '00000000-0000-0000-0000-000000
 select 'exec sees registrations', count(*) from reavers_app_event_registrations;
 select set_config('test.uid', :'u4', false);
 select 'member sees registrations', count(*) from reavers_app_event_registrations;
+-- Tournaments: treasury edits, the executive views (unless an admin says otherwise), members don't see it
+reset role;
+set role authenticated;
+select set_config('test.uid', :'u1', false);
+insert into reavers_app_tournaments(code, name, year, fighter_fee_cents) values ('TEST-2027', 'Test Cup', 2027, 4000);
+insert into reavers_app_tournament_fighters(tournament_id, name, fee_cents, method, paid_cents, status)
+  select id, 'Fighter A', 4000, 'cash', 4000, 'paid' from reavers_app_tournaments where code = 'TEST-2027';
+insert into reavers_app_tournament_cash_boxes(tournament_id, name, opening, closing, counted)
+  select id, 'Door', '{"2000": 5}', '{"2000": 7}', true from reavers_app_tournaments where code = 'TEST-2027';
+insert into reavers_app_transactions(date, description, amount_cents, source, external_id) values ('2026-11-15', 'TEST-2027: fighter fees (cash)', 4000, 'tournament', 'tournament-TEST-2027-fees-cash');
+\set ON_ERROR_STOP 0
+insert into reavers_app_tournament_fighters(tournament_id, name, status)
+  select id, 'Bad status', 'maybe' from reavers_app_tournaments where code = 'TEST-2027';
+insert into reavers_app_tournaments(code, name, year) values ('bad code!', 'X', 2027);
+\set ON_ERROR_STOP 1
+select set_config('test.uid', :'u3', false);
+select 'exec tournaments level', reavers_app_my_pages()->>'tournaments';
+select 'exec sees tournaments', (select count(*) from reavers_app_tournaments where code like 'TEST%'), (select count(*) from reavers_app_tournament_fighters), (select count(*) from reavers_app_tournament_cash_boxes);
+\set ON_ERROR_STOP 0
+insert into reavers_app_tournament_fighters(tournament_id, name) select id, 'Exec add' from reavers_app_tournaments where code = 'TEST-2027';
+\set ON_ERROR_STOP 1
+update reavers_app_tournaments set fights = 99 where code = 'TEST-2027';
+select set_config('test.uid', :'u4', false);
+select 'member tournaments level', reavers_app_my_pages()->>'tournaments';
+select 'member sees tournaments', (select count(*) from reavers_app_tournaments), (select count(*) from reavers_app_tournament_fighters);
+-- An admin gives a member view of the page
+select set_config('test.uid', :'u1', false);
+insert into reavers_app_page_access(user_id, page, access) values (:'u4', 'tournaments', 'view');
+select set_config('test.uid', :'u4', false);
+select 'member given view', reavers_app_my_pages()->>'tournaments', (select count(*) from reavers_app_tournament_fighters);
+reset role;
+select 'fights after exec update', fights is null from reavers_app_tournaments where code = 'TEST-2027';
+select 'rumble seeded', code, fighters_count, divisions, fights, stream_minutes from reavers_app_tournaments where code = 'RUMBLE-2026';

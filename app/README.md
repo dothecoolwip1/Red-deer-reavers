@@ -64,9 +64,34 @@ Until the migration below is applied, a signed-in person sees sample data with a
    applied, the store page still sells every sticker and trading card that's for sale, just without photos.
 10. **Event sign-ups.** After Square is on, apply `20261112000000_reavers_app_event_signups.sql` and deploy
    `reavers-event-signup`. See "Event sign-ups and tickets" below.
-11. **Stripe (optional, older).** Deploy `supabase/functions/reavers-stripe-webhook` with `--no-verify-jwt`, set
+11. **Tournaments.** Apply `20261116000000_reavers_app_tournaments.sql`, then `20261116010000_reavers_app_tournaments_rumble_2026.sql`
+   (home server and the cloud copy). It adds Money → **Tournaments** and its page-access switch, and RUMBLE-2026 with its stats.
+   The Rumble 2026 fighter list isn't in this public repository: run `tournaments/rumble-2026-fighters.sql` from the project
+   files after it. See "Tournaments" below.
+12. **Stripe (optional, older).** Deploy `supabase/functions/reavers-stripe-webhook` with `--no-verify-jwt`, set
    `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET`, and add the endpoint in Stripe for `checkout.session.completed`.
    Square replaces this; existing Stripe links still show under Pay the club → Other payment links.
+
+## Tournaments
+
+Money → **Tournaments** tracks every tournament the Reavers host, one edition per year (Red Deer Rumble 2026 is
+`RUMBLE-2026`, 2027 is `RUMBLE-2027`). Treasury edits; the executive views it; members don't see it unless an admin gives
+it to them on Page access.
+
+- **Edition summary**: expected and collected money by payment method (cash, e-transfer, debit, credit, other), who still
+  owes (red), who paid (green) and who didn't have to (grey), merch sold, total in, total out, net and the stats.
+- **Fighters, sales, expenses, cash boxes and stats**, each with its own Export button; **Export edition** and
+  **Export everything** download it all as one CSV.
+- **Square**: *Add from Square sales* brings in the Square payments taken on the event days (registrations and dues stay
+  out); *Import a Square export* reads Square's Item details CSV (plus the Transactions CSV for cash or card) when Square
+  wasn't connected yet; *Match Square registrations* ticks off fighters who paid online.
+- **Cash boxes**: one per box (door, merch table). Count the opening float and the closing cash by note and coin; the page
+  shows cash taken, compares it with the cash sales and cash fees (less anything paid out of the box) as over or short, and
+  says which notes and coins to keep for next time's float and how much to deposit.
+- **All tournaments**: every edition side by side, with the change from the year before.
+- **Ledger**: *Post to ledger* books an edition's fees, sales and expenses by payment method (source `tournament`). Anything
+  that came through the app's Square sales is already in the ledger and is left out; posting again replaces the earlier lines.
+  The newest edition's in, out, net and what's owing also show on Home's "Latest money" card.
 
 ## Turn on Square
 
