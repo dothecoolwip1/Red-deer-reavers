@@ -534,7 +534,7 @@ button.link { padding: 0; min-height: 0; color: var(--gilt-hi); text-decoration:
 
 .tour-section > .tour-head { padding-bottom: 8px; border-bottom: 1px solid var(--line); }
 .tour-bars { list-style: none; margin: 0 0 14px; padding: 0; display: grid; gap: 8px; }
-.tour-bars li { display: grid; grid-template-columns: minmax(70px, 120px) minmax(0, 1fr) minmax(48px, max-content); gap: 12px; align-items: center; font-variant-numeric: tabular-nums; }
+.tour-bars li { display: grid; grid-template-columns: minmax(70px, 120px) minmax(0, 1fr) 6.5rem; gap: 12px; align-items: center; font-variant-numeric: tabular-nums; }
 .tour-bars .bar { height: 10px; border-radius: 99px; background: var(--iron-3); overflow: hidden; }
 .tour-bars .bar > span { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--gilt), var(--gilt-hi)); }
 
