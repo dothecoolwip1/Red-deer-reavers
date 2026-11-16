@@ -79,8 +79,10 @@ it to them on Page access.
 
 - **Edition summary**: expected and collected money by payment method (cash, e-transfer, debit, credit, other), who still
   owes (red), who paid (green) and who didn't have to (grey), merch sold, total in, total out, net and the stats.
-- **Fighters, sales, expenses, cash boxes and stats**, each with its own Export button; **Export edition** and
-  **Export everything** download it all as one CSV.
+- **Fighters, sales, expenses, cash boxes and stats**, each with its own Export button. Every export is an Excel
+  workbook (.xlsx, opens in Excel, Numbers and Google Sheets): styled headers, real money and dates, totals as formulas,
+  frozen headers and filters, status colours, and print setup. **Export edition** gives one sheet per section;
+  **Export everything** adds an All editions sheet comparing every year.
 - **Square**: *Add from Square sales* brings in the Square payments taken on the event days (registrations and dues stay
   out); *Import a Square export* reads Square's Item details CSV (plus the Transactions CSV for cash or card) when Square
   wasn't connected yet; *Match Square registrations* ticks off fighters who paid online.
