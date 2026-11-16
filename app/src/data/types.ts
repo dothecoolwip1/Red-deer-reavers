@@ -5,6 +5,7 @@ import type { WebsiteApi } from "./website";
 import type { AttendanceApi } from "./attendance";
 import type { AccessApi } from "./access";
 import type { FighterProfilesApi } from "./fighterProfiles";
+import type { RemindersApi } from "./reminders";
 import type { PageLevels } from "../lib/pages";
 import type { Kind, PaymentItem, PaymentKind } from "../lib/square";
 
@@ -124,6 +125,8 @@ export interface Store {
   access: AccessApi;
   /** The Reavers extras on fighter profiles (weight class, role, action photo, sponsors), shown on the public site. */
   fighterProfiles: FighterProfilesApi;
+  /** Automatic dues, practice, event and attendance reminders (admins change the settings). */
+  reminders: RemindersApi;
   /** Starts a Square checkout and returns the address of Square's payment page. */
   checkout(req: CheckoutRequest): Promise<string>;
   /** Treasury re-labels what a Square payment was for; its ledger lines follow. */

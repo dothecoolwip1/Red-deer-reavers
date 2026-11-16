@@ -142,6 +142,9 @@ async function verifyDiscord(req: Request, body: string) {
 async function daily(req: Request) {
   const secret = env("REAVERS_CRON_SECRET");
   if (!secret || req.headers.get("x-reavers-cron") !== secret) return json({ error: "Forbidden" }, 403);
+  // Admins can turn this post off on Team → Reminders (until that update is applied the table isn't there, and it stays on).
+  const settings = await service.from("reavers_app_reminder_settings").select("noshow_enabled").eq("id", 1).maybeSingle();
+  if (!settings.error && settings.data && settings.data.noshow_enabled === false) return json({ no_shows: 0, expired: 0, off: true });
   const { data, error } = await service.rpc("reavers_app_bot_daily");
   if (error) throw error;
   const { no_shows, expired } = data as {

@@ -6,6 +6,7 @@ import { liveWebsite } from "./website";
 import { liveAttendance } from "./attendance";
 import { liveAccess } from "./access";
 import { liveFighterProfiles } from "./fighterProfiles";
+import { liveReminders } from "./reminders";
 import { parseLevels } from "../lib/pages";
 
 let client: SupabaseClient | null = null;
@@ -149,6 +150,7 @@ export function liveStore(session: Session): Store {
     attendance: liveAttendance(supabase),
     access: liveAccess(supabase),
     fighterProfiles: liveFighterProfiles(supabase),
+    reminders: liveReminders(supabase),
     checkout: startCheckout,
     async setPaymentKind(id, kind) {
       const { error } = await supabase().rpc("reavers_app_square_set_kind", { p_payment: id, p_kind: kind });
