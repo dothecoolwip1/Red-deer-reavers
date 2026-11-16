@@ -580,3 +580,9 @@ button.link { padding: 0; min-height: 0; color: var(--gilt-hi); text-decoration:
 }
 .tour-bars li > :last-child { text-align: right; min-width: 6ch; }
 .tour-year .col { border-bottom: 1px solid var(--line); }
+/* Expenses someone covered out of pocket: royal, not a club cost. */
+.pill.gift { color: #c9b0f0; border-color: var(--royal-hi); background: #2a1f3d; }
+.money.gift { color: #c9b0f0; }
+.tour-bars li.gift .bar > span { background: var(--royal-hi); }
+.tour-bars li.gift > span:first-child { color: #c9b0f0; }
+.tour-net small { display: block; margin-top: 2px; font-size: .82rem; color: var(--bone-dim); }

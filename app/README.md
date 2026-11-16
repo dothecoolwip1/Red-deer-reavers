@@ -65,7 +65,8 @@ Until the migration below is applied, a signed-in person sees sample data with a
 10. **Event sign-ups.** After Square is on, apply `20261112000000_reavers_app_event_signups.sql` and deploy
    `reavers-event-signup`. See "Event sign-ups and tickets" below.
 11. **Tournaments.** Apply `20261116000000_reavers_app_tournaments.sql`, then `20261116010000_reavers_app_tournaments_rumble_2026.sql`
-   and `20261116020000_reavers_app_tournaments_rumble_2026_fighters.sql` (home server and the cloud copy). It adds
+   and `20261116020000_reavers_app_tournaments_rumble_2026_fighters.sql`, then `20261116030000_reavers_app_tournament_expenses_out_of_pocket.sql`
+   (home server and the cloud copy). It adds
    Money → **Tournaments** and its page-access switch, and RUMBLE-2026 with its stats and fighter list. See "Tournaments" below.
 12. **Stripe (optional, older).** Deploy `supabase/functions/reavers-stripe-webhook` with `--no-verify-jwt`, set
    `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET`, and add the endpoint in Stripe for `checkout.session.completed`.
@@ -86,6 +87,9 @@ it to them on Page access.
 - **Square**: *Add from Square sales* brings in the Square payments taken on the event days (registrations and dues stay
   out); *Import a Square export* reads Square's Item details CSV (plus the Transactions CSV for cash or card) when Square
   wasn't connected yet; *Match Square registrations* ticks off fighters who paid online.
+- **Expenses covered out of pocket**: tick *Someone covered it out of pocket* (and say who) when a person paid for
+  something and won't be paid back. It stays out of the club's costs, the cash box and the ledger, and the page shows the
+  net the edition would have made if the club had paid for it.
 - **Cash boxes**: one per box (door, merch table). Count the opening float and the closing cash by note and coin; the page
   shows cash taken, compares it with the cash sales and cash fees (less anything paid out of the box) as over or short, and
   says which notes and coins to keep for next time's float and how much to deposit.

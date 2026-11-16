@@ -8,7 +8,7 @@ import { formatMoney, parseMoney } from "../lib/money";
 import {
   DENOMS, EXPENSE_CATEGORIES, EXPENSE_LABEL, METHODS, METHOD_LABEL, PRICE_LIST, STATUSES, STATUS_LABEL, STATUS_TONE,
   byEvent, change, countTotal, denomLabel, editionCode, floatPlan, formatMinutes, ledgerLinesFor, parseMinutes,
-  registrationMatches, saleKind, squareCsvLines, squareSaleLines, summarize,
+  clubPaid, registrationMatches, saleKind, squareCsvLines, squareSaleLines, summarize,
   type CashBox, type Counts, type Method, type Summary, type Tournament, type TournamentExpense, type TournamentFighter, type TournamentSale
 } from "../lib/tournaments";
 import { Empty, Loading, Modal, Money, Page, Pill, RecordForm, dateLabel, todayIso, useAction, usePage, useStore, useTable, useToast, type Field } from "../ui";
@@ -177,7 +177,8 @@ function Edition({ t, data, canEdit, canPost, onEdit, reload }: { t: Tournament;
         <div className="tour-purse">
           <div><span>Money in</span><strong><Money cents={s.totalIn} /></strong></div>
           <div><span>Money out</span><strong><Money cents={s.totalOut} /></strong></div>
-          <div className="tour-net"><span>Net</span><strong className={s.net < 0 ? "money short" : "money in"}>{formatMoney(s.net)}</strong></div>
+          <div className="tour-net"><span>Net</span><strong className={s.net < 0 ? "money short" : "money in"}>{formatMoney(s.net)}</strong>
+            {s.donated > 0 && <small>{formatMoney(s.netIfPaid)} if the club had paid the {formatMoney(s.donated)} covered out of pocket</small>}</div>
         </div>
         <Meter value={s.totalIn} of={s.expectedIn} label={<>Collected <Money cents={s.totalIn} /> of <Money cents={s.expectedIn} /> expected</>} />
       </section>
@@ -463,15 +464,25 @@ const EXPENSE_FIELDS: Field[] = [
   { key: "method", label: "Payment method", type: "select", options: [...METHODS], labels: METHOD_LABEL },
   { key: "spent_on", label: "Day", type: "date" },
   { key: "description", label: "What for", wide: true },
-  { key: "from_cash_box", label: "Paid out of the event's cash box", type: "checkbox" }
+  { key: "from_cash_box", label: "Paid out of the event's cash box", type: "checkbox" },
+  { key: "out_of_pocket", label: "Someone covered it out of pocket and won't be paid back", type: "checkbox" },
+  { key: "covered_by", label: "Covered by", hint: "Who paid for it, if it was covered out of pocket" }
 ];
+/** The two out-of-pocket columns are only sent when they're used or already there, so saving still works before that migration is applied. */
+const expenseRow = (v: Record<string, unknown>, before?: TournamentExpense): Partial<TournamentExpense> => {
+  const out = Boolean(v.out_of_pocket);
+  const { out_of_pocket: _o, covered_by: _c, ...rest } = v;
+  const row = { ...rest, from_cash_box: out ? false : Boolean(v.from_cash_box) } as Partial<TournamentExpense>;
+  if (out || (before && "out_of_pocket" in before)) Object.assign(row, { out_of_pocket: out, covered_by: out ? String(v.covered_by || "").trim() || null : null });
+  return row;
+};
 
 function Expenses({ t, rows, canEdit, reload, onExport }: { t: Tournament; rows: TournamentExpense[]; canEdit: boolean; reload: () => Promise<void>; onExport: () => void }) {
   const store = useStore();
   const run = useAction();
   const [editing, setEditing] = useState<TournamentExpense | "new" | null>(null);
   return (
-    <Section title={`Expenses (${formatMoney(sum(rows, e => e.amount_cents))})`} actions={<>
+    <Section title={`Expenses (${formatMoney(sum(rows.filter(clubPaid), e => e.amount_cents))}${rows.some(e => !clubPaid(e)) ? `, plus ${formatMoney(sum(rows.filter(e => !clubPaid(e)), e => e.amount_cents))} covered out of pocket` : ""})`} actions={<>
       <button onClick={onExport}>Export</button>
       {canEdit && <button className="primary" onClick={() => setEditing("new")}>Add expense</button>}
     </>}>
@@ -484,9 +495,9 @@ function Expenses({ t, rows, canEdit, reload, onExport }: { t: Tournament; rows:
               {[...rows].sort((a, b) => EXPENSE_CATEGORIES.indexOf(a.category) - EXPENSE_CATEGORIES.indexOf(b.category)).map(e => (
                 <tr key={e.id}>
                   <td data-label="Category">{EXPENSE_LABEL[e.category]}</td>
-                  <td data-label="What for">{e.description || <span className="muted">-</span>}{e.from_cash_box && <> <Pill>from cash box</Pill></>}</td>
+                  <td data-label="What for">{e.description || <span className="muted">-</span>}{e.from_cash_box && <> <Pill>from cash box</Pill></>}{e.out_of_pocket && <> <Pill tone="gift">{e.covered_by ? `Covered by ${e.covered_by}` : "Covered out of pocket"}</Pill></>}</td>
                   <td data-label="Method">{METHOD_LABEL[e.method]}</td>
-                  <td data-label="Amount" className="num"><Money cents={e.amount_cents} /></td>
+                  <td data-label="Amount" className="num">{e.out_of_pocket ? <span className="money gift" title="Not a club cost">{formatMoney(e.amount_cents)}</span> : <Money cents={e.amount_cents} />}</td>
                   {canEdit && <td className="row-actions"><button className="ghost" onClick={() => setEditing(e)}>Edit</button></td>}
                 </tr>))}
             </tbody>
@@ -496,7 +507,7 @@ function Expenses({ t, rows, canEdit, reload, onExport }: { t: Tournament; rows:
         <Modal title={editing === "new" ? "Add expense" : "Edit expense"} onClose={() => setEditing(null)}>
           <RecordForm fields={EXPENSE_FIELDS} initial={(editing === "new" ? { method: "etransfer", spent_on: t.starts_on } : editing) as Record<string, unknown>}
             onSubmit={async v => {
-              const ok = await run(() => editing === "new" ? store.insert("tournament_expenses", { ...v, tournament_id: t.id } as Partial<TournamentExpense>) : store.update("tournament_expenses", editing.id, v as Partial<TournamentExpense>), "Saved");
+              const ok = await run(() => editing === "new" ? store.insert("tournament_expenses", { ...expenseRow(v), tournament_id: t.id }) : store.update("tournament_expenses", editing.id, expenseRow(v, editing)), "Saved");
               if (ok) { setEditing(null); await reload(); }
             }}
             onDelete={editing === "new" ? undefined : async () => {
@@ -509,11 +520,13 @@ function Expenses({ t, rows, canEdit, reload, onExport }: { t: Tournament; rows:
 }
 
 function ExpenseBars({ rows }: { rows: TournamentExpense[] }) {
-  const cats = EXPENSE_CATEGORIES.map(c => ({ c, cents: sum(rows.filter(e => e.category === c), e => e.amount_cents) })).filter(x => x.cents).sort((a, b) => b.cents - a.cents);
-  const top = cats[0]?.cents || 0;
+  const cats = EXPENSE_CATEGORIES.map(c => ({ c, cents: sum(rows.filter(e => e.category === c && clubPaid(e)), e => e.amount_cents) })).filter(x => x.cents).sort((a, b) => b.cents - a.cents);
+  const donated = sum(rows.filter(e => !clubPaid(e)), e => e.amount_cents);
+  const top = Math.max(cats[0]?.cents || 0, donated);
   return (
     <ul className="tour-bars" aria-label="Expenses by category">
       {cats.map(x => <li key={x.c}><span>{EXPENSE_LABEL[x.c]}</span><span className="bar"><span style={{ width: `${pct(x.cents, top)}%` }} /></span><Money cents={x.cents} /></li>)}
+      {donated > 0 && <li className="gift"><span>Out of pocket</span><span className="bar"><span style={{ width: `${pct(donated, top)}%` }} /></span><span>{formatMoney(donated)}</span></li>}
     </ul>
   );
 }
