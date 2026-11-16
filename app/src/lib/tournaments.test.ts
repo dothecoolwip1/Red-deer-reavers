@@ -86,6 +86,21 @@ describe("floatPlan", () => {
   });
 });
 
+describe("expenses covered out of pocket", () => {
+  const paid = expense("venue", 50000, "etransfer");
+  const covered = { ...expense("gear", 10000, "cash"), out_of_pocket: true, covered_by: "Sam", from_cash_box: true };
+  it("aren't a club cost, but show what the net would have been", () => {
+    const s = summarize([], [sale("Event visitor fee", 100, 1000, "cash")], [paid, covered], []);
+    expect([s.totalOut, s.donated, s.net, s.netIfPaid]).toEqual([50000, 10000, 50000, 40000]);
+    expect(s.expensesByCategory.gear).toBe(0);
+    expect(s.cash.expected).toBe(100000);
+  });
+  it("stay out of the ledger", () => {
+    const lines = ledgerLinesFor({ code: "X-2026", starts_on: "2026-11-14", ends_on: null }, [], [], [paid, covered], "2026-11-16");
+    expect(lines.map(l => l.amount_cents)).toEqual([-50000]);
+  });
+});
+
 describe("ledgerLinesFor", () => {
   it("posts fees, sales and expenses by method, and leaves Square sales out", () => {
     const lines = ledgerLinesFor({ code: "RUMBLE-2026", starts_on: "2026-11-14", ends_on: "2026-11-15" }, rumble(),

@@ -164,11 +164,12 @@ function tournamentSeed(): Pick<Db, "tournaments" | "tournament_fighters" | "tou
     sale(t26, "Large sticker", 5, 300, "cash", "2026-11-15"), sale(t26, "Reavers stickers 2-pack", 4, 500, "credit", "2026-11-14"),
     sale(t25, "Event visitor fee", 71, 1000, "cash", "2025-11-15"), sale(t25, "Small sticker", 20, 100, "cash", "2025-11-15")
   ];
-  const cost = (tid: string, category: Tables["tournament_expenses"]["category"], description: string, amount_cents: number, method: Method, from_cash_box = false): Tables["tournament_expenses"] =>
-    ({ id: id(), tournament_id: tid, category, description, amount_cents, method, spent_on: null, from_cash_box });
+  const cost = (tid: string, category: Tables["tournament_expenses"]["category"], description: string, amount_cents: number, method: Method, from_cash_box = false, covered_by: string | null = null): Tables["tournament_expenses"] =>
+    ({ id: id(), tournament_id: tid, category, description, amount_cents, method, spent_on: null, from_cash_box, out_of_pocket: Boolean(covered_by), covered_by });
   const tournament_expenses = [
     cost(t26, "venue", "Hall rental (sample)", 60000, "etransfer"), cost(t26, "prizes", "Medals (sample)", 18000, "etransfer"),
     cost(t26, "printing", "Brackets and posters (sample)", 4500, "debit"), cost(t26, "food", "Pizza for volunteers (sample)", 6500, "cash", true),
+    cost(t26, "gear", "Tape and zip ties (sample)", 10000, "debit", false, "Sample volunteer"),
     cost(t25, "venue", "Hall rental (sample)", 55000, "etransfer"), cost(t25, "prizes", "Medals (sample)", 15000, "etransfer")
   ];
   const box = (tid: string, name: string, opening: Counts, closing: Counts): Tables["tournament_cash_boxes"] =>

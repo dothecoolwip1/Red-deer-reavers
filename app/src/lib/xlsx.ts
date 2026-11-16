@@ -5,7 +5,8 @@
 export const STYLES = [
   "default", "title", "subtitle", "head", "headNum", "text", "wrap", "int", "money", "date", "label",
   "totalLabel", "totalInt", "totalMoney", "section", "good", "bad", "free", "kpiLabel", "kpiMoney", "kpiInt",
-  "moneyGood", "moneyBad", "muted", "kpiMoneyGood", "kpiMoneyBad", "about", "kpiNote", "headCenter", "textRight"
+  "moneyGood", "moneyBad", "muted", "kpiMoneyGood", "kpiMoneyBad", "about", "kpiNote", "headCenter", "textRight",
+  "rule", "pct", "totalPct"
 ] as const;
 export type Style = (typeof STYLES)[number];
 
@@ -27,7 +28,12 @@ export type Sheet = {
   landscape?: boolean;
   /** Ranges that get a light band on every other row (status pills are left out so they keep their colour). */
   stripes?: string[];
+  /** In-cell bars, like the app's: a range, the bar colour, and optional fixed ends (otherwise the range's lowest and highest). */
+  bars?: { range: string; color: string; min?: number; max?: number }[];
 };
+
+/** Bar colours that match the app. */
+export const BAR = { gilt: "FFD6A84C", good: "FF2E8B57", bad: "FFC8463D", royal: "FF7442B4" } as const;
 
 export const colName = (i: number) => { let s = ""; for (let n = i + 1; n > 0; n = Math.floor((n - 1) / 26)) s = String.fromCharCode(65 + ((n - 1) % 26)) + s; return s; };
 export const ref = (col: number, row: number) => `${colName(col)}${row}`;
@@ -48,14 +54,14 @@ export function excelDate(iso: string): number | null {
 
 // The app's colours: iron (near black), gilt, royal purple, bone.
 const IRON = "FF16121C", GILT = "FFD6A84C", GILT_HI = "FFF3CF7A", ROYAL = "FF4F2382", BONE = "FFF7F1E3", BONE_DIM = "FFC9BDA6", INK = "FF1F1A27", LINE = "FFE4DEEA", WHITE = "FFFFFFFF";
-const font = (sz: number, rgb: string, opts = "") => `<font>${opts}<sz val="${sz}"/><color rgb="${rgb}"/><name val="Calibri"/><family val="2"/></font>`;
+const font = (sz: number, rgb: string, opts = "", face = "Calibri") => `<font>${opts}<sz val="${sz}"/><color rgb="${rgb}"/><name val="${face}"/><family val="${face === "Georgia" ? 1 : 2}"/></font>`;
 const FONTS = [
   font(11, INK), // 0 body
-  font(20, GILT_HI, "<b/>"), // 1 banner title
+  font(22, GILT_HI, "<b/>", "Georgia"), // 1 banner title
   font(10, "FF6E6578", "<i/>"), // 2 note
   font(11, WHITE, "<b/>"), // 3 header / pill
   font(11, INK, "<b/>"), // 4 bold
-  font(14, ROYAL, "<b/>"), // 5 section
+  font(14, ROYAL, "<b/>", "Georgia"), // 5 section
   font(11, "FF1E7A46", "<b/>"), // 6 green
   font(11, "FFB3261E", "<b/>"), // 7 red
   font(10, "FF6E6578", "<b/>"), // 8 KPI label
@@ -67,9 +73,11 @@ const FONTS = [
   font(10, "FF6E6578", "<i/>") // 14 muted note in tables
 ];
 const solid = (rgb: string) => `<fill><patternFill patternType="solid"><fgColor rgb="${rgb}"/><bgColor indexed="64"/></patternFill></fill>`;
-// 0 none, 1 gray125 (required), 2 royal, 3 bone, 4 green pill, 5 red pill, 6 grey pill, 7 iron, 8 totals
+const gradient = (from: string, to: string) => `<fill><gradientFill degree="0"><stop position="0"><color rgb="${from}"/></stop><stop position="1"><color rgb="${to}"/></stop></gradientFill></fill>`;
+// 0 none, 1 gray125 (required), 2 royal, 3 bone, 4 green pill, 5 red pill, 6 grey pill, 7 banner (purple into iron, like the app's), 8 totals,
+// 9 the gold-into-ember rule under the banner
 const FILLS = [`<fill><patternFill patternType="none"/></fill>`, `<fill><patternFill patternType="gray125"/></fill>`,
-  solid(ROYAL), solid(BONE), solid("FF2E8B57"), solid("FFC8463D"), solid("FF9A93A3"), solid(IRON), solid("FFEFE3C8")];
+  solid(ROYAL), solid(BONE), solid("FF2E8B57"), solid("FFC8463D"), solid("FF9A93A3"), gradient("FF34205A", IRON), solid("FFEFE3C8"), gradient(GILT, "FFFF7B1C")];
 const side = (name: string, s?: [string, string]) => (s ? `<${name} style="${s[0]}"><color rgb="${s[1]}"/></${name}>` : `<${name}/>`);
 const border = (b: { l?: [string, string]; r?: [string, string]; t?: [string, string]; btm?: [string, string] } = {}) =>
   `<border>${side("left", b.l)}${side("right", b.r)}${side("top", b.t)}${side("bottom", b.btm)}${side("diagonal")}</border>`;
@@ -84,7 +92,7 @@ const BORDERS = [
   border({ l: ["thin", WHITE], r: ["thin", WHITE], btm: ["thin", LINE] }), // 6 pill
   border({ btm: ["medium", GILT] }) // 7 header
 ];
-const MONEY = 164, DATE = 165, INT = 3;
+const MONEY = 164, DATE = 165, INT = 3, PCT = 9;
 const NUMFMTS = `<numFmts count="2"><numFmt numFmtId="${MONEY}" formatCode="&quot;$&quot;#,##0.00;[Red]\\-&quot;$&quot;#,##0.00"/><numFmt numFmtId="${DATE}" formatCode="ddd\\ mmm\\ d,\\ yyyy"/></numFmts>`;
 
 /** [font, fill, border, numFmt, horizontal, wrap] for each style, in STYLES order. */
@@ -118,7 +126,10 @@ const XF: Record<Style, [number, number, number, number, string?, boolean?]> = {
   moneyGood: [6, 0, 1, MONEY],
   moneyBad: [7, 0, 1, MONEY],
   muted: [14, 0, 1, 0, "left", true],
-  textRight: [0, 0, 1, 0, "right"]
+  textRight: [0, 0, 1, 0, "right"],
+  rule: [0, 9, 0, 0],
+  pct: [0, 0, 1, PCT],
+  totalPct: [4, 8, 2, PCT]
 };
 
 function stylesXml() {
@@ -137,7 +148,7 @@ function stylesXml() {
 
 // ------------------------------------------------------------------ sheets
 
-const MONEYISH = new Set<Style>(["money", "totalMoney", "kpiMoney", "moneyGood", "moneyBad", "kpiMoneyGood", "kpiMoneyBad"]);
+const MONEYISH = new Set<Style>(["pct", "totalPct", "money", "totalMoney", "kpiMoney", "moneyGood", "moneyBad", "kpiMoneyGood", "kpiMoneyBad"]);
 
 function cellXml(c: XCell, r: string): string {
   if (c === null || c === undefined) return "";
@@ -161,7 +172,7 @@ function cellXml(c: XCell, r: string): string {
 function cellWidth(c: XCell): number {
   if (c === null || c === undefined) return 0;
   const o = typeof c === "object" ? c : { v: c };
-  if (o.s === "title" || o.s === "about" || o.s === "subtitle" || o.s === "section" || o.s === "muted" || o.s === "kpiNote") return 0;
+  if (o.s === "title" || o.s === "about" || o.s === "rule" || o.s === "subtitle" || o.s === "section" || o.s === "muted" || o.s === "kpiNote") return 0;
   if (o.date !== undefined) return 13;
   if (typeof o.v === "number") return MONEYISH.has(o.s ?? "int") ? Math.max(10, Math.abs(o.v).toFixed(2).length + 5) : String(o.v).length + 2;
   const longest = String(o.v ?? "").split("\n").reduce((m, l) => Math.max(m, l.length), 0);
@@ -181,9 +192,13 @@ function sheetXml(sh: Sheet): string {
   const pane = sh.freeze ? `<pane ySplit="${sh.freeze}" topLeftCell="A${sh.freeze + 1}" activePane="bottomLeft" state="frozen"/><selection pane="bottomLeft" activeCell="A${sh.freeze + 1}" sqref="A${sh.freeze + 1}"/>` : "";
   const filter = sh.filter ? `<autoFilter ref="${ref(0, sh.filter.row)}:${ref(sh.filter.cols - 1, Math.max(sh.filter.row, sh.filter.last))}"/>` : "";
   const stripes = sh.stripes?.length ? `<conditionalFormatting sqref="${sh.stripes.join(" ")}"><cfRule type="expression" dxfId="0" priority="1"><formula>MOD(ROW(),2)=0</formula></cfRule></conditionalFormatting>` : "";
+  const bars = (sh.bars || []).map((b, i) => {
+    const end = (v: number | undefined, kind: "min" | "max") => (v === undefined ? `<cfvo type="${kind}"/>` : `<cfvo type="num" val="${v}"/>`);
+    return `<conditionalFormatting sqref="${b.range}"><cfRule type="dataBar" priority="${i + 2}"><dataBar minLength="0" maxLength="100">${end(b.min, "min")}${end(b.max, "max")}<color rgb="${b.color}"/></dataBar></cfRule></conditionalFormatting>`;
+  }).join("");
   const merges = sh.merges?.length ? `<mergeCells count="${sh.merges.length}">${sh.merges.map(m => `<mergeCell ref="${m}"/>`).join("")}</mergeCells>` : "";
   return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheetPr>${sh.tab ? `<tabColor rgb="${sh.tab}"/>` : ""}<pageSetUpPr fitToPage="1"/></sheetPr><dimension ref="A1:${ref(ncols - 1, Math.max(1, sh.rows.length))}"/><sheetViews><sheetView workbookViewId="0" showGridLines="0">${pane}</sheetView></sheetViews><sheetFormatPr defaultRowHeight="20" customHeight="1"/>${cols}<sheetData>${rows}</sheetData>${filter}${merges}${stripes}<printOptions horizontalCentered="1"/><pageMargins left="0.5" right="0.5" top="0.6" bottom="0.6" header="0.3" footer="0.3"/><pageSetup orientation="${sh.landscape ? "landscape" : "portrait"}" fitToWidth="1" fitToHeight="0"/><headerFooter><oddFooter>&amp;L&amp;8${esc(sh.name)}&amp;R&amp;8Page &amp;P of &amp;N</oddFooter></headerFooter></worksheet>`;
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheetPr>${sh.tab ? `<tabColor rgb="${sh.tab}"/>` : ""}<pageSetUpPr fitToPage="1"/></sheetPr><dimension ref="A1:${ref(ncols - 1, Math.max(1, sh.rows.length))}"/><sheetViews><sheetView workbookViewId="0" showGridLines="0">${pane}</sheetView></sheetViews><sheetFormatPr defaultRowHeight="20" customHeight="1"/>${cols}<sheetData>${rows}</sheetData>${filter}${merges}${stripes}${bars}<printOptions horizontalCentered="1"/><pageMargins left="0.5" right="0.5" top="0.6" bottom="0.6" header="0.3" footer="0.3"/><pageSetup orientation="${sh.landscape ? "landscape" : "portrait"}" fitToWidth="1" fitToHeight="0"/><headerFooter><oddFooter>&amp;L&amp;8${esc(sh.name)}&amp;R&amp;8Page &amp;P of &amp;N</oddFooter></headerFooter></worksheet>`;
 }
 
 /** Excel's rules for sheet names: 31 characters, none of \ / ? * [ ] :, and unique. */

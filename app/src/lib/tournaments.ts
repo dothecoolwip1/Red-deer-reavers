@@ -57,7 +57,11 @@ export type TournamentSale = {
 export type TournamentExpense = {
   id: string; tournament_id: string; category: ExpenseCategory; description: string | null; amount_cents: number; method: Method;
   spent_on: string | null; from_cash_box: boolean;
+  /** Someone paid for it themselves and won't be paid back: not a club cost, but part of what the event really cost. */
+  out_of_pocket?: boolean; covered_by?: string | null;
 };
+/** Paid by the club (not covered by someone out of pocket). */
+export const clubPaid = (e: TournamentExpense) => !e.out_of_pocket;
 export type CashBox = {
   id: string; tournament_id: string; name: string; opening: Counts; closing: Counts; counted: boolean;
   keep_float_cents: number | null; counted_by: string | null; note: string | null;
@@ -122,6 +126,8 @@ export type Summary = {
   sales: { total: number; visitors: number; merch: number; merchQty: number; other: number; card: number };
   fighters: { total: number; paid: number; owing: TournamentFighter[]; free: number; waived: number; notNeeded: number };
   totalIn: number; totalOut: number; net: number; expectedIn: number;
+  /** Covered out of pocket, no refund: left out of totalOut. netIfPaid is the net had the club paid for those too. */
+  donated: number; netIfPaid: number;
   expensesByCategory: Record<ExpenseCategory, number>;
   cash: { expected: number; boxes: number; counted: boolean; taken: number; overShort: number; opening: number; closing: number };
 };
@@ -145,15 +151,16 @@ export function summarize(fighters: TournamentFighter[], sales: TournamentSale[]
     if (s.square_payment_id || s.square_ref) card += amount;
   }
   const expensesByCategory = Object.fromEntries(EXPENSE_CATEGORIES.map(c => [c, 0])) as Record<ExpenseCategory, number>;
-  for (const e of expenses) expensesByCategory[e.category] += e.amount_cents;
+  for (const e of expenses) if (clubPaid(e)) expensesByCategory[e.category] += e.amount_cents;
   const feesExpected = fighters.reduce((s, f) => s + owed(f), 0);
   const feesCollected = fighters.reduce((s, f) => s + f.paid_cents, 0);
   const salesTotal = sales.reduce((s, x) => s + x.quantity * x.price_cents, 0);
-  const totalOut = expenses.reduce((s, e) => s + e.amount_cents, 0);
+  const totalOut = expenses.filter(clubPaid).reduce((s, e) => s + e.amount_cents, 0);
+  const donated = expenses.filter(e => !clubPaid(e)).reduce((s, e) => s + e.amount_cents, 0);
   const totalIn = feesCollected + salesTotal;
   const cashExpected = fighters.filter(f => f.method === "cash").reduce((s, f) => s + f.paid_cents, 0)
     + sales.filter(s => s.method === "cash").reduce((s, x) => s + x.quantity * x.price_cents, 0)
-    - expenses.filter(e => e.from_cash_box).reduce((s, e) => s + e.amount_cents, 0);
+    - expenses.filter(e => e.from_cash_box && clubPaid(e)).reduce((s, e) => s + e.amount_cents, 0);
   const opening = boxes.reduce((s, b) => s + countTotal(b.opening), 0);
   const closing = boxes.reduce((s, b) => s + countTotal(b.closing), 0);
   const counted = boxes.length > 0 && boxes.every(b => b.counted);
@@ -167,7 +174,7 @@ export function summarize(fighters: TournamentFighter[], sales: TournamentSale[]
       free: fighters.filter(f => f.status === "waived" || f.status === "not_needed").length,
       waived: fighters.filter(f => f.status === "waived").length, notNeeded: fighters.filter(f => f.status === "not_needed").length
     },
-    totalIn, totalOut, net: totalIn - totalOut, expectedIn: feesExpected + salesTotal, expensesByCategory,
+    totalIn, totalOut, net: totalIn - totalOut, donated, netIfPaid: totalIn - totalOut - donated, expectedIn: feesExpected + salesTotal, expensesByCategory,
     cash: { expected: cashExpected, boxes: boxes.length, counted, opening, closing, taken: closing - opening, overShort: closing - opening - cashExpected }
   };
 }
@@ -206,7 +213,7 @@ export function ledgerLinesFor(t: Pick<Tournament, "code" | "starts_on" | "ends_
     const category = { visitors: "Admissions", registrations: "Event entry", merch: "Merch", other: "Other" }[group];
     add(`${group}-${s.method}${account === "Square" ? "-square" : ""}`, s.quantity * s.price_cents, { description: `${t.code}: ${label} (${METHOD_LABEL[s.method].toLowerCase()})`, category, account });
   }
-  for (const e of expenses) {
+  for (const e of expenses.filter(clubPaid)) {
     add(`expense-${e.category}-${e.method}`, -e.amount_cents, { description: `${t.code}: ${EXPENSE_LABEL[e.category].toLowerCase()} (${METHOD_LABEL[e.method].toLowerCase()})`, category: EXPENSE_LEDGER[e.category], account: e.from_cash_box ? "Cash box" : METHOD_ACCOUNT[e.method] });
   }
   return [...lines.values()];

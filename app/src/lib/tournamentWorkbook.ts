@@ -5,7 +5,7 @@ import {
   DENOMS, EXPENSE_CATEGORIES, EXPENSE_LABEL, METHOD_LABEL, STATUS_LABEL, byEvent, countTotal, denomLabel, floatPlan, formatMinutes, summarize,
   type CashBox, type FighterStatus, type Summary, type Tournament, type TournamentExpense, type TournamentFighter, type TournamentSale
 } from "./tournaments";
-import { ref, type Sheet, type Style, type XCell } from "./xlsx";
+import { BAR, ref, type Sheet, type Style, type XCell } from "./xlsx";
 
 export type EditionData = { fighters: TournamentFighter[]; sales: TournamentSale[]; expenses: TournamentExpense[]; boxes: CashBox[] };
 
@@ -31,7 +31,7 @@ const STATUS_ORDER: Record<FighterStatus, number> = { owes: 0, paid: 1, waived: 
 function top(e: Tournament, what: string, width: number, today: string, lead?: string): { rows: XCell[][]; merges: string[] } {
   const about = [what.toUpperCase(), e.code, days(e), e.venue, lead, `Exported ${day(today)}`].filter(Boolean).join("   ·   ");
   const w = Math.max(width, 4) - 1;
-  return { rows: [[{ v: `${e.name} ${e.year}`, s: "title" }], [{ v: about, s: "about" }], []], merges: [`A1:${ref(w, 1)}`, `A2:${ref(w, 2)}`] };
+  return { rows: [[{ v: `${e.name} ${e.year}`, s: "title" }], [{ v: about, s: "about" }], [{ v: "", s: "rule" }]], merges: [`A1:${ref(w, 1)}`, `A2:${ref(w, 2)}`, `A3:${ref(w, 3)}`] };
 }
 type Extra = Partial<Sheet> & { lead?: string };
 const sheet = (name: string, e: Tournament, what: string, width: number, today: string, body: XCell[][], extra: Extra = {}): Sheet => {
@@ -41,7 +41,7 @@ const sheet = (name: string, e: Tournament, what: string, width: number, today: 
   const auto: Record<number, number> = {};
   body.forEach((r, i) => { const c = r[0]; const st = c && typeof c === "object" ? c.s : undefined; if (st === "section") auto[i + 4] = 30; else if (st === "head" || st === "headNum") auto[i + 4] = 28; else if (st === "totalLabel") auto[i + 4] = 24; });
   rest.heights = { ...auto, ...(rest.heights || {}) };
-  return { ...rest, name, rows: [...rows, ...body], merges: [...merges, ...(rest.merges || [])], heights: { 1: 42, 2: 24, 3: 12, ...(rest.freeze ? ({ 4: 30 } as Record<number, number>) : {}), ...(rest.heights || {}) } };
+  return { ...rest, name, rows: [...rows, ...body], merges: [...merges, ...(rest.merges || [])], heights: { 1: 46, 2: 24, 3: 5, ...(rest.freeze ? ({ 4: 30 } as Record<number, number>) : {}), ...(rest.heights || {}) } };
 };
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 
@@ -59,17 +59,19 @@ export function summarySheet(e: Tournament, d: EditionData, today: string, name 
   heights[R()] = 40;
   body.push([$(s.totalIn, "kpiMoney"), $(s.totalOut, "kpiMoney"), $(s.net, s.net < 0 ? "kpiMoneyBad" : "kpiMoneyGood"), $(s.fees.owing, s.fees.owing ? "kpiMoneyBad" : "kpiMoney"), n(s.fighters.total, "kpiInt")]);
   heights[R()] = 22;
-  body.push([t(`of ${money(s.expectedIn)} expected`, "kpiNote"), t(plural(d.expenses.length, "expense"), "kpiNote"), t(s.net < 0 ? "loss" : "profit", "kpiNote"), t(plural(s.fighters.owing.length, "fighter"), "kpiNote"), t(`${s.fighters.paid} paid · ${s.fighters.free} free`, "kpiNote")]);
+  body.push([t(`of ${money(s.expectedIn)} expected`, "kpiNote"), t(plural(d.expenses.length, "expense"), "kpiNote"), t(s.donated ? `${money(s.netIfPaid)} if the club paid all` : s.net < 0 ? "loss" : "profit", "kpiNote"), t(plural(s.fighters.owing.length, "fighter"), "kpiNote"), t(`${s.fighters.paid} paid · ${s.fighters.free} free`, "kpiNote")]);
   body.push([]);
 
   // By payment method
-  body.push([t("Expected and collected, by payment method", "section"), t("", "section"), t("", "section"), t("", "section")]);
-  body.push(head(["Payment method", "Expected", "Collected", "Difference"], [1, 2, 3]));
+  body.push([t("Expected and collected, by payment method", "section"), t("", "section"), t("", "section"), t("", "section"), t("", "section")]);
+  body.push(head(["Payment method", "Expected", "Collected", "Difference", "Collected %"], [1, 2, 3, 4]));
+  const pctOf = (r: number, a: number, b: number, s: Style = "pct"): XCell => ({ f: `IF(${ref(1, r)}=0,0,${ref(2, r)}/${ref(1, r)})`, v: b ? a / b : 0, s });
   const methods = s.byMethod.filter(m => m.expected || m.collected);
   const first = R();
-  for (const m of methods) { const r = R(); body.push([t(METHOD_LABEL[m.method], "label"), $(m.expected), $(m.collected), { f: `${ref(2, r)}-${ref(1, r)}`, v: (m.collected - m.expected) / 100, s: m.collected < m.expected ? "moneyBad" : "moneyGood" }]); }
+  for (const m of methods) { const r = R(); body.push([t(METHOD_LABEL[m.method], "label"), $(m.expected), $(m.collected), { f: `${ref(2, r)}-${ref(1, r)}`, v: (m.collected - m.expected) / 100, s: m.collected < m.expected ? "moneyBad" : "moneyGood" }, pctOf(r, m.collected, m.expected)]); }
   const last = R() - 1;
-  { const r = R(); body.push([t("Total", "totalLabel"), { f: sumF(1, first, last), v: s.expectedIn / 100, s: "totalMoney" }, { f: sumF(2, first, last), v: s.totalIn / 100, s: "totalMoney" }, { f: `${ref(2, r)}-${ref(1, r)}`, v: (s.totalIn - s.expectedIn) / 100, s: "totalMoney" }]); }
+  { const r = R(); body.push([t("Total", "totalLabel"), { f: sumF(1, first, last), v: s.expectedIn / 100, s: "totalMoney" }, { f: sumF(2, first, last), v: s.totalIn / 100, s: "totalMoney" }, { f: `${ref(2, r)}-${ref(1, r)}`, v: (s.totalIn - s.expectedIn) / 100, s: "totalMoney" }, pctOf(r, s.totalIn, s.expectedIn, "totalPct")]); }
+  const bars: NonNullable<Sheet["bars"]> = [{ range: `E${first}:E${last + 1}`, color: BAR.gilt, min: 0, max: 1 }];
   body.push([t("Fighter fees count toward expected; those who didn't have to pay don't. Sales count as collected when they're entered.", "subtitle")]);
   body.push([]);
 
@@ -82,9 +84,14 @@ export function summarySheet(e: Tournament, d: EditionData, today: string, name 
   const ioFirst = R();
   for (let i = 0; i < rowsIO; i++) body.push([inLines[i] ? t(inLines[i][0], "label") : t(""), inLines[i] ? $(inLines[i][1]) : t(""), outLines[i] ? t(outLines[i][0], "label") : t(""), outLines[i] ? $(outLines[i][1]) : t("")]);
   const ioLast = R() - 1;
+  bars.push({ range: `B${ioFirst}:B${ioLast}`, color: BAR.good, min: 0 }, { range: `D${ioFirst}:D${ioLast}`, color: BAR.bad, min: 0 });
   const totalsRow = R();
   body.push([t("Total in", "totalLabel"), { f: sumF(1, ioFirst, ioLast), v: s.totalIn / 100, s: "totalMoney" }, t("Total out", "totalLabel"), { f: sumF(3, ioFirst, ioLast), v: s.totalOut / 100, s: "totalMoney" }]);
   body.push([t("Net (in minus out)", "label"), { f: `${ref(1, totalsRow)}-${ref(3, totalsRow)}`, v: s.net / 100, s: s.net < 0 ? "moneyBad" : "moneyGood" }, t("Through Square", "label"), $(s.sales.card)]);
+  if (s.donated) {
+    const netRow = R() - 1, r = R();
+    body.push([t("Net if the club had paid it all", "label"), { f: `${ref(1, netRow)}-${ref(3, r)}`, v: s.netIfPaid / 100, s: s.netIfPaid < 0 ? "moneyBad" : "moneyGood" }, t("Covered out of pocket (no refund)", "label"), $(s.donated)]);
+  }
   body.push([]);
 
   // Fighters and cash
@@ -93,6 +100,7 @@ export function summarySheet(e: Tournament, d: EditionData, today: string, name 
   const cashRows: [string, number, Style][] = [["Opening floats", s.cash.opening, "money"], ["Closing count", s.cash.closing, "money"], ["Cash taken in", s.cash.taken, "money"], ["Expected cash", s.cash.expected, "money"]];
   const fRows: [string, number, Style][] = [["Paid", s.fighters.paid, "good"], ["Owe", s.fighters.owing.length, "bad"], ["Waived", s.fighters.waived, "free"], ["Not needed", s.fighters.notNeeded, "free"]];
   const fFirst = R();
+  bars.push({ range: `B${fFirst}:B${fFirst + 3}`, color: BAR.royal, min: 0 });
   for (let i = 0; i < 4; i++) body.push([t(fRows[i][0], fRows[i][2]), n(fRows[i][1]), t(cashRows[i][0], "label"), $(cashRows[i][1], cashRows[i][2])]);
   body.push([t("Total", "totalLabel"), { f: sumF(1, fFirst, fFirst + 3), v: s.fighters.total, s: "totalInt" }, t(s.cash.boxes ? (s.cash.counted ? "Over (+) or short (-)" : "Over or short (not all counted)") : "No cash boxes yet", "totalLabel"), $(s.cash.boxes ? s.cash.overShort : null, "totalMoney")]);
 
@@ -105,7 +113,7 @@ export function summarySheet(e: Tournament, d: EditionData, today: string, name 
     body.push([t("Total", "totalLabel"), { f: sumF(1, oFirst, R() - 1), v: s.fees.owing / 100, s: "totalMoney" }, t("", "totalLabel"), t("", "totalLabel")]);
   }
 
-  return sheet(name, e, "Summary", 5, today, body, { cols: [30, 17, 30, 17, 16], heights, tab: "FF4F2382" });
+  return sheet(name, e, "Summary", 5, today, body, { cols: [30, 17, 30, 17, 16], heights, bars, tab: "FF4F2382" });
 }
 const money = (c: number) => `$${(c / 100).toLocaleString("en-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
@@ -148,20 +156,27 @@ export function saleSheet(e: Tournament, list: TournamentSale[], today: string, 
   const last = Math.max(first, first + sorted.length - 1);
   body.push([t(`${list.length} ${list.length === 1 ? "line" : "lines"}`, "totalLabel"), t("", "totalLabel"), { f: sumF(2, first, last), v: list.reduce((s, x) => s + x.quantity, 0), s: "totalInt" }, t("", "totalLabel"),
     { f: sumF(4, first, last), v: sumC(list, x => x.quantity * x.price_cents), s: "totalMoney" }, t("", "totalLabel"), t("", "totalLabel"), t("", "totalLabel")]);
-  return sheet(name, e, "Sales", cols.length, today, body, { lead: plural(list.length, "sale line"), freeze: 4, filter: { row: 4, cols: cols.length, last: first + sorted.length - 1 }, stripes: sorted.length ? [`A${first}:H${first + sorted.length - 1}`] : [], cols: [17, 30, 10, 11, 12, 16, 16, 36], landscape: true, tab: "FFD6A84C" });
+  return sheet(name, e, "Sales", cols.length, today, body, { lead: plural(list.length, "sale line"), freeze: 4, filter: { row: 4, cols: cols.length, last: first + sorted.length - 1 }, stripes: sorted.length ? [`A${first}:H${first + sorted.length - 1}`] : [], bars: sorted.length ? [{ range: `E${first}:E${first + sorted.length - 1}`, color: BAR.gilt, min: 0 }] : [], cols: [17, 30, 10, 11, 12, 16, 16, 36], landscape: true, tab: "FFD6A84C" });
 }
 
 // ------------------------------------------------------------------ Expenses
 
 export function expenseSheet(e: Tournament, list: TournamentExpense[], today: string, name = "Expenses"): Sheet {
-  const cols = ["Day", "Category", "Description", "Amount", "Payment method", "From the cash box"];
+  const cols = ["Day", "Category", "Description", "Amount", "Payment method", "From the cash box", "Covered out of pocket by"];
   const sorted = [...list].sort((a, b) => (a.spent_on || "").localeCompare(b.spent_on || "") || a.category.localeCompare(b.category));
   const body: XCell[][] = [head(cols, [3])];
   const first = 5;
-  for (const x of sorted) body.push([{ date: x.spent_on, s: "date" }, t(EXPENSE_LABEL[x.category], "label"), t(x.description, "wrap"), $(x.amount_cents), t(METHOD_LABEL[x.method]), t(x.from_cash_box ? "Yes" : "")]);
+  for (const x of sorted) body.push([{ date: x.spent_on, s: "date" }, t(EXPENSE_LABEL[x.category], "label"), t(x.description, "wrap"), $(x.amount_cents), t(METHOD_LABEL[x.method]), t(x.from_cash_box ? "Yes" : ""),
+    t(x.out_of_pocket ? x.covered_by || "Someone (no refund)" : "")]);
   const last = Math.max(first, first + sorted.length - 1);
-  body.push([t(`${list.length} ${list.length === 1 ? "expense" : "expenses"}`, "totalLabel"), t("", "totalLabel"), t("", "totalLabel"), { f: sumF(3, first, last), v: sumC(list, x => x.amount_cents), s: "totalMoney" }, t("", "totalLabel"), t("", "totalLabel")]);
-  return sheet(name, e, "Expenses", cols.length, today, body, { lead: plural(list.length, "expense"), freeze: 4, filter: { row: 4, cols: cols.length, last: first + sorted.length - 1 }, stripes: sorted.length ? [`A${first}:F${first + sorted.length - 1}`] : [], cols: [17, 14, 40, 12, 16, 17], tab: "FFC8463D" });
+  const totalRow = body.length + 4;
+  const club = sumC(list.filter(x => !x.out_of_pocket), x => x.amount_cents), all = sumC(list, x => x.amount_cents);
+  body.push([t(`${list.length} ${list.length === 1 ? "expense" : "expenses"}`, "totalLabel"), t("", "totalLabel"), t("", "totalLabel"), { f: sumF(3, first, last), v: all, s: "totalMoney" }, t("", "totalLabel"), t("", "totalLabel"), t("", "totalLabel")]);
+  if (list.some(x => x.out_of_pocket)) {
+    body.push([t("Paid by the club", "label"), t(""), t(""), { f: `SUMIF(${ref(6, first)}:${ref(6, last)},"",${ref(3, first)}:${ref(3, last)})`, v: club, s: "money" }]);
+    body.push([t("Covered out of pocket", "label"), t(""), t("Not a club cost, nobody is paid back", "muted"), { f: `${ref(3, totalRow)}-${ref(3, totalRow + 1)}`, v: all - club, s: "money" }]);
+  }
+  return sheet(name, e, "Expenses", cols.length, today, body, { lead: plural(list.length, "expense"), freeze: 4, filter: { row: 4, cols: cols.length, last: first + sorted.length - 1 }, stripes: sorted.length ? [`A${first}:G${first + sorted.length - 1}`] : [], bars: sorted.length ? [{ range: `D${first}:D${first + sorted.length - 1}`, color: BAR.bad, min: 0 }] : [], cols: [17, 14, 36, 12, 16, 12, 22], landscape: true, tab: "FFC8463D" });
 }
 
 // ------------------------------------------------------------------ Cash boxes
@@ -207,7 +222,9 @@ export function statSheet(e: Tournament, d: EditionData, today: string, name = "
   line("Divisions", e.divisions);
   line("Fights", e.fights);
   line("Rounds", e.rounds);
+  const specFirst = body.length + 4;
   for (const s of e.spectators || []) line(`Spectators, ${day(s.day) || s.day}`, s.count);
+  const specLast = body.length + 3;
   if ((e.spectators || []).length) body.push([t("Spectators, total", "totalLabel"), n(visitors(e), "totalInt")]);
   line("Stream viewers", e.stream_viewers);
   line("Stream time", formatMinutes(e.stream_minutes));
@@ -218,7 +235,7 @@ export function statSheet(e: Tournament, d: EditionData, today: string, name = "
     body.push(head(["Division", "First", "Second", "Third"]));
     for (const p of e.podiums) body.push([t(p.division, "label"), t(p.first), t(p.second), t(p.third)]);
   }
-  return sheet(name, e, "Stats", 4, today, body, { cols: [28, 22, 22, 22], tab: "FF7442B4" });
+  return sheet(name, e, "Stats", 4, today, body, { cols: [28, 22, 22, 22], bars: specLast >= specFirst ? [{ range: `B${specFirst}:B${specLast}`, color: BAR.gilt, min: 0 }] : [], tab: "FF7442B4" });
 }
 
 // ------------------------------------------------------------------ workbooks
@@ -231,22 +248,24 @@ export function editionSheets(e: Tournament, d: EditionData, today: string, pref
 
 /** Every edition side by side, grouped by event, with the change in net from the year before. */
 export function overviewSheet(all: { t: Tournament; d: EditionData }[], today: string): Sheet {
-  const cols = ["Edition", "Event", "Year", "Dates", "Venue", "Fighters", "Fights", "Spectators", "Fees expected", "Fees collected", "Still owing", "Sales", "Merch", "Total in", "Total out", "Net", "Net vs year before"];
+  const cols = ["Edition", "Event", "Year", "Dates", "Venue", "Fighters", "Fights", "Spectators", "Fees expected", "Fees collected", "Still owing", "Sales", "Merch", "Total in", "Total out", "Net", "Net vs year before", "Covered out of pocket", "Net if the club paid all"];
   const rows = all.map(r => ({ ...r, s: summarize(r.d.fighters, r.d.sales, r.d.expenses, r.d.boxes), name: r.t.name, year: r.t.year }));
-  const body: XCell[][] = [[{ v: "Red Deer Reavers tournaments", s: "title" }], [{ v: `EVERY EDITION   ·   ${plural(all.length, "edition")}   ·   Exported ${day(today)}`, s: "about" }], [], head(cols, [2, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])];
+  const body: XCell[][] = [[{ v: "Red Deer Reavers tournaments", s: "title" }], [{ v: `EVERY EDITION   ·   ${plural(all.length, "edition")}   ·   Exported ${day(today)}`, s: "about" }], [{ v: "", s: "rule" }], head(cols, [2, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18])];
   const first = 5;
   for (const g of byEvent(rows)) g.editions.forEach((r, i) => {
     const s: Summary = r.s, prev = i ? g.editions[i - 1].s : null;
     body.push([t(r.t.code, "label"), t(r.t.name), { v: r.t.year, s: "text" }, t(days(r.t)), t(r.t.venue), n(r.t.fighters_count ?? r.d.fighters.length), n(r.t.fights), n(visitors(r.t) || null),
       $(s.fees.expected), $(s.fees.collected), $(s.fees.owing, s.fees.owing ? "moneyBad" : "money"), $(s.sales.total), $(s.sales.merch), $(s.totalIn), $(s.totalOut), $(s.net, s.net < 0 ? "moneyBad" : "moneyGood"),
-      prev ? $(s.net - prev.net, s.net < prev.net ? "moneyBad" : "moneyGood") : t("First year", "muted")]);
+      prev ? $(s.net - prev.net, s.net < prev.net ? "moneyBad" : "moneyGood") : t("First year", "muted"), $(s.donated), $(s.netIfPaid, s.netIfPaid < 0 ? "moneyBad" : "moneyGood")]);
   });
   const last = Math.max(first, body.length);
   const all$ = (f: (s: Summary) => number) => rows.reduce((a, r) => a + f(r.s), 0) / 100;
   body.push([t("All editions", "totalLabel"), ...Array.from({ length: 4 }, () => t("", "totalLabel")),
     { f: sumF(5, first, last), v: rows.reduce((a, r) => a + (r.t.fighters_count ?? r.d.fighters.length), 0), s: "totalInt" }, { f: sumF(6, first, last), v: rows.reduce((a, r) => a + (r.t.fights ?? 0), 0), s: "totalInt" }, { f: sumF(7, first, last), v: rows.reduce((a, r) => a + visitors(r.t), 0), s: "totalInt" },
     ...([s => s.fees.expected, s => s.fees.collected, s => s.fees.owing, s => s.sales.total, s => s.sales.merch, s => s.totalIn, s => s.totalOut, s => s.net] as ((s: Summary) => number)[])
-      .map((f, j) => ({ f: sumF(8 + j, first, last), v: all$(f), s: "totalMoney" as Style })), t("", "totalLabel")]);
-  return { name: "All editions", rows: body, freeze: 4, filter: { row: 4, cols: cols.length, last: body.length - 1 }, merges: [`A1:${ref(cols.length - 1, 1)}`, `A2:${ref(cols.length - 1, 2)}`], heights: { 1: 42, 2: 24, 3: 12, 4: 30 }, stripes: body.length > 5 ? [`A5:Q${body.length - 1}`] : [], cols: [14, 20, 7, 18, 18, 9, 8, 11, 13, 13, 12, 11, 11, 12, 12, 12, 15], landscape: true, tab: "FF4F2382" };
+      .map((f, j) => ({ f: sumF(8 + j, first, last), v: all$(f), s: "totalMoney" as Style })), t("", "totalLabel"),
+    { f: sumF(17, first, last), v: all$(s => s.donated), s: "totalMoney" }, { f: sumF(18, first, last), v: all$(s => s.netIfPaid), s: "totalMoney" }]);
+  return { name: "All editions", rows: body, freeze: 4, filter: { row: 4, cols: cols.length, last: body.length - 1 }, merges: [`A1:${ref(cols.length - 1, 1)}`, `A2:${ref(cols.length - 1, 2)}`, `A3:${ref(cols.length - 1, 3)}`], heights: { 1: 46, 2: 24, 3: 5, 4: 30 },
+    bars: body.length > 5 ? [{ range: `N5:N${body.length - 1}`, color: BAR.gilt, min: 0 }, { range: `P5:P${body.length - 1}`, color: BAR.good }] : [], stripes: body.length > 5 ? [`A5:S${body.length - 1}`] : [], cols: [14, 20, 7, 18, 18, 9, 8, 11, 13, 13, 12, 11, 11, 12, 12, 12, 15, 14, 15], landscape: true, tab: "FF4F2382" };
 }
 
