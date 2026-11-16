@@ -5,7 +5,7 @@
 export const STYLES = [
   "default", "title", "subtitle", "head", "headNum", "text", "wrap", "int", "money", "date", "label",
   "totalLabel", "totalInt", "totalMoney", "section", "good", "bad", "free", "kpiLabel", "kpiMoney", "kpiInt",
-  "moneyGood", "moneyBad", "muted", "kpiMoneyGood", "kpiMoneyBad", "about", "kpiNote", "headCenter"
+  "moneyGood", "moneyBad", "muted", "kpiMoneyGood", "kpiMoneyBad", "about", "kpiNote", "headCenter", "textRight"
 ] as const;
 export type Style = (typeof STYLES)[number];
 
@@ -117,7 +117,8 @@ const XF: Record<Style, [number, number, number, number, string?, boolean?]> = {
   kpiNote: [13, 3, 5, 0, "left"],
   moneyGood: [6, 0, 1, MONEY],
   moneyBad: [7, 0, 1, MONEY],
-  muted: [14, 0, 1, 0, "left", true]
+  muted: [14, 0, 1, 0, "left", true],
+  textRight: [0, 0, 1, 0, "right"]
 };
 
 function stylesXml() {

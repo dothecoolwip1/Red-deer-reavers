@@ -202,7 +202,7 @@ const countPieces = (c: Record<string, number | undefined> | null | undefined) =
 
 export function statSheet(e: Tournament, d: EditionData, today: string, name = "Stats"): Sheet {
   const body: XCell[][] = [head(["Stat", "Value"], [1])];
-  const line = (label: string, v: number | string | null | undefined) => body.push([t(label, "label"), typeof v === "number" ? n(v) : v ? { v, s: "text" } : t("")]);
+  const line = (label: string, v: number | string | null | undefined) => body.push([t(label, "label"), typeof v === "number" ? n(v) : v ? { v, s: "textRight" } : t("")]);
   line("Fighters", e.fighters_count ?? d.fighters.length);
   line("Divisions", e.divisions);
   line("Fights", e.fights);
