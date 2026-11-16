@@ -2,6 +2,8 @@ import { useMemo, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import type { SquarePaymentRow } from "../data/types";
 import { parseCsv } from "../lib/csv";
+import { cashBoxSheet, editionSheets, expenseSheet, fighterSheet, overviewSheet, saleSheet, statSheet, summarySheet } from "../lib/tournamentWorkbook";
+import { downloadXlsx, type Sheet } from "../lib/xlsx";
 import { formatMoney, parseMoney } from "../lib/money";
 import {
   DENOMS, EXPENSE_CATEGORIES, EXPENSE_LABEL, METHODS, METHOD_LABEL, PRICE_LIST, STATUSES, STATUS_LABEL, STATUS_TONE,
@@ -9,11 +11,9 @@ import {
   registrationMatches, saleKind, squareCsvLines, squareSaleLines, summarize,
   type CashBox, type Counts, type Method, type Summary, type Tournament, type TournamentExpense, type TournamentFighter, type TournamentSale
 } from "../lib/tournaments";
-import { Empty, Loading, Modal, Money, Page, Pill, RecordForm, dateLabel, downloadCsv, todayIso, useAction, usePage, useStore, useTable, useToast, type Field } from "../ui";
+import { Empty, Loading, Modal, Money, Page, Pill, RecordForm, dateLabel, todayIso, useAction, usePage, useStore, useTable, useToast, type Field } from "../ui";
 
 type Data = { fighters: TournamentFighter[]; sales: TournamentSale[]; expenses: TournamentExpense[]; boxes: CashBox[] };
-type Cell = string | number | null;
-const dollars = (c: number | null | undefined) => (c === null || c === undefined ? null : (c / 100).toFixed(2));
 const methodLabel = (m: Method | null) => (m ? METHOD_LABEL[m] : "-");
 const sum = <T,>(rows: T[], f: (r: T) => number) => rows.reduce((s, r) => s + f(r), 0);
 const of = <T extends { tournament_id: string }>(rows: T[] | null, id: string) => (rows || []).filter(r => r.tournament_id === id);
@@ -34,66 +34,9 @@ function Section({ title, actions, children }: { title: string; actions?: ReactN
   );
 }
 
-// ------------------------------------------------------------------ exports (CSV: one per section, or everything)
+// ------------------------------------------------------------------ exports (Excel workbooks: one per section, an edition, or everything)
 
-const fighterRows = (t: Tournament, list: TournamentFighter[]): Cell[][] => [
-  ["Edition", "Name", "Club", "Divisions", "Status", "Fee owed", "Payment method", "Amount paid", "Still owing", "Square", "Note"],
-  ...list.map(f => [t.code, f.name, f.club, f.divisions, STATUS_LABEL[f.status], dollars(f.fee_cents), methodLabel(f.method), dollars(f.paid_cents),
-    dollars(f.status === "paid" || f.status === "owes" ? Math.max(0, f.fee_cents - f.paid_cents) : 0), f.square_payment_id ? "yes" : "", f.note])
-];
-const saleRows = (t: Tournament, list: TournamentSale[]): Cell[][] => [
-  ["Edition", "Day", "Item", "Quantity", "Price", "Total", "Payment method", "From Square", "Note"],
-  ...list.map(s => [t.code, s.sold_on, s.item, s.quantity, dollars(s.price_cents), dollars(s.quantity * s.price_cents), METHOD_LABEL[s.method], s.square_payment_id ? "Square sales" : s.square_ref ? `Square export ${s.square_ref}` : "", s.note])
-];
-const expenseRows = (t: Tournament, list: TournamentExpense[]): Cell[][] => [
-  ["Edition", "Day", "Category", "Description", "Amount", "Payment method", "From the cash box"],
-  ...list.map(e => [t.code, e.spent_on, EXPENSE_LABEL[e.category], e.description, dollars(e.amount_cents), METHOD_LABEL[e.method], e.from_cash_box ? "yes" : ""])
-];
-const boxRows = (t: Tournament, list: CashBox[]): Cell[][] => [
-  ["Edition", "Box", "Count", ...DENOMS.map(denomLabel), "Total"],
-  ...list.flatMap(b => {
-    const plan = floatPlan(b.closing, b.opening, b.keep_float_cents);
-    const row = (label: string, c: Counts): Cell[] => [t.code, b.name, label, ...DENOMS.map(d => c[String(d)] ?? 0), dollars(countTotal(c))];
-    return [row("Opening float", b.opening), row("Closing count", b.closing), row("Keep for next float", plan.keep), row("Deposit", plan.deposit)];
-  })
-];
-const statRows = (t: Tournament, d: Data): Cell[][] => [
-  ["Edition", "Stat", "Value"],
-  ...([
-    ["Fighters", t.fighters_count ?? d.fighters.length], ["Divisions", t.divisions], ["Fights", t.fights], ["Rounds", t.rounds],
-    ...(t.spectators || []).map(s => [`Spectators ${s.day}`, s.count]), ["Spectators total", visitors(t)],
-    ["Stream viewers", t.stream_viewers], ["Stream time", formatMinutes(t.stream_minutes)], ["Clubs attending", t.clubs_attending],
-    ...(t.podiums || []).map(p => [`Podium: ${p.division}`, [p.first, p.second, p.third].filter(Boolean).join(" / ")])
-  ] as Cell[][]).map(r => [t.code, ...r])
-];
-const summaryRows = (t: Tournament, s: Summary): Cell[][] => [
-  ["Edition", "Payment method", "Expected", "Collected", "Difference"],
-  ...s.byMethod.map(m => [t.code, METHOD_LABEL[m.method], dollars(m.expected), dollars(m.collected), dollars(m.collected - m.expected)]),
-  [t.code, "Total", dollars(s.expectedIn), dollars(s.totalIn), dollars(s.totalIn - s.expectedIn)],
-  [], ["Edition", "Line", "Amount"],
-  ...([
-    ["Fighter fees expected", dollars(s.fees.expected)], ["Fighter fees collected", dollars(s.fees.collected)], ["Still owing", dollars(s.fees.owing)],
-    ["Visitor fees", dollars(s.sales.visitors)], ["Merch sold", dollars(s.sales.merch)], ["Merch items", s.sales.merchQty], ["Other sales", dollars(s.sales.other)],
-    ["Through Square", dollars(s.sales.card)],
-    ...EXPENSE_CATEGORIES.map(c => [`Expense: ${EXPENSE_LABEL[c]}`, dollars(s.expensesByCategory[c])]),
-    ["Total in", dollars(s.totalIn)], ["Total out", dollars(s.totalOut)], ["Net", dollars(s.net)],
-    ["Expected cash", dollars(s.cash.expected)], ["Cash taken (closing - opening)", dollars(s.cash.taken)], ["Cash over (+) or short (-)", dollars(s.cash.overShort)],
-    ["Paid", s.fighters.paid], ["Owe", s.fighters.owing.length], ["Waived", s.fighters.waived], ["Not needed", s.fighters.notNeeded]
-  ] as Cell[][]).map(r => [t.code, ...r])
-];
-const editionRows = (t: Tournament, d: Data): Cell[][] => {
-  const s = summarize(d.fighters, d.sales, d.expenses, d.boxes);
-  return [[`${t.name} ${t.year} (${t.code})`], [], ["Summary"], ...summaryRows(t, s), [], ["Fighters"], ...fighterRows(t, d.fighters), [], ["Sales"], ...saleRows(t, d.sales),
-    [], ["Expenses"], ...expenseRows(t, d.expenses), [], ["Cash boxes"], ...boxRows(t, d.boxes), [], ["Stats"], ...statRows(t, d)];
-};
-const compareRows = (rows: { t: Tournament; s: Summary; d: Data }[]): Cell[][] => [
-  ["Edition", "Event", "Year", "Dates", "Venue", "Fighters", "Divisions", "Fights", "Spectators", "Stream viewers", "Fees expected", "Fees collected", "Still owing", "Sales", "Merch", "Total in", "Total out", "Net", "Net change from year before"],
-  ...byEvent(rows.map(r => ({ ...r, name: r.t.name, year: r.t.year }))).flatMap(g => g.editions.map((r, i) => [
-    r.t.code, r.t.name, r.t.year, [r.t.starts_on, r.t.ends_on].filter(Boolean).join(" to "), r.t.venue, r.t.fighters_count ?? r.d.fighters.length, r.t.divisions, r.t.fights, visitors(r.t), r.t.stream_viewers,
-    dollars(r.s.fees.expected), dollars(r.s.fees.collected), dollars(r.s.fees.owing), dollars(r.s.sales.total), dollars(r.s.sales.merch), dollars(r.s.totalIn), dollars(r.s.totalOut), dollars(r.s.net),
-    i ? dollars(r.s.net - g.editions[i - 1].s.net) : null
-  ]))
-];
+const xlsx = (file: string, sheets: Sheet[], title: string) => downloadXlsx(`${file}-${todayIso()}.xlsx`, sheets, title);
 
 // ------------------------------------------------------------------ the page
 
@@ -121,7 +64,7 @@ export function Tournaments() {
   return (
     <Page title="Tournaments" intro={<>Money and stats for every tournament the Reavers host, one edition per year. Card and cash sales rung up on Square come in from <Link to="/sales">Square sales</Link> or a Square export, so nothing is typed twice. Monthly dues stay out.</>}
       actions={<>
-        <button onClick={() => downloadCsv(`reavers-tournaments-${todayIso()}.csv`, [["All tournaments"], ...compareRows(all), ...all.flatMap(r => [[], ...editionRows(r.t, r.d)])])} disabled={loading || !all.length}>Export everything</button>
+        <button onClick={() => xlsx("reavers-tournaments", [overviewSheet(all, todayIso()), ...all.flatMap(r => editionSheets(r.t, r.d, todayIso(), r.t.code))], "Reavers tournaments")} disabled={loading || !all.length}>Export everything</button>
         {canEdit && <button className="primary" onClick={() => setEditing("new")}>New edition</button>}
       </>}>
       <div className="toolbar">
@@ -157,7 +100,8 @@ function Edition({ t, data, canEdit, canPost, onEdit, reload }: { t: Tournament;
   const store = useStore();
   const run = useAction();
   const s = summarize(data.fighters, data.sales, data.expenses, data.boxes);
-  const csv = (part: string, rows: Cell[][]) => downloadCsv(`reavers-${slug(t)}-${part}-${todayIso()}.csv`, rows);
+  const today = todayIso();
+  const save = (part: string, sheets: Sheet[]) => xlsx(`reavers-${slug(t)}-${part}`, sheets, `${t.name} ${t.year}`);
   const days = [t.starts_on, t.ends_on].filter(Boolean).map(d => dateLabel(d)).filter((d, i, a) => a.indexOf(d) === i).join(" to ");
 
   async function postToLedger() {
@@ -179,7 +123,7 @@ function Edition({ t, data, canEdit, canPost, onEdit, reload }: { t: Tournament;
           <p className="muted">{[days, t.venue, `Fighter fee ${formatMoney(t.fighter_fee_cents)}`].filter(Boolean).join(" · ")}</p>
         </div>
         <div className="row-actions">
-          <button onClick={() => csv("all", editionRows(t, data))}>Export edition</button>
+          <button onClick={() => save("all", editionSheets(t, data, today))}>Export edition</button>
           {canPost && <button onClick={postToLedger}>Post to ledger</button>}
           {canEdit && <button onClick={onEdit}>Edit edition and stats</button>}
         </div>
@@ -195,7 +139,7 @@ function Edition({ t, data, canEdit, canPost, onEdit, reload }: { t: Tournament;
         <div className="stat"><span>Through Square</span><strong><Money cents={s.sales.card} /></strong><small><Link to="/sales">Square sales</Link></small></div>
       </div>
 
-      <Section title="Expected and collected, by payment method" actions={<button onClick={() => csv("summary", summaryRows(t, s))}>Export</button>}>
+      <Section title="Expected and collected, by payment method" actions={<button onClick={() => save("summary", [summarySheet(t, data, today)])}>Export</button>}>
         <div className="table-wrap">
           <table>
             <thead><tr><th>Method</th><th className="num">Expected</th><th className="num">Collected</th><th className="num">Difference</th></tr></thead>
@@ -218,11 +162,11 @@ function Edition({ t, data, canEdit, canPost, onEdit, reload }: { t: Tournament;
           <ul className="list">{s.fighters.owing.map(f => <li key={f.id}><span>{f.name} <small className="muted">{methodLabel(f.method)}</small></span><span className="money short">{formatMoney(Math.max(0, f.fee_cents - f.paid_cents))}</span></li>)}</ul>
         </div>)}
 
-      <Fighters t={t} rows={data.fighters} canEdit={canEdit} reload={reload} onExport={() => csv("fighters", fighterRows(t, data.fighters))} />
-      <Sales t={t} rows={data.sales} canEdit={canEdit} reload={reload} onExport={() => csv("sales", saleRows(t, data.sales))} />
-      <Expenses t={t} rows={data.expenses} canEdit={canEdit} reload={reload} onExport={() => csv("expenses", expenseRows(t, data.expenses))} />
-      <CashBoxes t={t} rows={data.boxes} summary={s} canEdit={canEdit} reload={reload} onExport={() => csv("cash-boxes", boxRows(t, data.boxes))} />
-      <Stats t={t} data={data} onExport={() => csv("stats", statRows(t, data))} />
+      <Fighters t={t} rows={data.fighters} canEdit={canEdit} reload={reload} onExport={() => save("fighters", [fighterSheet(t, data.fighters, today)])} />
+      <Sales t={t} rows={data.sales} canEdit={canEdit} reload={reload} onExport={() => save("sales", [saleSheet(t, data.sales, today)])} />
+      <Expenses t={t} rows={data.expenses} canEdit={canEdit} reload={reload} onExport={() => save("expenses", [expenseSheet(t, data.expenses, today)])} />
+      <CashBoxes t={t} rows={data.boxes} summary={s} canEdit={canEdit} reload={reload} onExport={() => save("cash-boxes", [cashBoxSheet(t, data.boxes, today)])} />
+      <Stats t={t} data={data} onExport={() => save("stats", [statSheet(t, data, today)])} />
     </>
   );
 }
@@ -713,7 +657,7 @@ function AllTournaments({ rows, onPick }: { rows: { t: Tournament; s: Summary; d
   };
   return (
     <>
-      <div className="toolbar"><button onClick={() => downloadCsv(`reavers-tournaments-compare-${todayIso()}.csv`, compareRows(rows))}>Export comparison</button></div>
+      <div className="toolbar"><button onClick={() => xlsx("reavers-tournaments-compare", [overviewSheet(rows, todayIso())], "Reavers tournaments")}>Export comparison</button></div>
       {groups.map(g => (
         <Section key={g.name} title={g.name}>
           <div className="table-wrap">
