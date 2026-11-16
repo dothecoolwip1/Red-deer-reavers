@@ -27,15 +27,23 @@ const visitors = (e: Tournament) => (e.spectators || []).reduce((s, d) => s + d.
 const STATUS_STYLE: Record<FighterStatus, Style> = { paid: "good", owes: "bad", waived: "free", not_needed: "free" };
 const STATUS_ORDER: Record<FighterStatus, number> = { owes: 0, paid: 1, waived: 2, not_needed: 3 };
 
-/** Title, one line about the edition, and a blank row: the first three rows of every sheet. */
-function top(e: Tournament, what: string, width: number, today: string): { rows: XCell[][]; merges: string[] } {
-  const about = [e.code, days(e), e.venue, `Exported ${day(today)}`].filter(Boolean).join("  ·  ");
-  return { rows: [[{ v: `${e.name} ${e.year}  ·  ${what}`, s: "title" }], [{ v: about, s: "subtitle" }], []], merges: [`A1:${ref(Math.max(width, 4) - 1, 1)}`, `A2:${ref(Math.max(width, 4) - 1, 2)}`] };
+/** A dark banner (event and year, then what the sheet is and the edition's details), and a thin spacer row. */
+function top(e: Tournament, what: string, width: number, today: string, lead?: string): { rows: XCell[][]; merges: string[] } {
+  const about = [what.toUpperCase(), e.code, days(e), e.venue, lead, `Exported ${day(today)}`].filter(Boolean).join("   ·   ");
+  const w = Math.max(width, 4) - 1;
+  return { rows: [[{ v: `${e.name} ${e.year}`, s: "title" }], [{ v: about, s: "about" }], []], merges: [`A1:${ref(w, 1)}`, `A2:${ref(w, 2)}`] };
 }
-const sheet = (name: string, e: Tournament, what: string, width: number, today: string, body: XCell[][], extra: Partial<Sheet> = {}): Sheet => {
-  const { rows, merges } = top(e, what, width, today);
-  return { ...extra, name, rows: [...rows, ...body], merges: [...merges, ...(extra.merges || [])], heights: { 1: 30, ...(extra.heights || {}) } };
+type Extra = Partial<Sheet> & { lead?: string };
+const sheet = (name: string, e: Tournament, what: string, width: number, today: string, body: XCell[][], extra: Extra = {}): Sheet => {
+  const { lead, ...rest } = extra;
+  const { rows, merges } = top(e, what, width, today, lead);
+  // Room to breathe: taller section titles and table headers.
+  const auto: Record<number, number> = {};
+  body.forEach((r, i) => { const c = r[0]; const st = c && typeof c === "object" ? c.s : undefined; if (st === "section") auto[i + 4] = 30; else if (st === "head" || st === "headNum") auto[i + 4] = 28; else if (st === "totalLabel") auto[i + 4] = 24; });
+  rest.heights = { ...auto, ...(rest.heights || {}) };
+  return { ...rest, name, rows: [...rows, ...body], merges: [...merges, ...(rest.merges || [])], heights: { 1: 42, 2: 24, 3: 12, ...(rest.freeze ? ({ 4: 30 } as Record<number, number>) : {}), ...(rest.heights || {}) } };
 };
+const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 
 // ------------------------------------------------------------------ Summary
 
@@ -46,10 +54,12 @@ export function summarySheet(e: Tournament, d: EditionData, today: string, name 
   const heights: Record<number, number> = {};
 
   // Headline numbers
+  heights[R()] = 26;
   body.push([t("Total in", "kpiLabel"), t("Total out", "kpiLabel"), t("Net", "kpiLabel"), t("Still owing", "kpiLabel"), t("Fighters", "kpiLabel")]);
-  heights[R()] = 30;
+  heights[R()] = 40;
   body.push([$(s.totalIn, "kpiMoney"), $(s.totalOut, "kpiMoney"), $(s.net, s.net < 0 ? "kpiMoneyBad" : "kpiMoneyGood"), $(s.fees.owing, s.fees.owing ? "kpiMoneyBad" : "kpiMoney"), n(s.fighters.total, "kpiInt")]);
-  body.push([t(`of ${money(s.expectedIn)} expected`, "subtitle"), t(`${d.expenses.length} ${d.expenses.length === 1 ? "expense" : "expenses"}`, "subtitle"), null, t(`${s.fighters.owing.length} ${s.fighters.owing.length === 1 ? "fighter" : "fighters"}`, "subtitle"), t(`${s.fighters.paid} paid · ${s.fighters.free} free`, "subtitle")]);
+  heights[R()] = 22;
+  body.push([t(`of ${money(s.expectedIn)} expected`, "kpiNote"), t(plural(d.expenses.length, "expense"), "kpiNote"), t(s.net < 0 ? "loss" : "profit", "kpiNote"), t(plural(s.fighters.owing.length, "fighter"), "kpiNote"), t(`${s.fighters.paid} paid · ${s.fighters.free} free`, "kpiNote")]);
   body.push([]);
 
   // By payment method
@@ -104,7 +114,7 @@ const money = (c: number) => `$${(c / 100).toLocaleString("en-CA", { minimumFrac
 export function fighterSheet(e: Tournament, list: TournamentFighter[], today: string, name = "Fighters"): Sheet {
   const cols = ["Name", "Status", "Fee", "Paid", "Still owing", "Payment method", "Club", "Divisions", "Square", "Note"];
   const sorted = [...list].sort((a, b) => STATUS_ORDER[a.status] - STATUS_ORDER[b.status] || a.name.localeCompare(b.name));
-  const body: XCell[][] = [head(cols, [2, 3, 4])];
+  const body: XCell[][] = [head(cols, [2, 3, 4]).map((c, i) => (i === 1 ? { v: "Status", s: "headCenter" as Style } : c))];
   const first = 5;
   sorted.forEach((f, i) => {
     const r = first + i;
@@ -118,7 +128,8 @@ export function fighterSheet(e: Tournament, list: TournamentFighter[], today: st
   body.push([t(`${list.length} ${list.length === 1 ? "fighter" : "fighters"}`, "totalLabel"), t(`${s.fighters.paid} paid`, "totalLabel"),
     { f: sumF(2, first, Math.max(first, last)), v: sumC(list, f => f.fee_cents), s: "totalMoney" }, { f: sumF(3, first, Math.max(first, last)), v: sumC(list, f => f.paid_cents), s: "totalMoney" },
     { f: sumF(4, first, Math.max(first, last)), v: s.fees.owing / 100, s: "totalMoney" }, t("", "totalLabel"), t("", "totalLabel"), t("", "totalLabel"), t("", "totalLabel"), t("", "totalLabel")]);
-  return sheet(name, e, "Fighters", cols.length, today, body, { freeze: 4, filter: { row: 4, cols: cols.length, last }, cols: [24, 12, 11, 11, 12, 15, 18, 22, 9, 44], landscape: true, tab: "FF6CC48A" });
+  const lead = `${plural(list.length, "fighter")}: ${s.fighters.paid} paid, ${s.fighters.owing.length} owe, ${s.fighters.free} free`;
+  return sheet(name, e, "Fighters", cols.length, today, body, { lead, freeze: 4, filter: { row: 4, cols: cols.length, last }, stripes: sorted.length ? [`A${first}:A${last}`, `C${first}:J${last}`] : [], cols: [26, 13, 11, 11, 12, 16, 18, 22, 9, 46], landscape: true, tab: "FF2E8B57" });
 }
 const sumC = <T,>(rows: T[], f: (r: T) => number) => rows.reduce((s, r) => s + f(r), 0) / 100;
 
@@ -137,7 +148,7 @@ export function saleSheet(e: Tournament, list: TournamentSale[], today: string, 
   const last = Math.max(first, first + sorted.length - 1);
   body.push([t(`${list.length} ${list.length === 1 ? "line" : "lines"}`, "totalLabel"), t("", "totalLabel"), { f: sumF(2, first, last), v: list.reduce((s, x) => s + x.quantity, 0), s: "totalInt" }, t("", "totalLabel"),
     { f: sumF(4, first, last), v: sumC(list, x => x.quantity * x.price_cents), s: "totalMoney" }, t("", "totalLabel"), t("", "totalLabel"), t("", "totalLabel")]);
-  return sheet(name, e, "Sales", cols.length, today, body, { freeze: 4, filter: { row: 4, cols: cols.length, last: first + sorted.length - 1 }, cols: [14, 30, 10, 11, 12, 15, 16, 36], landscape: true, tab: "FFD6A84C" });
+  return sheet(name, e, "Sales", cols.length, today, body, { lead: plural(list.length, "sale line"), freeze: 4, filter: { row: 4, cols: cols.length, last: first + sorted.length - 1 }, stripes: sorted.length ? [`A${first}:H${first + sorted.length - 1}`] : [], cols: [17, 30, 10, 11, 12, 16, 16, 36], landscape: true, tab: "FFD6A84C" });
 }
 
 // ------------------------------------------------------------------ Expenses
@@ -150,7 +161,7 @@ export function expenseSheet(e: Tournament, list: TournamentExpense[], today: st
   for (const x of sorted) body.push([{ date: x.spent_on, s: "date" }, t(EXPENSE_LABEL[x.category], "label"), t(x.description, "wrap"), $(x.amount_cents), t(METHOD_LABEL[x.method]), t(x.from_cash_box ? "Yes" : "")]);
   const last = Math.max(first, first + sorted.length - 1);
   body.push([t(`${list.length} ${list.length === 1 ? "expense" : "expenses"}`, "totalLabel"), t("", "totalLabel"), t("", "totalLabel"), { f: sumF(3, first, last), v: sumC(list, x => x.amount_cents), s: "totalMoney" }, t("", "totalLabel"), t("", "totalLabel")]);
-  return sheet(name, e, "Expenses", cols.length, today, body, { freeze: 4, filter: { row: 4, cols: cols.length, last: first + sorted.length - 1 }, cols: [14, 14, 40, 12, 15, 17], tab: "FFFF6B5E" });
+  return sheet(name, e, "Expenses", cols.length, today, body, { lead: plural(list.length, "expense"), freeze: 4, filter: { row: 4, cols: cols.length, last: first + sorted.length - 1 }, stripes: sorted.length ? [`A${first}:F${first + sorted.length - 1}`] : [], cols: [17, 14, 40, 12, 16, 17], tab: "FFC8463D" });
 }
 
 // ------------------------------------------------------------------ Cash boxes
@@ -222,7 +233,7 @@ export function editionSheets(e: Tournament, d: EditionData, today: string, pref
 export function overviewSheet(all: { t: Tournament; d: EditionData }[], today: string): Sheet {
   const cols = ["Edition", "Event", "Year", "Dates", "Venue", "Fighters", "Fights", "Spectators", "Fees expected", "Fees collected", "Still owing", "Sales", "Merch", "Total in", "Total out", "Net", "Net vs year before"];
   const rows = all.map(r => ({ ...r, s: summarize(r.d.fighters, r.d.sales, r.d.expenses, r.d.boxes), name: r.t.name, year: r.t.year }));
-  const body: XCell[][] = [[{ v: "Reavers tournaments  ·  every edition", s: "title" }], [{ v: `Exported ${day(today)}`, s: "subtitle" }], [], head(cols, [2, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])];
+  const body: XCell[][] = [[{ v: "Red Deer Reavers tournaments", s: "title" }], [{ v: `EVERY EDITION   ·   ${plural(all.length, "edition")}   ·   Exported ${day(today)}`, s: "about" }], [], head(cols, [2, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])];
   const first = 5;
   for (const g of byEvent(rows)) g.editions.forEach((r, i) => {
     const s: Summary = r.s, prev = i ? g.editions[i - 1].s : null;
@@ -236,6 +247,6 @@ export function overviewSheet(all: { t: Tournament; d: EditionData }[], today: s
     { f: sumF(5, first, last), v: rows.reduce((a, r) => a + (r.t.fighters_count ?? r.d.fighters.length), 0), s: "totalInt" }, { f: sumF(6, first, last), v: rows.reduce((a, r) => a + (r.t.fights ?? 0), 0), s: "totalInt" }, { f: sumF(7, first, last), v: rows.reduce((a, r) => a + visitors(r.t), 0), s: "totalInt" },
     ...([s => s.fees.expected, s => s.fees.collected, s => s.fees.owing, s => s.sales.total, s => s.sales.merch, s => s.totalIn, s => s.totalOut, s => s.net] as ((s: Summary) => number)[])
       .map((f, j) => ({ f: sumF(8 + j, first, last), v: all$(f), s: "totalMoney" as Style })), t("", "totalLabel")]);
-  return { name: "All editions", rows: body, freeze: 4, filter: { row: 4, cols: cols.length, last: body.length - 1 }, merges: ["A1:H1", "A2:H2"], heights: { 1: 30 }, cols: [14, 20, 7, 18, 18, 9, 8, 11, 13, 13, 12, 11, 11, 12, 12, 12, 15], landscape: true, tab: "FF4F2382" };
+  return { name: "All editions", rows: body, freeze: 4, filter: { row: 4, cols: cols.length, last: body.length - 1 }, merges: [`A1:${ref(cols.length - 1, 1)}`, `A2:${ref(cols.length - 1, 2)}`], heights: { 1: 42, 2: 24, 3: 12, 4: 30 }, stripes: body.length > 5 ? [`A5:Q${body.length - 1}`] : [], cols: [14, 20, 7, 18, 18, 9, 8, 11, 13, 13, 12, 11, 11, 12, 12, 12, 15], landscape: true, tab: "FF4F2382" };
 }
 

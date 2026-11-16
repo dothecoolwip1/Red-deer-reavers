@@ -5,7 +5,7 @@
 export const STYLES = [
   "default", "title", "subtitle", "head", "headNum", "text", "wrap", "int", "money", "date", "label",
   "totalLabel", "totalInt", "totalMoney", "section", "good", "bad", "free", "kpiLabel", "kpiMoney", "kpiInt",
-  "moneyGood", "moneyBad", "muted", "kpiMoneyGood", "kpiMoneyBad"
+  "moneyGood", "moneyBad", "muted", "kpiMoneyGood", "kpiMoneyBad", "about", "kpiNote", "headCenter"
 ] as const;
 export type Style = (typeof STYLES)[number];
 
@@ -25,6 +25,8 @@ export type Sheet = {
   heights?: Record<number, number>;
   tab?: string;
   landscape?: boolean;
+  /** Ranges that get a light band on every other row (status pills are left out so they keep their colour). */
+  stripes?: string[];
 };
 
 export const colName = (i: number) => { let s = ""; for (let n = i + 1; n > 0; n = Math.floor((n - 1) / 26)) s = String.fromCharCode(65 + ((n - 1) % 26)) + s; return s; };
@@ -44,76 +46,92 @@ export function excelDate(iso: string): number | null {
 
 // ------------------------------------------------------------------ styles
 
-const ROYAL = "FF4F2382", GILT = "FFD6A84C", BONE = "FFF7F1E3", LINE = "FFDDD6E6";
+// The app's colours: iron (near black), gilt, royal purple, bone.
+const IRON = "FF16121C", GILT = "FFD6A84C", GILT_HI = "FFF3CF7A", ROYAL = "FF4F2382", BONE = "FFF7F1E3", BONE_DIM = "FFC9BDA6", INK = "FF1F1A27", LINE = "FFE4DEEA", WHITE = "FFFFFFFF";
+const font = (sz: number, rgb: string, opts = "") => `<font>${opts}<sz val="${sz}"/><color rgb="${rgb}"/><name val="Calibri"/><family val="2"/></font>`;
 const FONTS = [
-  `<font><sz val="11"/><color rgb="FF1F1A27"/><name val="Calibri"/><family val="2"/></font>`, // 0 body
-  `<font><b/><sz val="18"/><color rgb="${ROYAL}"/><name val="Calibri"/><family val="2"/></font>`, // 1 title
-  `<font><i/><sz val="10"/><color rgb="FF6E6578"/><name val="Calibri"/><family val="2"/></font>`, // 2 subtitle / muted
-  `<font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/><family val="2"/></font>`, // 3 header
-  `<font><b/><sz val="11"/><color rgb="FF1F1A27"/><name val="Calibri"/><family val="2"/></font>`, // 4 bold
-  `<font><b/><sz val="13"/><color rgb="${ROYAL}"/><name val="Calibri"/><family val="2"/></font>`, // 5 section
-  `<font><sz val="11"/><color rgb="FF006100"/><name val="Calibri"/><family val="2"/></font>`, // 6 green
-  `<font><sz val="11"/><color rgb="FF9C0006"/><name val="Calibri"/><family val="2"/></font>`, // 7 red
-  `<font><sz val="11"/><color rgb="FF595959"/><name val="Calibri"/><family val="2"/></font>`, // 8 grey
-  `<font><b/><sz val="16"/><color rgb="FF1F1A27"/><name val="Calibri"/><family val="2"/></font>`, // 9 KPI value
-  `<font><sz val="9"/><color rgb="FF6E6578"/><name val="Calibri"/><family val="2"/></font>`, // 10 KPI label
-  `<font><b/><sz val="11"/><color rgb="FF006100"/><name val="Calibri"/><family val="2"/></font>`, // 11 bold green
-  `<font><b/><sz val="11"/><color rgb="FF9C0006"/><name val="Calibri"/><family val="2"/></font>`, // 12 bold red
-  `<font><b/><sz val="16"/><color rgb="FF006100"/><name val="Calibri"/><family val="2"/></font>`, // 13 KPI green
-  `<font><b/><sz val="16"/><color rgb="FF9C0006"/><name val="Calibri"/><family val="2"/></font>` // 14 KPI red
+  font(11, INK), // 0 body
+  font(20, GILT_HI, "<b/>"), // 1 banner title
+  font(10, "FF6E6578", "<i/>"), // 2 note
+  font(11, WHITE, "<b/>"), // 3 header / pill
+  font(11, INK, "<b/>"), // 4 bold
+  font(14, ROYAL, "<b/>"), // 5 section
+  font(11, "FF1E7A46", "<b/>"), // 6 green
+  font(11, "FFB3261E", "<b/>"), // 7 red
+  font(10, "FF6E6578", "<b/>"), // 8 KPI label
+  font(20, INK, "<b/>"), // 9 KPI value
+  font(10, BONE_DIM), // 10 banner line
+  font(20, "FF1E7A46", "<b/>"), // 11 KPI green
+  font(20, "FFB3261E", "<b/>"), // 12 KPI red
+  font(9, "FF6E6578", "<i/>"), // 13 KPI note
+  font(10, "FF6E6578", "<i/>") // 14 muted note in tables
 ];
 const solid = (rgb: string) => `<fill><patternFill patternType="solid"><fgColor rgb="${rgb}"/><bgColor indexed="64"/></patternFill></fill>`;
+// 0 none, 1 gray125 (required), 2 royal, 3 bone, 4 green pill, 5 red pill, 6 grey pill, 7 iron, 8 totals
 const FILLS = [`<fill><patternFill patternType="none"/></fill>`, `<fill><patternFill patternType="gray125"/></fill>`,
-  solid(ROYAL), solid(BONE), solid("FFE2F3E5"), solid("FFFBE1DE"), solid("FFEDEBEF")];
-const side = (name: string, style?: string, rgb?: string) => (style ? `<${name} style="${style}"><color rgb="${rgb}"/></${name}>` : `<${name}/>`);
-const border = (bottom?: [string, string], top?: [string, string]) =>
-  `<border>${side("left")}${side("right")}${side("top", top?.[0], top?.[1])}${side("bottom", bottom?.[0], bottom?.[1])}${side("diagonal")}</border>`;
-const BORDERS = [border(), border(["thin", LINE]), border(["thin", LINE], ["medium", ROYAL]), border(["medium", GILT]), border(["thin", GILT])];
+  solid(ROYAL), solid(BONE), solid("FF2E8B57"), solid("FFC8463D"), solid("FF9A93A3"), solid(IRON), solid("FFEFE3C8")];
+const side = (name: string, s?: [string, string]) => (s ? `<${name} style="${s[0]}"><color rgb="${s[1]}"/></${name}>` : `<${name}/>`);
+const border = (b: { l?: [string, string]; r?: [string, string]; t?: [string, string]; btm?: [string, string] } = {}) =>
+  `<border>${side("left", b.l)}${side("right", b.r)}${side("top", b.t)}${side("bottom", b.btm)}${side("diagonal")}</border>`;
+const GAP: [string, string] = ["thick", WHITE];
+const BORDERS = [
+  border(), // 0
+  border({ btm: ["thin", LINE] }), // 1 body row
+  border({ t: ["medium", GILT], btm: ["medium", GILT] }), // 2 totals
+  border({ btm: ["medium", GILT] }), // 3 section
+  border({ l: GAP, r: GAP, t: ["thick", GILT] }), // 4 KPI card top
+  border({ l: GAP, r: GAP }), // 5 KPI card middle
+  border({ l: ["thin", WHITE], r: ["thin", WHITE], btm: ["thin", LINE] }), // 6 pill
+  border({ btm: ["medium", GILT] }) // 7 header
+];
 const MONEY = 164, DATE = 165, INT = 3;
-const NUMFMTS = `<numFmts count="2"><numFmt numFmtId="${MONEY}" formatCode="&quot;$&quot;#,##0.00;[Red]\\-&quot;$&quot;#,##0.00"/><numFmt numFmtId="${DATE}" formatCode="mmm\\ d,\\ yyyy"/></numFmts>`;
+const NUMFMTS = `<numFmts count="2"><numFmt numFmtId="${MONEY}" formatCode="&quot;$&quot;#,##0.00;[Red]\\-&quot;$&quot;#,##0.00"/><numFmt numFmtId="${DATE}" formatCode="ddd\\ mmm\\ d,\\ yyyy"/></numFmts>`;
 
 /** [font, fill, border, numFmt, horizontal, wrap] for each style, in STYLES order. */
 const XF: Record<Style, [number, number, number, number, string?, boolean?]> = {
   default: [0, 0, 0, 0],
-  title: [1, 0, 0, 0],
+  title: [1, 7, 0, 0, "left"],
+  about: [10, 7, 0, 0, "left"],
   subtitle: [2, 0, 0, 0],
-  head: [3, 2, 0, 0, "left", true],
-  headNum: [3, 2, 0, 0, "right", true],
+  head: [3, 2, 7, 0, "left", true],
+  headNum: [3, 2, 7, 0, "right", true],
+  headCenter: [3, 2, 7, 0, "center", true],
   text: [0, 0, 1, 0],
   wrap: [0, 0, 1, 0, "left", true],
   int: [0, 0, 1, INT],
   money: [0, 0, 1, MONEY],
   date: [0, 0, 1, DATE, "left"],
   label: [4, 0, 1, 0],
-  totalLabel: [4, 3, 2, 0],
-  totalInt: [4, 3, 2, INT],
-  totalMoney: [4, 3, 2, MONEY],
+  totalLabel: [4, 8, 2, 0],
+  totalInt: [4, 8, 2, INT],
+  totalMoney: [4, 8, 2, MONEY],
   section: [5, 0, 3, 0],
-  good: [6, 4, 1, 0, "center"],
-  bad: [7, 5, 1, 0, "center"],
-  free: [8, 6, 1, 0, "center"],
-  kpiLabel: [10, 3, 4, 0],
-  kpiMoney: [9, 3, 0, MONEY, "left"],
-  kpiInt: [9, 3, 0, INT, "left"],
-  moneyGood: [11, 0, 1, MONEY],
-  moneyBad: [12, 0, 1, MONEY],
-  muted: [2, 0, 1, 0, "left", true],
-  kpiMoneyGood: [13, 3, 0, MONEY, "left"],
-  kpiMoneyBad: [14, 3, 0, MONEY, "left"]
+  good: [3, 4, 6, 0, "center"],
+  bad: [3, 5, 6, 0, "center"],
+  free: [3, 6, 6, 0, "center"],
+  kpiLabel: [8, 3, 4, 0],
+  kpiMoney: [9, 3, 5, MONEY, "left"],
+  kpiInt: [9, 3, 5, INT, "left"],
+  kpiMoneyGood: [11, 3, 5, MONEY, "left"],
+  kpiMoneyBad: [12, 3, 5, MONEY, "left"],
+  kpiNote: [13, 3, 5, 0, "left"],
+  moneyGood: [6, 0, 1, MONEY],
+  moneyBad: [7, 0, 1, MONEY],
+  muted: [14, 0, 1, 0, "left", true]
 };
 
 function stylesXml() {
   const xfs = STYLES.map(s => {
     const [font, fill, bd, fmt, h, wrap] = XF[s];
     // A one-character inset keeps a right-aligned amount from running into the text in the next column.
-    const plain = s === "default" || s === "title" || s === "subtitle" || s === "section";
+    const plain = s === "default" || s === "subtitle" || s === "section";
     const horizontal = h ?? (plain ? undefined : fmt ? "right" : "left");
     const indent = horizontal === "left" || horizontal === "right" ? ` indent="1"` : "";
     const align = `<alignment vertical="center"${horizontal ? ` horizontal="${horizontal}"` : ""}${indent}${wrap ? ` wrapText="1"` : ""}/>`;
     return `<xf numFmtId="${fmt}" fontId="${font}" fillId="${fill}" borderId="${bd}" xfId="0" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1">${align}</xf>`;
   });
   return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">${NUMFMTS}<fonts count="${FONTS.length}">${FONTS.join("")}</fonts><fills count="${FILLS.length}">${FILLS.join("")}</fills><borders count="${BORDERS.length}">${BORDERS.join("")}</borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="${xfs.length}">${xfs.join("")}</cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`;
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">${NUMFMTS}<fonts count="${FONTS.length}">${FONTS.join("")}</fonts><fills count="${FILLS.length}">${FILLS.join("")}</fills><borders count="${BORDERS.length}">${BORDERS.join("")}</borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="${xfs.length}">${xfs.join("")}</cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles><dxfs count="1"><dxf><fill><patternFill patternType="solid"><bgColor rgb="FFF6F3F9"/></patternFill></fill></dxf></dxfs></styleSheet>`;
 }
 
 // ------------------------------------------------------------------ sheets
@@ -142,7 +160,7 @@ function cellXml(c: XCell, r: string): string {
 function cellWidth(c: XCell): number {
   if (c === null || c === undefined) return 0;
   const o = typeof c === "object" ? c : { v: c };
-  if (o.s === "title" || o.s === "subtitle" || o.s === "section" || o.s === "muted") return 0;
+  if (o.s === "title" || o.s === "about" || o.s === "subtitle" || o.s === "section" || o.s === "muted" || o.s === "kpiNote") return 0;
   if (o.date !== undefined) return 13;
   if (typeof o.v === "number") return MONEYISH.has(o.s ?? "int") ? Math.max(10, Math.abs(o.v).toFixed(2).length + 5) : String(o.v).length + 2;
   const longest = String(o.v ?? "").split("\n").reduce((m, l) => Math.max(m, l.length), 0);
@@ -161,9 +179,10 @@ function sheetXml(sh: Sheet): string {
   }).join("");
   const pane = sh.freeze ? `<pane ySplit="${sh.freeze}" topLeftCell="A${sh.freeze + 1}" activePane="bottomLeft" state="frozen"/><selection pane="bottomLeft" activeCell="A${sh.freeze + 1}" sqref="A${sh.freeze + 1}"/>` : "";
   const filter = sh.filter ? `<autoFilter ref="${ref(0, sh.filter.row)}:${ref(sh.filter.cols - 1, Math.max(sh.filter.row, sh.filter.last))}"/>` : "";
+  const stripes = sh.stripes?.length ? `<conditionalFormatting sqref="${sh.stripes.join(" ")}"><cfRule type="expression" dxfId="0" priority="1"><formula>MOD(ROW(),2)=0</formula></cfRule></conditionalFormatting>` : "";
   const merges = sh.merges?.length ? `<mergeCells count="${sh.merges.length}">${sh.merges.map(m => `<mergeCell ref="${m}"/>`).join("")}</mergeCells>` : "";
   return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheetPr>${sh.tab ? `<tabColor rgb="${sh.tab}"/>` : ""}<pageSetUpPr fitToPage="1"/></sheetPr><dimension ref="A1:${ref(ncols - 1, Math.max(1, sh.rows.length))}"/><sheetViews><sheetView workbookViewId="0" showGridLines="0">${pane}</sheetView></sheetViews><sheetFormatPr defaultRowHeight="18" customHeight="1"/>${cols}<sheetData>${rows}</sheetData>${filter}${merges}<printOptions horizontalCentered="1"/><pageMargins left="0.5" right="0.5" top="0.6" bottom="0.6" header="0.3" footer="0.3"/><pageSetup orientation="${sh.landscape ? "landscape" : "portrait"}" fitToWidth="1" fitToHeight="0"/><headerFooter><oddFooter>&amp;L&amp;8${esc(sh.name)}&amp;R&amp;8Page &amp;P of &amp;N</oddFooter></headerFooter></worksheet>`;
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheetPr>${sh.tab ? `<tabColor rgb="${sh.tab}"/>` : ""}<pageSetUpPr fitToPage="1"/></sheetPr><dimension ref="A1:${ref(ncols - 1, Math.max(1, sh.rows.length))}"/><sheetViews><sheetView workbookViewId="0" showGridLines="0">${pane}</sheetView></sheetViews><sheetFormatPr defaultRowHeight="20" customHeight="1"/>${cols}<sheetData>${rows}</sheetData>${filter}${merges}${stripes}<printOptions horizontalCentered="1"/><pageMargins left="0.5" right="0.5" top="0.6" bottom="0.6" header="0.3" footer="0.3"/><pageSetup orientation="${sh.landscape ? "landscape" : "portrait"}" fitToWidth="1" fitToHeight="0"/><headerFooter><oddFooter>&amp;L&amp;8${esc(sh.name)}&amp;R&amp;8Page &amp;P of &amp;N</oddFooter></headerFooter></worksheet>`;
 }
 
 /** Excel's rules for sheet names: 31 characters, none of \ / ? * [ ] :, and unique. */
