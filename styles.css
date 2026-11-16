@@ -591,6 +591,16 @@ a.result-row:active{transform:scale(.995);transition-duration:60ms}
 .fighter-hero .meta .icon{color:var(--gilt);width:17px;height:17px}
 .fighter-hero .chip-row{justify-content:center}
 .fighter-hero .btn-row{justify-content:center;margin-top:20px}
+.fighter-hero .hero-media.action{opacity:.5;filter:none}
+.fighter-hero .hero-media.action img{object-position:50% 30%}
+.fighter-hero .nickname{margin:-2px 0 8px;font-family:var(--font-caps);font-size:clamp(1rem,3.6vw,1.35rem);font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--gilt-hi)}
+.fighter-hero .tagline{max-width:34ch;margin:0 auto 14px;font-size:1.15rem;font-style:italic;color:var(--bone)}
+.fighter-card .nickname{margin:0;font-family:var(--font-caps);font-size:.78rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--gilt)}
+.bio-card .about p{margin:0 0 .8em}
+.bio-card .about p:last-child{margin-bottom:0}
+.plate-sponsor{border-color:rgba(255,123,28,.45)}
+.sponsor-names{list-style:none;margin:0 0 14px;padding:0;display:grid;gap:6px}
+.sponsor-names li{font-family:var(--font-display);font-size:1.5rem;font-weight:800;line-height:1.05;color:var(--bone)}
 .fighter-layout{display:grid;gap:18px}
 .stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
 .stat-grid .record-tile{padding:16px 10px}
@@ -744,6 +754,31 @@ add-to-calendar-button{--btn-background:var(--iron-700);--btn-text:var(--bone);-
 @media print{
   .site-header,.dock,.embers,.marquee,body::after{display:none!important}
   body{background:#fff;color:#000;padding:0}
+  /* fighter profile: a one-page sponsor sheet */
+  body[data-page="fighter"] .site-footer,body[data-page="fighter"] .no-print,body[data-page="fighter"] .source-note{display:none!important}
+  body[data-page="fighter"] .fighter-hero{padding:0 0 12px;color:#000}
+  body[data-page="fighter"] .fighter-hero::before,body[data-page="fighter"] .fighter-hero .hero-media::after{display:none}
+  body[data-page="fighter"] .fighter-hero .hero-media{display:none}
+  body[data-page="fighter"] .fighter-hero .hero-media.action{display:block;position:static;opacity:1;filter:none;height:auto;margin:0 0 12px}
+  body[data-page="fighter"] .fighter-hero .hero-media.action img{position:static;width:100%;max-height:9cm;object-fit:cover;animation:none;transform:none}
+  body[data-page="fighter"] .fighter-hero h1{font-size:44pt;color:#000;text-shadow:none}
+  body[data-page="fighter"] .fighter-hero .nickname,body[data-page="fighter"] .eyebrow{color:#6b3d00}
+  body[data-page="fighter"] .fighter-hero .tagline,body[data-page="fighter"] .fighter-hero .meta,body[data-page="fighter"] .muted{color:#222}
+  body[data-page="fighter"] .fighter-hero .meta .icon{color:#6b3d00}
+  body[data-page="fighter"] .plate,body[data-page="fighter"] .parchment,body[data-page="fighter"] .result-row,body[data-page="fighter"] .chip{background:#fff!important;color:#000;border:1px solid #999;box-shadow:none}
+  body[data-page="fighter"] .plate::before,body[data-page="fighter"] .plate::after,body[data-page="fighter"] .parchment::before,body[data-page="fighter"] .parchment::after{display:none}
+  body[data-page="fighter"] .record-tile b,body[data-page="fighter"] .sponsor-names li,body[data-page="fighter"] .result-row strong,body[data-page="fighter"] .bio-card p{color:#000}
+  body[data-page="fighter"] .record-tile span,body[data-page="fighter"] .result-row small{color:#333}
+  body[data-page="fighter"] .stat-grid{grid-template-columns:repeat(6,1fr)}
+  body[data-page="fighter"] .section-tight{padding:8px 0}
+  body[data-page="fighter"] .fighter-layout{grid-template-columns:1.6fr 1fr}
+  body[data-page="fighter"] [data-reveal]{opacity:1!important;transform:none!important}
+  body[data-page="fighter"] .shield{display:none}
+  body[data-page="fighter"] .fighter-layout,body[data-page="fighter"] .fighter-layout>*{align-items:start;align-content:start}
+  body[data-page="fighter"] h2,body[data-page="fighter"] .highlights li,body[data-page="fighter"] .result-row .pts{color:#000}
+  body[data-page="fighter"] .stat-grid .record-tile b{font-size:1.9rem;white-space:nowrap}
+  body[data-page="fighter"] .plate:has(.socials){display:none}
+  body[data-page="fighter"] .bio-card{break-inside:avoid}
 }
 
 /* pause control for moving decoration (marquee + embers) */

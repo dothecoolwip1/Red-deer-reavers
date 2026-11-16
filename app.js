@@ -308,11 +308,14 @@
   }
   function fighterCard(f, i) {
     const disciplines = f.disciplines.slice(0, 3).map(code => `<span class="chip">${escapeHtml(BOS ? BOS.categoryName(code) : code)}</span>`).join("");
-    const roleLine = [f.siteRole && norm(f.siteRole) !== "fighter" ? f.siteRole : "", f.where].filter(Boolean).join(" · ");
+    const x = f.extras || null;
+    const role = (x && x.teamRole) || (f.siteRole && norm(f.siteRole) !== "fighter" ? f.siteRole : "");
+    const roleLine = [x && x.weightClass, role, f.where].filter(Boolean).join(" · ");
     return `<a class="plate fighter-card" href="${escapeHtml(f.profileUrl)}" data-reveal data-delay="${i % 4}">
       ${f.captain ? `<span class="pennant ember">Captain</span>` : f.mercenary ? `<span class="pennant steel">Mercenary</span>` : ""}
       ${shieldHtml(f.name, f.avatar || f.sitePhoto)}
       <h3>${escapeHtml(f.name)}</h3>
+      ${x && x.nickname ? `<p class="nickname">“${escapeHtml(x.nickname)}”</p>` : ""}
       ${roleLine ? `<p class="where">${escapeHtml(roleLine)}</p>` : ""}
       ${disciplines ? `<div class="chip-row">${disciplines}</div>` : ""}
       <span class="text-link go">View profile ${icon("arrow")}</span>
@@ -347,6 +350,11 @@
     const match = siteByName.get(norm(f.name));
     return match ? { ...f, siteRole: match.role || "", sitePhoto: match.photo || "" } : f;
   });
+  // Reavers extras (weight class, team role, nickname) for fighters who turned on their profile in the app.
+  if (fighters.length && BOS && BOS.reaversProfiles && fighterTargets.length) {
+    const extras = await BOS.reaversProfiles(fighters.map(f => f.id));
+    fighters.forEach(f => { f.extras = extras.get(String(f.id).toLowerCase()) || null; });
+  }
   const fighterNames = new Set(fighters.map(f => norm(f.name)));
   const crew = siteRoster.filter(m => !fighterNames.has(norm(m.name)));
 
@@ -425,6 +433,17 @@
 
   // ---------- community inquiry (goes to the team admin) ----------
   const communityForm = document.querySelector("[data-community-form]");
+  // "Sponsor this fighter" on a fighter profile links here with ?interest=sponsor&fighter=<name>: start the form for them.
+  if (communityForm) {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("interest") === "sponsor") {
+      const type = communityForm.querySelector('select[name="event_type"]');
+      if (type) type.value = "sponsor";
+      const fighterName = String(params.get("fighter") || "").replace(/\s+/g, " ").trim().slice(0, 80);
+      const details = communityForm.querySelector('textarea[name="details"]');
+      if (details && !details.value) details.value = fighterName ? `We're interested in sponsoring ${fighterName}.` : "We're interested in sponsoring the Reavers.";
+    }
+  }
   communityForm?.addEventListener("submit", async event => {
     event.preventDefault();
     const status = document.querySelector("[data-community-form-status]");
