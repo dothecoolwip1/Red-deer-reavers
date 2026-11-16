@@ -65,9 +65,8 @@ Until the migration below is applied, a signed-in person sees sample data with a
 10. **Event sign-ups.** After Square is on, apply `20261112000000_reavers_app_event_signups.sql` and deploy
    `reavers-event-signup`. See "Event sign-ups and tickets" below.
 11. **Tournaments.** Apply `20261116000000_reavers_app_tournaments.sql`, then `20261116010000_reavers_app_tournaments_rumble_2026.sql`
-   (home server and the cloud copy). It adds Money → **Tournaments** and its page-access switch, and RUMBLE-2026 with its stats.
-   The Rumble 2026 fighter list isn't in this public repository: run `tournaments/rumble-2026-fighters.sql` from the project
-   files after it. See "Tournaments" below.
+   and `20261116020000_reavers_app_tournaments_rumble_2026_fighters.sql` (home server and the cloud copy). It adds
+   Money → **Tournaments** and its page-access switch, and RUMBLE-2026 with its stats and fighter list. See "Tournaments" below.
 12. **Stripe (optional, older).** Deploy `supabase/functions/reavers-stripe-webhook` with `--no-verify-jwt`, set
    `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET`, and add the endpoint in Stripe for `checkout.session.completed`.
    Square replaces this; existing Stripe links still show under Pay the club → Other payment links.
