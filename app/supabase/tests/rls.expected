@@ -153,10 +153,10 @@ member sees registrations|0
 ERROR:  new row for relation "reavers_app_tournament_fighters" violates check constraint "reavers_app_tournament_fighters_status_check"
 ERROR:  new row for relation "reavers_app_tournaments" violates check constraint "reavers_app_tournaments_code_check"
 exec tournaments level|1
-exec sees tournaments|1|1|1
+exec sees tournaments|1|57|1
 ERROR:  new row violates row-level security policy for table "reavers_app_tournament_fighters"
 member tournaments level|0
 member sees tournaments|0|0
-member given view|1|1
+member given view|1|57
 fights after exec update|t
 rumble seeded|RUMBLE-2026|37|16|159|1310

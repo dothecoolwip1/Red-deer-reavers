@@ -1,9 +1,8 @@
 -- Reavers app: the first edition on the Tournaments page, Red Deer Rumble 2026 (RUMBLE-2026), with its stats.
 -- Apply after 20261116000000_reavers_app_tournaments.sql. Running it again changes nothing.
 --
--- Only the event and its stats are here, because this repository is public. The fighter list (names and who paid) is
--- loaded separately from the project's files (tournaments/rumble-2026-fighters.sql). Sales come in from Square on the
--- page (Add from Square sales, or Import a Square export), and the cash box counts and expenses are entered there.
+-- The fighter list is in 20261116020000_reavers_app_tournaments_rumble_2026_fighters.sql. Sales come in from Square on
+-- the page (Add from Square sales, or Import a Square export), and the cash box counts and expenses are entered there.
 
 insert into public.reavers_app_tournaments
   (code, name, year, starts_on, ends_on, venue, fighter_fee_cents, fighters_count, divisions, fights, spectators,
