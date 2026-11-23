@@ -11,7 +11,8 @@ const publicFiles = [
   "media.html","social.html","store.html","styles.css","sw.js","team-data.js","team.html","training.html",
   "members.html","agm.html","about.html","reavers-sw.js","members-t.html","members.webmanifest","programs.html","involved.html","steps.html","contact.html","resources.html",
   "events.json","members.json","programs.json",
-  "sponsors.html","sponsors.js","sponsors.css"
+  "sponsors.html","sponsors.js","sponsors.css",
+  "_redirects","_headers"
 ];
 
 await fs.rm(out, { recursive: true, force: true });

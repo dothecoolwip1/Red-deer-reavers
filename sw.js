@@ -1,20 +1,21 @@
-const CACHE="reavers-forged-v38";
+const CACHE="reavers-forged-v39";
+// Cloudflare Pages answers "/team.html" with a redirect to "/team", so the pages are cached under their clean addresses
+// (a redirected response can't be served for a page load when offline).
 const STATIC=[
   "./",
-  "./index.html",
-  "./team.html",
-  "./fighter.html",
-  "./training.html",
-  "./events.html",
-  "./community.html",
-  "./media.html",
-  "./social.html",
+  "./team",
+  "./fighter",
+  "./training",
+  "./events",
+  "./community",
+  "./media",
+  "./social",
   "./styles.css?v=27",
   "./app.js?v=28",
   "./team-data.js?v=28",
   "./buhurtos.js?v=28",
   "./site-content.js?v=27",
-  "./members.html",
+  "./members",
   "./members.webmanifest",
   "./assets/members-app.css?v=2",
   "./assets/js/buhurtos-config.js",
@@ -66,7 +67,7 @@ self.addEventListener("fetch",event=>{
         .catch(async()=>{
           const cached=await caches.match(req,{ignoreSearch:req.mode==="navigate"});
           if(cached)return cached;
-          if(req.mode==="navigate")return caches.match("./index.html");
+          if(req.mode==="navigate")return caches.match("./");
           return Response.error();
         })
     );

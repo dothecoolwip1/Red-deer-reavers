@@ -1,9 +1,8 @@
 name: Build Reavers Assets
 
+# Run by hand only. Cloudflare Pages builds and serves the site from main (docs/MOVE_TO_CLOUDFLARE.md); this only
+# refreshes the generated assets committed for the old GitHub Pages copy, which just forwards to reddeerreavers.com.
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
 
 permissions:

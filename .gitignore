@@ -2,3 +2,4 @@ node_modules/
 _site/
 .lighthouseci/
 .DS_Store
+.wrangler/
