@@ -1,10 +1,9 @@
 name: Site Quality
 
+# Run by hand only (Actions tab > Site Quality > Run workflow), to keep GitHub Actions use low.
+# The same checks run locally: npm run verify, then npm run a11y and npm run lighthouse against a local server.
+# Cloudflare Pages builds main itself, so a broken build never goes live (the previous deployment stays up).
 on:
-  pull_request:
-  push:
-    branches:
-      - main
   workflow_dispatch:
 
 permissions:

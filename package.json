@@ -14,7 +14,8 @@
     "a11y": "pa11y-ci --config .pa11yci.json",
     "pages": "node scripts/build-pages.mjs",
     "build:app": "npm --prefix app ci --no-audit --no-fund && npm --prefix app test && npm --prefix app run build",
-    "build:site": "node scripts/build-site.mjs"
+    "build:site": "node scripts/build-site.mjs",
+    "verify": "npm run check:js && npm run build && npm run check"
   },
   "dependencies": {
     "@fontsource-variable/cinzel": "5.3.0",

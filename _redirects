@@ -1,0 +1,15 @@
+# Cloudflare Pages: the same path redirects vercel.json gives Vercel. Pages applies these before serving files.
+# Host rules (app.reddeerreavers.com -> /app/, www -> bare domain) can't live here; they are Cloudflare Redirect Rules
+# on the reddeerreavers.com zone (docs/MOVE_TO_CLOUDFLARE.md, part 4).
+# Pages serves /members, /agm, /team etc. without ".html" by itself, so vercel.json's two rewrites need no line here.
+/app                 /app/                        302
+/admin               /app/                        301
+/admin.html          /app/                        301
+/members-t.html      /members                     302
+/members-t           /members                     302
+/BuhurtOS            https://buhurt-os.app/       302
+/BuhurtOS/           https://buhurt-os.app/       302
+/BuhurtOS/*          https://buhurt-os.app/:splat 302
+/Red-deer-reavers    /                            302
+/Red-deer-reavers/   /                            302
+/Red-deer-reavers/*  /:splat                      302

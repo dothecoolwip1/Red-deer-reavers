@@ -1,0 +1,3 @@
+# Cloudflare Pages: the same headers vercel.json gives Vercel.
+/reavers-sw.js
+  Cache-Control: no-cache
