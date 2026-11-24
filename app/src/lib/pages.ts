@@ -1,9 +1,9 @@
 import type { Role } from "./roles";
 
-/** The staff pages an admin can give or take away per person. Kept in step with migrations 20261111000000 and 20261116000000. */
+/** The staff pages an admin can give or take away per person. Kept in step with migrations 20261111000000, 20261116000000 and 20261124000000. */
 export type PageId =
   | "attendance" | "ledger" | "budget" | "sales" | "dues" | "tournaments" | "sponsors" | "grants" | "gear" | "compliance"
-  | "site" | "calendar" | "team" | "practices" | "inquiries" | "site-settings" | "qr";
+  | "site" | "calendar" | "team" | "practices" | "inquiries" | "site-settings" | "qr" | "social";
 /** 0 = hidden, 1 = view only, 2 = full use. */
 export type Level = 0 | 1 | 2;
 export type Access = "none" | "view" | "edit";
@@ -27,6 +27,7 @@ export const PAGES: PageInfo[] = [
   { id: "tournaments", label: "Tournaments", group: "Money", viewOnly: true },
   { id: "sponsors", label: "Sponsors", group: "Growth", viewOnly: false },
   { id: "grants", label: "Grants", group: "Growth", viewOnly: false },
+  { id: "social", label: "Social media", group: "Growth", viewOnly: true },
   { id: "gear", label: "Armory", group: "Safety", viewOnly: false },
   { id: "compliance", label: "Deadlines", group: "Society", viewOnly: false },
   { id: "calendar", label: "Calendar", group: "Website", viewOnly: false, note: CAPTAIN },

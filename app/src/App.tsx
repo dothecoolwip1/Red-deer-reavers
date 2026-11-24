@@ -35,6 +35,7 @@ import { Attendance } from "./pages/Attendance";
 import { PageAccess } from "./pages/PageAccess";
 import { FighterProfiles } from "./pages/FighterProfiles";
 import { Reminders } from "./pages/Reminders";
+import { Social } from "./pages/Social";
 import type { PageId } from "./lib/pages";
 
 /** need: a role action, or a staff page whose access an admin can change per person (see lib/pages.ts). */
@@ -54,6 +55,7 @@ const NAV: Nav[] = [
   { path: "/tournaments", label: "Tournaments", need: { page: "tournaments" }, element: <Tournaments />, group: "Money" },
   { path: "/sponsors", label: "Sponsors", need: { page: "sponsors" }, element: <Sponsors />, group: "Growth" },
   { path: "/grants", label: "Grants", need: { page: "grants" }, element: <Grants />, group: "Growth" },
+  { path: "/social", label: "Social media", need: { page: "social" }, element: <Social />, group: "Growth" },
   { path: "/waivers", label: "Waiver", need: "self.use", element: <Waivers />, group: "Safety" },
   { path: "/incidents", label: "Incidents", need: "self.use", element: <Incidents />, group: "Safety" },
   { path: "/gear", label: "Armory", need: { page: "gear" }, element: <Gear />, group: "Safety" },

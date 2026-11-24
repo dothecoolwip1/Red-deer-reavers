@@ -160,3 +160,19 @@ member sees tournaments|0|0
 member given view|1|57
 fights after exec update|t
 rumble seeded|RUMBLE-2026|37|16|159|1310
+exec social level|2
+exec sees social accounts|1
+ERROR:  permission denied for table reavers_app_social_tokens
+ERROR:  permission denied for table reavers_app_social_accounts
+ERROR:  new row violates row-level security policy for table "reavers_app_social_targets"
+ERROR:  permission denied for function reavers_app_social_claim
+member social level|0
+member sees social|0|0
+ERROR:  new row violates row-level security policy for table "reavers_app_social_posts"
+claimed|1
+claimed again|0
+post while publishing|publishing
+post after publishing|published|t
+ERROR:  This post has already gone out to some accounts, so it can't be changed. Copy it into a new post instead.
+targets kept|1
+after disconnect|0|1
