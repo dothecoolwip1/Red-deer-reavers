@@ -6,9 +6,9 @@ import {
   lengthFor, PLATFORM, PLATFORMS, problemsFor, statsLine, textFor, type MediaItem, type Platform, type PostDraft, type PostStatus,
   type TiktokPrivacy, type YoutubePrivacy
 } from "../lib/social";
+import { LOGO_PATH } from "../lib/socialLogos";
 import { Empty, Loading, Page, Pill, errorText, useAction, usePage, useStore, useToast } from "../ui";
 
-const SHORT: Record<Platform, string> = { facebook: "FB", instagram: "IG", youtube: "YT", tiktok: "TT", x: "X", bluesky: "BS", discord: "DC" };
 const STATUS: Record<PostStatus, [string, string]> = {
   draft: ["Draft", ""], scheduled: ["Scheduled", "soon"], publishing: ["Posting", "soon"], published: ["Posted", "done"],
   partial: ["Partly posted", "overdue"], failed: ["Failed", "overdue"], cancelled: ["Cancelled", ""]
@@ -17,7 +17,12 @@ const when = (iso: string) => new Intl.DateTimeFormat("en-US", { weekday: "short
 const shortDate = (iso: string) => new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "America/Edmonton" }).format(new Date(iso));
 const addDays = (iso: string, n: number) => { const d = new Date(`${iso}T12:00:00Z`); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
 
-export const Badge = ({ p }: { p: Platform }) => <span className={`plat plat-${p}`} aria-hidden="true">{SHORT[p]}</span>;
+/** The platform's own logo, white on its brand colour. Decorative: the platform's name is always written next to it. */
+export const Badge = ({ p }: { p: Platform }) => (
+  <span className={`plat plat-${p}`} aria-hidden="true">
+    <svg viewBox="0 0 24 24" focusable="false"><path d={LOGO_PATH[p]} /></svg>
+  </span>
+);
 
 type Tab = "write" | "queue" | "accounts";
 
@@ -211,7 +216,7 @@ function Composer({ accounts, post, copy, onDone, onCancel, onConnect }: {
           <div className="field">
             <span>Different wording for one platform (optional)</span>
             <div className="segmented own-pick">
-              {platforms.map(p => <button key={p} type="button" aria-pressed={own === p} onClick={() => setOwn(own === p ? null : p)}><Badge p={p} /> {texts[p]?.trim() ? "✓" : ""}</button>)}
+              {platforms.map(p => <button key={p} type="button" aria-pressed={own === p} aria-label={`Own wording for ${PLATFORM[p].label}`} title={PLATFORM[p].label} onClick={() => setOwn(own === p ? null : p)}><Badge p={p} /> {texts[p]?.trim() ? "✓" : ""}</button>)}
             </div>
             {own && (
               <label className="field">
