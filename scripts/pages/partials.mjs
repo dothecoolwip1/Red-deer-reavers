@@ -1,5 +1,5 @@
 // Shared page chrome for the Reavers site. `npm run pages` writes the root HTML files from scripts/pages/*.page.mjs.
-export const V = "28";
+export const V = "29";
 
 /** BuhurtOS is served from GitHub Pages. (buhurtos.ca is NOT a working address.) */
 export const BOS_SITE = "https://buhurt-os.app";
@@ -126,12 +126,12 @@ export const footer = () => `
           <a href="social.html">${icon("horn")}All our channels</a>
           <a href="${SOCIAL.instagram}" target="_blank" rel="noopener">${icon("instagram")}Instagram</a>
           <a href="${SOCIAL.facebook}" target="_blank" rel="noopener">${icon("facebook")}Facebook</a>
-          <a href="mailto:reddeerreavers@gmail.com">${icon("quill")}Email</a>
+          <a href="mailto:info@reddeerreavers.com">${icon("quill")}Email</a>
         </div>
       </div>
     </div>
     <div class="footer-base">
-      <span>© <span data-year>2026</span> Red Deer Reavers Guild</span>
+      <span>© <span data-year>2026</span> Red Deer Reavers Guild</span> <a href="privacy.html">Privacy</a>
       <span class="powered">Fighter records kept on <a href="${BOS_SITE}/" target="_blank" rel="noopener">BuhurtOS</a></span>
     </div>
   </div>

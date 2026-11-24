@@ -6,6 +6,7 @@ import type { AttendanceApi } from "./attendance";
 import type { AccessApi } from "./access";
 import type { FighterProfilesApi } from "./fighterProfiles";
 import type { RemindersApi } from "./reminders";
+import type { SocialApi } from "./social";
 import type { PageLevels } from "../lib/pages";
 import type { Kind, PaymentItem, PaymentKind } from "../lib/square";
 import type { RegistrationStatus, TicketKind } from "../lib/events";
@@ -158,6 +159,8 @@ export interface Store {
   fighterProfiles: FighterProfilesApi;
   /** Automatic dues, practice, event and attendance reminders (admins change the settings). */
   reminders: RemindersApi;
+  /** The social media manager: connected accounts, posts and the schedule. */
+  social: SocialApi;
   /** Starts a Square checkout and returns the address of Square's payment page. */
   checkout(req: CheckoutRequest): Promise<string>;
   /** Treasury re-labels what a Square payment was for; its ledger lines follow. */

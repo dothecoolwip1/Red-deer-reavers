@@ -461,7 +461,7 @@
     const message = String(data.get("message") || "").trim();
     const subject = encodeURIComponent(`Reavers inquiry from ${name}`);
     const body = encodeURIComponent(`Name: ${name}\nBest contact: ${contact}\nInterested in: ${interest}\n\n${message}`);
-    window.location.href = `mailto:${TEAM.contactEmail || "reddeerreavers@gmail.com"}?subject=${subject}&body=${body}`;
+    window.location.href = `mailto:${TEAM.contactEmail || "info@reddeerreavers.com"}?subject=${subject}&body=${body}`;
   });
 
   // ---------- community inquiry (goes to the team admin) ----------
@@ -505,7 +505,7 @@
       if (status) status.textContent = "Thank you. Your inquiry is with the Reavers now, and we will follow up using the contact you gave.";
       if (button) button.textContent = "Inquiry sent";
     } catch (error) {
-      if (status) status.textContent = "We could not send that right now. You can still email reddeerreavers@gmail.com.";
+      if (status) status.textContent = "We could not send that right now. You can still email info@reddeerreavers.com.";
       if (button) { button.disabled = false; button.textContent = "Try again"; }
     }
   });

@@ -33,6 +33,8 @@ Fighters do not need to be added on this site. A fighter signs in to BuhurtOS, a
 
 `.github/workflows/social-sync.yml` runs `scripts/sync-social.mjs` once a day. It reads the latest Instagram and Facebook posts through Meta's official APIs, saves WebP copies of the photos in `assets/social/`, writes `assets/social/feed.json`, and commits them so they appear on the Social, Media and Home pages. It does nothing until the `INSTAGRAM_ACCESS_TOKEN` and/or `FACEBOOK_PAGE_ID` + `FACEBOOK_PAGE_TOKEN` repository secrets are added. Step-by-step setup: [docs/SOCIAL_SYNC.md](docs/SOCIAL_SYNC.md).
 
+Posting the other way, from the club to its accounts, is the Reavers app's Growth → **Social media** page: write once, post now or on a schedule to Facebook, Instagram, YouTube, TikTok, X, Bluesky and Discord. Setup: [docs/social-media.md](docs/social-media.md).
+
 ## Design
 
 The "Forged" theme lives in `styles.css`: dark iron, gilt corner guards, parchment sections, heraldic shield avatars, and the crest's purple and ember. Fonts (Grenze Gotisch, Cinzel, Alegreya Sans, all OFL) are self-hosted from `vendor/fonts`. Moving decoration (forge embers, the discipline banner) respects reduced-motion settings and has a pause button.

@@ -1944,7 +1944,7 @@
       h('details', { class: 'help-item' }, h('summary', {}, 'Your account'), h('div', { class: 'help-body' },
         h('p', {}, 'This is your BuhurtOS account: the same email and password work on ', h('a', { href: CFG.appUrl + '/', target: '_blank', rel: 'noopener' }, 'BuhurtOS'), ' for events, teams and your fighter profile.'),
         docs.length ? h('ul', {}, docs.map(function (d) { return h('li', {}, h('a', { href: d.href, target: '_blank', rel: 'noopener noreferrer' }, d.title), d.note ? h('span', { class: 'small' }, ' · ' + d.note) : null); })) : null,
-        h('p', {}, 'Questions? ', h('a', { href: 'mailto:reddeerreavers@gmail.com' }, 'Email the club'), CFG.discordInvite ? [' or find us on ', h('a', { href: CFG.discordInvite, target: '_blank', rel: 'noopener noreferrer' }, 'Discord')] : null, '.')))));
+        h('p', {}, 'Questions? ', h('a', { href: 'mailto:info@reddeerreavers.com' }, 'Email the club'), CFG.discordInvite ? [' or find us on ', h('a', { href: CFG.discordInvite, target: '_blank', rel: 'noopener noreferrer' }, 'Discord')] : null, '.')))));
     v.appendChild(h('section', { class: 'card-panel' }, h('h2', {}, 'Account'), h('p', { class: 'small' }, 'Signed in as ' + (state.session.user.email || '') + '.'),
       h('div', { class: 'row-btns' }, h('a', { class: 'btn-line', href: CFG.appUrl + '/account', target: '_blank', rel: 'noopener' }, 'Account settings on BuhurtOS'),
         h('button', { type: 'button', class: 'btn-line', onclick: inviteMember }, 'Invite a member'),

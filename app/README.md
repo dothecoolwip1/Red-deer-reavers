@@ -68,7 +68,11 @@ Until the migration below is applied, a signed-in person sees sample data with a
    and `20261116020000_reavers_app_tournaments_rumble_2026_fighters.sql`, then `20261116030000_reavers_app_tournament_expenses_out_of_pocket.sql`
    (home server and the cloud copy). It adds
    Money → **Tournaments** and its page-access switch, and RUMBLE-2026 with its stats and fighter list. See "Tournaments" below.
-12. **Stripe (optional, older).** Deploy `supabase/functions/reavers-stripe-webhook` with `--no-verify-jwt`, set
+12. **Social media (optional).** Apply `20261124000000_reavers_app_social.sql` (home server and the cloud copy), deploy
+   `reavers-social`, then follow `docs/social-media.md` for each platform. It adds Growth → **Social media**: write a
+   post once, post it now or schedule it to the club's Facebook Page, Instagram, YouTube, TikTok, X, Bluesky and
+   Discord, and see each account's link, likes and views. Until it's applied the page says so and nothing is posted.
+13. **Stripe (optional, older).** Deploy `supabase/functions/reavers-stripe-webhook` with `--no-verify-jwt`, set
    `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET`, and add the endpoint in Stripe for `checkout.session.completed`.
    Square replaces this; existing Stripe links still show under Pay the club → Other payment links.
 

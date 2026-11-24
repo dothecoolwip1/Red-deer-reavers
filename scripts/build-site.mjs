@@ -9,7 +9,7 @@ const publicFiles = [
   "404.html","app.js","buhurtos.js","site-content.js","community.html",
   "events.html","fighter.html","fighter.js","gallery.js","index.html","manifest.webmanifest",
   "media.html","social.html","store.html","styles.css","sw.js","team-data.js","team.html","training.html",
-  "members.html","agm.html","about.html","reavers-sw.js","members-t.html","members.webmanifest","programs.html","involved.html","steps.html","contact.html","resources.html",
+  "members.html","agm.html","about.html","reavers-sw.js","members-t.html","members.webmanifest","programs.html","involved.html","steps.html","contact.html","resources.html","privacy.html",
   "events.json","members.json","programs.json",
   "sponsors.html","sponsors.js","sponsors.css",
   "_redirects","_headers"

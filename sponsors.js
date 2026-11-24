@@ -92,7 +92,7 @@
       if (button) button.textContent = "Sent";
     } catch (error) {
       // The database answers bad input in plain words (code 22023); anything else gets the email fallback.
-      say(error.code === "22023" || error.code === "53400" ? error.message : "We could not send that right now. You can email reddeerreavers@gmail.com instead.");
+      say(error.code === "22023" || error.code === "53400" ? error.message : "We could not send that right now. You can email info@reddeerreavers.com instead.");
       if (button) { button.disabled = false; button.textContent = "Try again"; }
     }
   });

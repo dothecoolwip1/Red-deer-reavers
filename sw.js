@@ -1,4 +1,4 @@
-const CACHE="reavers-forged-v39";
+const CACHE="reavers-forged-v40";
 // Cloudflare Pages answers "/team.html" with a redirect to "/team", so the pages are cached under their clean addresses
 // (a redirected response can't be served for a page load when offline).
 const STATIC=[
@@ -11,9 +11,9 @@ const STATIC=[
   "./media",
   "./social",
   "./styles.css?v=27",
-  "./app.js?v=28",
-  "./team-data.js?v=28",
-  "./buhurtos.js?v=28",
+  "./app.js?v=29",
+  "./team-data.js?v=29",
+  "./buhurtos.js?v=29",
   "./site-content.js?v=27",
   "./members",
   "./members.webmanifest",

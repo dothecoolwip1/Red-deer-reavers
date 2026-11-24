@@ -39,7 +39,7 @@ export default () => `${head({
         <li class="plate"><strong>Pay on Square</strong><span>Card, Apple Pay or Google Pay on Square's secure page. Your receipt comes by email.</span></li>
         <li class="plate"><strong>Pick it up</strong><span>Show your receipt at any <a href="training.html">practice</a> or <a href="events.html">Reavers event</a> and we'll hand it over.</span></li>
       </ol>
-      <p class="form-note">Questions about an order? Email <a href="mailto:reddeerreavers@gmail.com">reddeerreavers@gmail.com</a>.</p>
+      <p class="form-note">Questions about an order? Email <a href="mailto:info@reddeerreavers.com">info@reddeerreavers.com</a>.</p>
     </div>
   </section>
 </main>

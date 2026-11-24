@@ -46,7 +46,7 @@ service role can call. Check it first with `PGHOST=... PGUSER=postgres app/supab
    DISCORD_MEMBERS_WEBHOOK=...                          # step 2
    RESEND_API_KEY=...                                   # step 2, only for email
    REMINDER_EMAIL_FROM=Red Deer Reavers <reminders@reddeerreavers.com>
-   REMINDER_EMAIL_REPLY_TO=reddeerreavers@gmail.com     # optional: where replies go
+   REMINDER_EMAIL_REPLY_TO=info@reddeerreavers.com     # optional: where replies go
    ```
 
    `DISCORD_BOT_TOKEN` and `REAVERS_CRON_SECRET` are the attendance bot's and are already there.

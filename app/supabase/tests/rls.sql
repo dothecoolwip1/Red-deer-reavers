@@ -446,3 +446,43 @@ select 'member given view', reavers_app_my_pages()->>'tournaments', (select coun
 reset role;
 select 'fights after exec update', fights is null from reavers_app_tournaments where code = 'TEST-2027';
 select 'rumble seeded', code, fighters_count, divisions, fights, stream_minutes from reavers_app_tournaments where code = 'RUMBLE-2026';
+-- Social media manager: the executive uses it, members don't see it, nobody signed in reads the keys
+insert into reavers_app_social_accounts(id, platform, external_id, name) values ('00000000-0000-0000-0000-0000000000a1', 'facebook', '123', 'Reavers Page');
+insert into reavers_app_social_tokens(account_id, access_token) values ('00000000-0000-0000-0000-0000000000a1', 'SECRET');
+set role authenticated;
+select set_config('test.uid', :'u3', false);
+select 'exec social level', reavers_app_my_pages()->>'social';
+select 'exec sees social accounts', count(*) from reavers_app_social_accounts;
+insert into reavers_app_social_posts(id, body, status, scheduled_at) values ('00000000-0000-0000-0000-0000000000b1', 'Practice Sunday', 'scheduled', now());
+insert into reavers_app_social_targets(post_id, account_id, platform, account_name) values ('00000000-0000-0000-0000-0000000000b1', '00000000-0000-0000-0000-0000000000a1', 'facebook', 'Reavers Page');
+\set ON_ERROR_STOP 0
+select 'exec reads tokens', count(*) from reavers_app_social_tokens;
+insert into reavers_app_social_accounts(platform, external_id, name) values ('x', '9', 'Fake');
+insert into reavers_app_social_targets(post_id, account_id, platform, status) values ('00000000-0000-0000-0000-0000000000b1', null, 'x', 'published');
+select reavers_app_social_claim();
+\set ON_ERROR_STOP 1
+select set_config('test.uid', :'u4', false);
+select 'member social level', reavers_app_my_pages()->>'social';
+select 'member sees social', (select count(*) from reavers_app_social_posts), (select count(*) from reavers_app_social_accounts);
+\set ON_ERROR_STOP 0
+insert into reavers_app_social_posts(body) values ('Member post');
+\set ON_ERROR_STOP 1
+-- The function claims it (once), posts it, and the post's status follows
+reset role;
+select 'claimed', count(*) from reavers_app_social_claim();
+select 'claimed again', count(*) from reavers_app_social_claim();
+select 'post while publishing', status from reavers_app_social_posts where id = '00000000-0000-0000-0000-0000000000b1';
+update reavers_app_social_targets set status = 'published', url = 'https://www.facebook.com/123_4' where post_id = '00000000-0000-0000-0000-0000000000b1';
+select 'post after publishing', status, published_at is not null from reavers_app_social_posts where id = '00000000-0000-0000-0000-0000000000b1';
+-- Once it's gone out it can't be rewritten or have its accounts taken away
+set role authenticated;
+select set_config('test.uid', :'u3', false);
+\set ON_ERROR_STOP 0
+update reavers_app_social_posts set body = 'Changed' where id = '00000000-0000-0000-0000-0000000000b1';
+\set ON_ERROR_STOP 1
+delete from reavers_app_social_targets where post_id = '00000000-0000-0000-0000-0000000000b1';
+select 'targets kept', count(*) from reavers_app_social_targets;
+-- Disconnecting takes the keys with it and keeps the history
+delete from reavers_app_social_accounts where id = '00000000-0000-0000-0000-0000000000a1';
+reset role;
+select 'after disconnect', (select count(*) from reavers_app_social_tokens), (select count(*) from reavers_app_social_targets where account_id is null and account_name = 'Reavers Page');
