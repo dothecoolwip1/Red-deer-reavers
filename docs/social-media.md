@@ -24,9 +24,11 @@ signed-in person can read.
 The app says all of this next to each account, and the Check panel says it again before anything is posted. When
 YouTube or TikTok keep a post private, the post's result says so.
 
-Two things for the Meta, Google and TikTok reviews: they want a **privacy policy** page on reddeerreavers.com (the site
-doesn't have one yet) and, for TikTok and the YouTube audit, a short screen recording of connecting and posting from the
-app. The app's own screens are enough for that recording.
+Two things for the Meta, Google and TikTok reviews. First, a **privacy policy**: use
+https://reddeerreavers.com/privacy.html (built from `scripts/pages/privacy.page.mjs`; it covers the YouTube API Services
+wording Google asks for). Meta also asks for a **data deletion instructions URL**: use
+https://reddeerreavers.com/privacy.html#delete. Second, for TikTok and the YouTube audit, a short screen recording of
+connecting and posting from the app. The app's own screens are enough for that recording.
 
 ## 1. Database
 
@@ -105,7 +107,8 @@ posts, and renews Instagram keys before they run out. A post scheduled for 10:00
    → **Create app**. Name it "Reavers app". Use case: **Manage everything on your Page**. Connect it to the club's
    business portfolio if Meta asks (create one if there isn't one).
 2. **App settings → Basic**: copy the **App ID** (`META_APP_ID`) and **App secret** (`META_APP_SECRET`). Fill in the
-   privacy policy URL and app icon while you're there.
+   privacy policy URL (https://reddeerreavers.com/privacy.html), the data deletion instructions URL
+   (https://reddeerreavers.com/privacy.html#delete) and the app icon while you're there.
 3. **Use cases → Manage everything on your Page → Customize**: make sure `pages_show_list`, `pages_read_engagement` and
    `pages_manage_posts` are added.
 4. **Facebook Login for Business → Settings** (or **Facebook Login → Settings**): add the redirect address from step 2

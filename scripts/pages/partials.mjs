@@ -131,7 +131,7 @@ export const footer = () => `
       </div>
     </div>
     <div class="footer-base">
-      <span>© <span data-year>2026</span> Red Deer Reavers Guild</span>
+      <span>© <span data-year>2026</span> Red Deer Reavers Guild</span> <a href="privacy.html">Privacy</a>
       <span class="powered">Fighter records kept on <a href="${BOS_SITE}/" target="_blank" rel="noopener">BuhurtOS</a></span>
     </div>
   </div>
