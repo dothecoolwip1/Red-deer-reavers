@@ -4,7 +4,7 @@ import { head, header, footer, dock, scripts } from "./partials.mjs";
 // (docs/social-media.md), and #delete is the "data deletion instructions" address Meta asks for.
 // Keep it true: when the site, the members area or the Reavers app starts collecting something new, add it here.
 const UPDATED = "November 24, 2026";
-const EMAIL = "reddeerreavers@gmail.com";
+const EMAIL = "info@reddeerreavers.com";
 
 export const file = "privacy.html";
 export default () => `${head({
