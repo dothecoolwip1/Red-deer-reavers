@@ -22,7 +22,7 @@
     season: "2026",
     organization: "Red Deer Reavers",
     location: "Central Alberta",
-    contactEmail: "reddeerreavers@gmail.com",
+    contactEmail: "info@reddeerreavers.com",
     practice: {
       venue: "Springbrook Archery Centre",
       fee: "$10",

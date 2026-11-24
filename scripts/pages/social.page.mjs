@@ -42,11 +42,11 @@ export default () => `${head({
           <p>Our fighters, results and tournament history, kept permanently.</p>
           <span class="text-link">View the team ${icon("external")}</span>
         </a>
-        <a class="plate channel-card mail" href="mailto:reddeerreavers@gmail.com" data-reveal data-delay="3">
+        <a class="plate channel-card mail" href="mailto:info@reddeerreavers.com" data-reveal data-delay="3">
           <span class="channel-icon">${icon("quill")}</span>
           <span class="label">Email</span>
           <strong>Write to us</strong>
-          <p><span class="mail-address">reddeerreavers@gmail.com</span>Questions, bookings, sponsorships and anything else.</p>
+          <p><span class="mail-address">info@reddeerreavers.com</span>Questions, bookings, sponsorships and anything else.</p>
           <span class="text-link">Send an email ${icon("arrow")}</span>
         </a>
       </div>

@@ -163,7 +163,7 @@ const dayFrom = (offset: number) => { const d = new Date(); d.setDate(d.getDate(
 function demoSeed(): SiteData {
   return {
     admin: true,
-    settings: { season: "2026", organization: "Red Deer Reavers", location: "Central Alberta", contact_email: "reddeerreavers@gmail.com" },
+    settings: { season: "2026", organization: "Red Deer Reavers", location: "Central Alberta", contact_email: "info@reddeerreavers.com" },
     practices: [
       { id: uid(), weekday: 3, label: "Wednesday", start_time: "17:30:00", end_time: "20:00:00", venue: "Springbrook Archery Centre", fee: "$10", active: true, sort_order: 10 },
       { id: uid(), weekday: 0, label: "Sunday", start_time: "17:00:00", end_time: "20:00:00", venue: "Springbrook Archery Centre", fee: "$10", active: true, sort_order: 20 }
